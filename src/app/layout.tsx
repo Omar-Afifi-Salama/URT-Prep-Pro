@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FontProvider } from '@/context/font-provider';
+import { ApiKeyProvider } from '@/context/api-key-provider';
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -55,10 +56,12 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <FontProvider>
-            {children}
-            <Toaster />
-          </FontProvider>
+          <ApiKeyProvider>
+            <FontProvider>
+              {children}
+              <Toaster />
+            </FontProvider>
+          </ApiKeyProvider>
         </ThemeProvider>
       </body>
     </html>

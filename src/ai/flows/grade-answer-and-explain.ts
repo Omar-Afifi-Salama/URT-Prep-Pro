@@ -7,7 +7,7 @@
  * - GradeAnswerAndExplainOutput - The return type for the gradeAnswerAndExplain function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, getGoogleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GradeAnswerAndExplainInputSchema = z.object({
@@ -15,6 +15,7 @@ const GradeAnswerAndExplainInputSchema = z.object({
   question: z.string().describe('The question to be answered.'),
   answer: z.string().describe('The correct answer to the question.'),
   userAnswer: z.string().describe('The user provided answer.'),
+  apiKey: z.string().optional().describe('The user provided API key for Google AI.'),
 });
 export type GradeAnswerAndExplainInput = z.infer<typeof GradeAnswerAndExplainInputSchema>;
 
@@ -64,7 +65,8 @@ const gradeAnswerAndExplainFlow = ai.defineFlow(
     outputSchema: GradeAnswerAndExplainOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const gemini = getGoogleAI(input.apiKey).model('gemini-1.5-flash');
+    const {output} = await prompt(input, { model: gemini });
     return output!;
   }
 );

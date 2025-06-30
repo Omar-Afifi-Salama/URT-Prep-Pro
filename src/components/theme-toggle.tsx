@@ -9,6 +9,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
@@ -24,23 +26,26 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Light Themes</DropdownMenuLabel>
         <DropdownMenuItem onClick={() => setTheme("light")}>
-          Default (Light)
+          Default
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Default (Dark)
+        <DropdownMenuItem onClick={() => setTheme("green")}>
+          Green
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("orange")}>
-          Orange (Light)
+          Orange
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark-orange")}>
-          Orange (Dark)
-        </DropdownMenuItem>
-         <DropdownMenuItem onClick={() => setTheme("green")}>
-          Green (Light)
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Dark Themes</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Default
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark-green")}>
-          Green (Dark)
+          Green
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark-orange")}>
+          Orange
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

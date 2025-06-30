@@ -7,7 +7,7 @@
  * - GenerateUrtPassageOutput - The return type for the generateUrtPassage function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, getGoogleAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateUrtPassageInputSchema = z.object({
@@ -15,6 +15,7 @@ const GenerateUrtPassageInputSchema = z.object({
   difficulty: z.string().describe('The desired difficulty of the passage and questions (e.g., "Easy", "Medium", "Hard").'),
   wordLength: z.number().describe('The approximate number of words for the passage.'),
   numQuestions: z.number().describe('The number of questions to generate.'),
+  apiKey: z.string().optional().describe('The user provided API key for Google AI.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -29,6 +30,7 @@ const GenerateUrtPassageOutputSchema = z.object({
   passage: z.string().describe('The generated URT passage.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
   imageUrl: z.string().describe('A URL for a relevant placeholder image.'),
+  recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -42,11 +44,12 @@ const textGenerationPrompt = ai.definePrompt({
   output: {schema: z.object({
     title: GenerateUrtPassageOutputSchema.shape.title,
     passage: GenerateUrtPassageOutputSchema.shape.passage,
-    questions: GenerateUrtPassageOutputSchema.shape.questions
+    questions: GenerateUrtPassageOutputSchema.shape.questions,
+    recommendedTime: GenerateUrtPassageOutputSchema.shape.recommendedTime,
   })},
-  prompt: `You are an expert URT passage and question generator.
+  prompt: `You are a senior curriculum designer for a national testing board. Your task is to write passages for the URT science exam. The tone must be formal, objective, and information-dense, completely avoiding conversational language. All facts must be presented with precision.
 
-You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured.
+You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam.
 
 The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
 
@@ -68,6 +71,9 @@ QUESTION FORMATTING:
 - The correct answer must exactly match one of the provided options.
 - Any equations or formulas in the questions or options MUST use the specified HTML formatting.
 
+TIMER:
+- Calculate a recommended time limit in minutes for this test. A good rule of thumb is 1.5 minutes per question, plus 3-5 minutes for reading the passage, depending on its length and complexity. Include this in the 'recommendedTime' field.
+
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
 Approximate Word Count: {{{wordLength}}}
@@ -82,8 +88,9 @@ const generateUrtPassageFlow = ai.defineFlow(
     outputSchema: GenerateUrtPassageOutputSchema,
   },
   async input => {
+    const gemini = getGoogleAI(input.apiKey).model('gemini-1.5-flash');
     // Step 1: Generate passage and questions
-    const {output: textOutput} = await textGenerationPrompt(input);
+    const {output: textOutput} = await textGenerationPrompt(input, { model: gemini });
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }

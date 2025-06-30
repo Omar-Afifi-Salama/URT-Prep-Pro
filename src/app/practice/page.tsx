@@ -38,6 +38,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
+import { useApiKey } from "@/context/api-key-provider";
+import { TestTimer } from "@/components/test-timer";
 
 export default function PracticePage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -53,8 +55,17 @@ export default function PracticePage() {
   );
   const { toast } = useToast();
   const { font } = useFont();
+  const { apiKey, isApiKeySet } = useApiKey();
 
   const handleGenerateTest = async () => {
+    if (!isApiKeySet) {
+        toast({
+            title: "API Key Required",
+            description: "Please set your Google AI API key in the user menu before generating a test.",
+            variant: "destructive",
+        });
+        return;
+    }
     if (!selectedSubject) {
       toast({
         title: "No Subject Selected",
@@ -73,6 +84,7 @@ export default function PracticePage() {
         difficulty,
         wordLength: parseInt(wordLength, 10),
         numQuestions: parseInt(numQuestions, 10),
+        apiKey: apiKey!,
       });
       setTestData(data);
       setView("test");
@@ -80,7 +92,7 @@ export default function PracticePage() {
       console.error("Failed to generate test:", error);
       toast({
         title: "Generation Failed",
-        description: "Could not generate a new test. Please try again.",
+        description: "Could not generate a new test. Check your API key and try again.",
         variant: "destructive",
       });
     } finally {
@@ -104,6 +116,7 @@ export default function PracticePage() {
             question: q.question,
             answer: q.answer,
             userAnswer: userAnswer,
+            apiKey: apiKey!,
           }).then(res => ({ ...res, userAnswer, correctAnswer: q.answer, question: q.question }))
         })
       );
@@ -124,7 +137,7 @@ export default function PracticePage() {
 
       const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
       history.unshift(newHistoryItem);
-      localStorage.setItem('testHistory', JSON.stringify(history));
+      localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50))); // Keep last 50 tests
 
       setView("results");
     } catch (error) {
@@ -276,8 +289,17 @@ export default function PracticePage() {
                     </CardContent>
                 </Card>
                 <Card className="lg:sticky top-24">
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="font-headline">Questions</CardTitle>
+                        {testData.recommendedTime && (
+                            <TestTimer 
+                                initialTime={testData.recommendedTime * 60} 
+                                onComplete={() => {
+                                    toast({ title: "Time's up!", description: "The test will be submitted automatically." });
+                                    handleSubmitTest();
+                                }} 
+                            />
+                        )}
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[60vh] pr-4">
@@ -290,7 +312,7 @@ export default function PracticePage() {
                                         {q.options.map((option, optIndex) => (
                                             <div key={optIndex} className="flex items-center space-x-2">
                                                 <RadioGroupItem value={option} id={`q${index}o${optIndex}`} />
-                                                <Label htmlFor={`q${index}o${optIndex}`} dangerouslySetInnerHTML={{__html: option}} />
+                                                <Label htmlFor={`q${index}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
                                             </div>
                                         ))}
                                         </div>

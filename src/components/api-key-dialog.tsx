@@ -1,0 +1,77 @@
+"use client";
+
+import { useState } from 'react';
+import { useApiKey } from '@/context/api-key-provider';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+
+export function ApiKeyDialog() {
+  const { apiKey, setApiKey, isDialogOpen, setDialogOpen } = useApiKey();
+  const [localKey, setLocalKey] = useState(apiKey || '');
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    if (localKey.trim()) {
+      setApiKey(localKey);
+      setDialogOpen(false);
+      toast({
+        title: 'API Key Saved',
+        description: 'Your Google AI API key has been saved.',
+      });
+    } else {
+      toast({
+        title: 'Invalid Key',
+        description: 'Please enter a valid API key.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  return (
+    <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Set Google AI API Key</DialogTitle>
+          <DialogDescription>
+            You need to provide your own Google AI API key to use the generative features of this app. Your key is stored only in your browser.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="api-key" className="text-right">
+              API Key
+            </Label>
+            <Input
+              id="api-key"
+              value={localKey}
+              onChange={(e) => setLocalKey(e.target.value)}
+              className="col-span-3"
+              placeholder="Enter your API key"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleSave}>
+            Save Key
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -9,6 +9,7 @@ export interface UrtTest {
   passage: string;
   questions: UrtQuestion[];
   imageUrl: string;
+  recommendedTime?: number;
 }
 
 export interface GradedResult {
