@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
 import { gradeAnswerAndExplain } from "@/ai/flows/grade-answer-and-explain.ts";
 import { AppHeader } from "@/components/app-header";
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
-import type { UrtPassage, GradedResult, QuestionWithOptions } from "@/lib/types";
+import type { UrtTest, GradedResult, TestHistoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -35,23 +36,10 @@ import {
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 
-function parseQuestions(questionStrings: string[]): QuestionWithOptions[] {
-    return questionStrings.map(q_str => {
-        const lines = q_str.split('\n').filter(line => line.trim() !== '');
-        const question = lines[0];
-        const options = lines.slice(1, -1).map(opt => opt.substring(3).trim());
-        const answerLine = lines[lines.length - 1];
-        const answer = answerLine.substring(answerLine.indexOf(':') + 2);
-        return { question, options, answer };
-    });
-}
-
-
 export default function PracticePage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [testData, setTestData] = useState<UrtPassage | null>(null);
-  const [parsedQuestions, setParsedQuestions] = useState<QuestionWithOptions[]>([]);
+  const [testData, setTestData] = useState<UrtTest | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [results, setResults] = useState<GradedResult[]>([]);
   const [view, setView] = useState<"generate" | "test" | "results">(
@@ -69,10 +57,12 @@ export default function PracticePage() {
       return;
     }
     setIsLoading(true);
+    setTestData(null);
+    setUserAnswers({});
+    setResults([]);
     try {
       const data = await generateUrtPassage({ topic: selectedSubject.name });
       setTestData(data);
-      setParsedQuestions(parseQuestions(data.questions));
       setView("test");
     } catch (error) {
       console.error("Failed to generate test:", error);
@@ -91,13 +81,14 @@ export default function PracticePage() {
   };
 
   const handleSubmitTest = async () => {
+    if (!testData) return;
     setIsLoading(true);
     try {
       const gradedResults = await Promise.all(
-        parsedQuestions.map(async (q, index) => {
+        testData.questions.map(async (q, index) => {
           const userAnswer = userAnswers[index] || "No answer";
           return gradeAnswerAndExplain({
-            passage: testData!.passage,
+            passage: testData.passage,
             question: q.question,
             answer: q.answer,
             userAnswer: userAnswer,
@@ -105,6 +96,24 @@ export default function PracticePage() {
         })
       );
       setResults(gradedResults);
+      
+      const correctCount = gradedResults.filter(r => r.isCorrect).length;
+      const totalCount = testData.questions.length;
+      const score = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
+      
+      const newHistoryItem: TestHistoryItem = {
+          id: new Date().toISOString() + Math.random(),
+          subject: selectedSubject!.name,
+          score: score,
+          correctQuestions: correctCount,
+          totalQuestions: totalCount,
+          date: new Date().toISOString(),
+      };
+
+      const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
+      history.unshift(newHistoryItem);
+      localStorage.setItem('testHistory', JSON.stringify(history));
+
       setView("results");
     } catch (error) {
       console.error("Failed to grade test:", error);
@@ -121,19 +130,29 @@ export default function PracticePage() {
   const handleStartNewTest = () => {
     setView("generate");
     setTestData(null);
-    setParsedQuestions([]);
     setUserAnswers({});
     setResults([]);
     setSelectedSubject(null);
   }
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && !testData) {
       return (
         <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <p className="text-lg font-headline">
-            {view === 'generate' ? 'Generating your test...' : 'Grading your answers...'}
+            Generating your test...
+          </p>
+          <p className="text-muted-foreground">This may take a few moments. We're creating a unique passage, questions, and a relevant image just for you.</p>
+        </div>
+      );
+    }
+    if (isLoading && view === 'results') {
+       return (
+        <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-lg font-headline">
+            Grading your answers...
           </p>
           <p className="text-muted-foreground">This may take a few moments. Please wait.</p>
         </div>
@@ -174,6 +193,7 @@ export default function PracticePage() {
           </Card>
         );
       case "test":
+        if (!testData) return null;
         return (
             <div className="grid lg:grid-cols-2 gap-8 w-full">
                 <Card className="lg:sticky top-24 h-fit">
@@ -181,8 +201,17 @@ export default function PracticePage() {
                         <CardTitle className="font-headline">Passage</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-[60vh]">
-                            <p className="whitespace-pre-line leading-relaxed">{testData?.passage}</p>
+                        <ScrollArea className="h-[60vh] pr-4">
+                           <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
+                                <Image 
+                                    src={testData.imageUrl} 
+                                    alt="Passage illustration"
+                                    layout="fill"
+                                    objectFit="cover"
+                                    data-ai-hint={testData.imageUrl.startsWith('https') ? 'passage illustration' : undefined}
+                                />
+                           </div>
+                           <p className="whitespace-pre-line leading-relaxed">{testData.passage}</p>
                         </ScrollArea>
                     </CardContent>
                 </Card>
@@ -191,9 +220,9 @@ export default function PracticePage() {
                         <CardTitle className="font-headline">Questions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-[60vh]">
+                        <ScrollArea className="h-[60vh] pr-4">
                             <div className="flex flex-col gap-6">
-                            {parsedQuestions.map((q, index) => (
+                            {testData.questions.map((q, index) => (
                                 <div key={index}>
                                     <p className="font-semibold mb-2">{index + 1}. {q.question}</p>
                                     <RadioGroup onValueChange={(value) => handleAnswerChange(index, value)}>
@@ -210,7 +239,10 @@ export default function PracticePage() {
                             ))}
                             </div>
                         </ScrollArea>
-                        <Button onClick={handleSubmitTest} className="w-full mt-6">Submit Answers</Button>
+                        <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
+                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          Submit Answers
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
@@ -227,7 +259,7 @@ export default function PracticePage() {
                 <CardContent className="text-center">
                     <p className="text-xl">You scored <span className="font-bold text-primary">{correctCount}</span> out of <span className="font-bold">{totalCount}</span></p>
                     <p className="text-4xl font-bold mt-2 text-primary">
-                        {((correctCount / totalCount) * 100).toFixed(1)}%
+                        {totalCount > 0 ? ((correctCount / totalCount) * 100).toFixed(1) : '0.0'}%
                     </p>
                     <Button onClick={handleStartNewTest} className="mt-6">Start Another Test</Button>
                 </CardContent>

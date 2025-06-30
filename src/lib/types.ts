@@ -1,12 +1,13 @@
-export interface UrtPassage {
-  passage: string;
-  questions: string[];
-}
-
-export interface QuestionWithOptions {
+export interface UrtQuestion {
   question: string;
   options: string[];
   answer: string;
+}
+
+export interface UrtTest {
+  passage: string;
+  questions: UrtQuestion[];
+  imageUrl: string;
 }
 
 export interface GradedResult {
@@ -16,4 +17,13 @@ export interface GradedResult {
   userAnswer: string;
   correctAnswer: string;
   question: string;
+}
+
+export interface TestHistoryItem {
+  id: string;
+  subject: string;
+  score: number;
+  totalQuestions: number;
+  correctQuestions: number;
+  date: string;
 }
