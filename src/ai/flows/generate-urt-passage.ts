@@ -15,7 +15,6 @@ const GenerateUrtPassageInputSchema = z.object({
   difficulty: z.string().describe('The desired difficulty of the passage and questions (e.g., "Easy", "Medium", "Hard").'),
   wordLength: z.number().describe('The approximate number of words for the passage.'),
   numQuestions: z.number().describe('The number of questions to generate.'),
-  apiKey: z.string().optional().describe('The user provided API key for Google AI.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -89,7 +88,7 @@ const generateUrtPassageFlow = ai.defineFlow(
   },
   async input => {
     // Step 1: Generate passage and questions
-    const {output: textOutput} = await textGenerationPrompt(input, { model: 'gemini-1.5-flash' });
+    const {output: textOutput} = await textGenerationPrompt(input, { model: 'googleai/gemini-1.5-flash' });
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }

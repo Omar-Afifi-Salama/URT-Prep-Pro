@@ -15,7 +15,6 @@ const GradeAnswerAndExplainInputSchema = z.object({
   question: z.string().describe('The question to be answered.'),
   answer: z.string().describe('The correct answer to the question.'),
   userAnswer: z.string().describe('The user provided answer.'),
-  apiKey: z.string().optional().describe('The user provided API key for Google AI.'),
 });
 export type GradeAnswerAndExplainInput = z.infer<typeof GradeAnswerAndExplainInputSchema>;
 
@@ -65,7 +64,7 @@ const gradeAnswerAndExplainFlow = ai.defineFlow(
     outputSchema: GradeAnswerAndExplainOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input, { model: 'gemini-1.5-flash' });
+    const {output} = await prompt(input, { model: 'googleai/gemini-1.5-flash' });
     return output!;
   }
 );
