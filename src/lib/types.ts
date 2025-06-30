@@ -5,6 +5,7 @@ export interface UrtQuestion {
 }
 
 export interface UrtTest {
+  title: string;
   passage: string;
   questions: UrtQuestion[];
   imageUrl: string;

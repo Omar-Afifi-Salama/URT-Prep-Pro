@@ -25,6 +25,7 @@ const QuestionSchema = z.object({
 });
 
 const GenerateUrtPassageOutputSchema = z.object({
+  title: z.string().describe('An appropriate title for the passage.'),
   passage: z.string().describe('The generated URT passage.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
   imageUrl: z.string().describe('A URL for a relevant image from Unsplash.'),
@@ -39,12 +40,15 @@ const textGenerationPrompt = ai.definePrompt({
   name: 'generateUrtPassageTextPrompt',
   input: {schema: GenerateUrtPassageInputSchema},
   output: {schema: z.object({
+    title: GenerateUrtPassageOutputSchema.shape.title,
     passage: GenerateUrtPassageOutputSchema.shape.passage,
     questions: GenerateUrtPassageOutputSchema.shape.questions
   })},
   prompt: `You are an expert URT passage and question generator.
 
-You will generate a URT passage and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
+You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
+
+If the topic is Physics or Chemistry, you MUST include relevant equations in the passage (e.g., F=ma, E=mc^2 for Physics; chemical formulas like H₂O or reaction equations for Chemistry). You must also ask at least one question that specifically requires understanding or using an equation from the passage.
 
 Each question must have exactly 4 options, and you must specify the correct answer, which must exactly match one of the provided options.
 

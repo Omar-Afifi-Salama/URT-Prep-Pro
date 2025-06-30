@@ -253,16 +253,18 @@ export default function PracticePage() {
             <div className="grid lg:grid-cols-2 gap-8 w-full items-start">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Passage</CardTitle>
+                        <CardTitle className="font-headline text-2xl">{testData.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                       <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
-                            <Image 
+                       <div className="mb-4 rounded-lg overflow-hidden">
+                           <Image 
                                 key={testData.imageUrl}
                                 src={testData.imageUrl} 
                                 alt="Passage illustration"
-                                fill
-                                className="object-cover"
+                                width={600}
+                                height={400}
+                                className="object-cover w-full h-auto"
+                                data-ai-hint={selectedSubject?.name.toLowerCase()}
                             />
                        </div>
                        <div className="leading-relaxed text-justify space-y-4">
