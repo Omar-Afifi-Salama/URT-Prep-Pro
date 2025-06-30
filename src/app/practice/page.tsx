@@ -270,10 +270,8 @@ export default function PracticePage() {
                                 data-ai-hint={selectedSubject?.name.toLowerCase() + " illustration"}
                             />
                        </div>
-                       <div className={cn("leading-relaxed text-justify space-y-4", font)}>
-                            {testData.passage.split('\n\n').filter(p => p.trim() !== '').map((paragraph, index) => (
-                                <p key={index} className="indent-8" dangerouslySetInnerHTML={{ __html: paragraph }} />
-                            ))}
+                       <div className={cn("prose dark:prose-invert max-w-none", font)}>
+                            <div dangerouslySetInnerHTML={{ __html: testData.passage.replace(/\n\n/g, '<br/><br/>') }} />
                         </div>
                     </CardContent>
                 </Card>
@@ -286,13 +284,13 @@ export default function PracticePage() {
                             <div className="flex flex-col gap-6">
                             {testData.questions.map((q, index) => (
                                 <div key={index}>
-                                    <p className="font-semibold mb-2">{index + 1}. {q.question}</p>
+                                    <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${index + 1}. ${q.question}`}} />
                                     <RadioGroup onValueChange={(value) => handleAnswerChange(index, value)}>
                                         <div className="space-y-2">
                                         {q.options.map((option, optIndex) => (
                                             <div key={optIndex} className="flex items-center space-x-2">
                                                 <RadioGroupItem value={option} id={`q${index}o${optIndex}`} />
-                                                <Label htmlFor={`q${index}o${optIndex}`}>{option}</Label>
+                                                <Label htmlFor={`q${index}o${optIndex}`} dangerouslySetInnerHTML={{__html: option}} />
                                             </div>
                                         ))}
                                         </div>
@@ -334,13 +332,13 @@ export default function PracticePage() {
                             <AccordionTrigger className="p-4 hover:no-underline">
                                 <div className="flex items-center gap-4 w-full">
                                     {result.isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" /> : <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
-                                    <p className="text-left flex-1">{index + 1}. {result.question}</p>
+                                    <p className="text-left flex-1" dangerouslySetInnerHTML={{__html: `${index + 1}. ${result.question}`}}/>
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="p-4 pt-0">
                                 <div className="space-y-4">
-                                    <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'}>{result.userAnswer}</span></p>
-                                    <p><strong>Correct Answer:</strong> {result.correctAnswer}</p>
+                                    <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
+                                    <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
                                     <Separator />
                                     <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
                                         <h4 className="font-bold">Explanation (English)</h4>

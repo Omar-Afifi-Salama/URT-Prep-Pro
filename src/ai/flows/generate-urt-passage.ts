@@ -46,15 +46,27 @@ const textGenerationPrompt = ai.definePrompt({
   })},
   prompt: `You are an expert URT passage and question generator.
 
-You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
+You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured.
 
-When formatting equations, use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). Do not use markdown syntax like asterisks or backticks.
+The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
 
-For science topics (Physics, Chemistry, Biology, Geology), you will adopt an academic and authoritative tone, similar to a reference textbook, while ensuring the content remains engaging and accessible.
+PASSAGE FORMATTING:
+- Number each paragraph, starting with 1. (e.g., "1. First paragraph text...")
+- When appropriate, include data in an HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>).
+- When a table is included, refer to it in the text (e.g., "as shown in Table 1").
+- Separate each paragraph with a double newline character (\\n\\n).
 
-If the topic is Physics or Chemistry, you MUST include relevant equations in the passage (e.g., F=ma, E=mc^2 for Physics; chemical formulas like H₂O or reaction equations for Chemistry). You must also ask at least one question that specifically requires understanding or using an equation from the passage.
+EQUATION FORMATTING:
+- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
 
-Each question must have exactly 4 options, and you must specify the correct answer, which must exactly match one of the provided options.
+SUBJECT-SPECIFIC INSTRUCTIONS:
+- For science topics (Physics, Chemistry, Biology, Geology), adopt an academic and authoritative tone, similar to a reference textbook, while ensuring the content remains engaging and accessible.
+- If the topic is Physics or Chemistry, you MUST include relevant equations in the passage. You must also ask at least one question that specifically requires understanding or using an equation from the passage. These equations must use the specified HTML formatting.
+
+QUESTION FORMATTING:
+- Each question must have exactly 4 options.
+- The correct answer must exactly match one of the provided options.
+- Any equations or formulas in the questions or options MUST use the specified HTML formatting.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
@@ -76,8 +88,8 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Generate a relevant placeholder image URL.
-    const imageUrl = `https://placehold.co/600x400.png`;
+    // Step 2: Generate a relevant image URL from Unsplash.
+    const imageUrl = `https://source.unsplash.com/600x400/?${input.topic}`;
 
     return {
         ...textOutput,
