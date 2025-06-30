@@ -48,6 +48,8 @@ const textGenerationPrompt = ai.definePrompt({
 
 You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
 
+When formatting equations, use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). Do not use markdown syntax like asterisks or backticks.
+
 For science topics (Physics, Chemistry, Biology, Geology), you will adopt an academic and authoritative tone, similar to a reference textbook, while ensuring the content remains engaging and accessible.
 
 If the topic is Physics or Chemistry, you MUST include relevant equations in the passage (e.g., F=ma, E=mc^2 for Physics; chemical formulas like H₂O or reaction equations for Chemistry). You must also ask at least one question that specifically requires understanding or using an equation from the passage.

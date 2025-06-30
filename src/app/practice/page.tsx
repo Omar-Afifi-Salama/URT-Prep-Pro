@@ -272,9 +272,7 @@ export default function PracticePage() {
                        </div>
                        <div className={cn("leading-relaxed text-justify space-y-4", font)}>
                             {testData.passage.split('\n\n').filter(p => p.trim() !== '').map((paragraph, index) => (
-                                <p key={index} className="indent-8">
-                                    {paragraph}
-                                </p>
+                                <p key={index} className="indent-8" dangerouslySetInnerHTML={{ __html: paragraph }} />
                             ))}
                         </div>
                     </CardContent>
@@ -346,9 +344,9 @@ export default function PracticePage() {
                                     <Separator />
                                     <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
                                         <h4 className="font-bold">Explanation (English)</h4>
-                                        <p>{result.explanationEnglish}</p>
+                                        <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
                                         <h4 className="font-bold">Explanation (Arabic)</h4>
-                                        <p dir="rtl" className="text-right font-sans">{result.explanationArabic}</p>
+                                        <p dir="rtl" className="text-right font-sans" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
                                     </div>
                                 </div>
                             </AccordionContent>

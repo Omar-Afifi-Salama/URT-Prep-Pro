@@ -39,6 +39,8 @@ You will be given a passage, a question, the correct answer, and the user's answ
 
 Your task is to determine if the user's answer is correct. Then, provide explanations in both English and Arabic.
 
+When writing explanations, if you need to include equations or chemical formulas, use HTML tags for formatting, such as <sub> for subscripts and <sup> for superscripts.
+
 Explain why the correct answer is correct, and if the user's answer is incorrect, explain where they went wrong and what they should learn.
 
 Passage: {{{passage}}}
