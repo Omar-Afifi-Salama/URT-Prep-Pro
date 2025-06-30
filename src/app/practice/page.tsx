@@ -195,33 +195,31 @@ export default function PracticePage() {
       case "test":
         if (!testData) return null;
         return (
-            <div className="grid lg:grid-cols-2 gap-8 w-full">
-                <Card className="lg:sticky top-24 h-fit">
+            <div className="grid lg:grid-cols-2 gap-8 w-full items-start">
+                <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Passage</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-[60vh] pr-4">
-                           <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
-                                <Image 
-                                    src={testData.imageUrl} 
-                                    alt="Passage illustration"
-                                    fill
-                                    className="object-cover"
-                                    data-ai-hint="passage illustration"
-                                />
-                           </div>
-                           <div className="leading-relaxed text-justify space-y-4">
-                                {testData.passage.split('\n\n').filter(p => p.trim() !== '').map((paragraph, index) => (
-                                    <p key={index} className="indent-8">
-                                        {paragraph}
-                                    </p>
-                                ))}
-                            </div>
-                        </ScrollArea>
+                       <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
+                            <Image 
+                                src={testData.imageUrl} 
+                                alt="Passage illustration"
+                                fill
+                                className="object-cover"
+                                data-ai-hint="passage illustration"
+                            />
+                       </div>
+                       <div className="leading-relaxed text-justify space-y-4">
+                            {testData.passage.split('\n\n').filter(p => p.trim() !== '').map((paragraph, index) => (
+                                <p key={index} className="indent-8">
+                                    {paragraph}
+                                </p>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="lg:sticky top-24">
                     <CardHeader>
                         <CardTitle className="font-headline">Questions</CardTitle>
                     </CardHeader>
@@ -306,7 +304,7 @@ export default function PracticePage() {
   return (
     <div className="min-h-screen w-full flex flex-col">
       <AppHeader />
-      <main className="flex-1 flex items-center justify-center p-4 md:p-8">
+      <main className="flex-1 flex items-start justify-center p-4 md:p-8">
         <div className="container mx-auto flex justify-center">
             {renderContent()}
         </div>
