@@ -143,7 +143,7 @@ export default function PracticePage() {
           <p className="text-lg font-headline">
             Generating your test...
           </p>
-          <p className="text-muted-foreground">This may take a few moments. We're creating a unique passage, questions, and a relevant image just for you.</p>
+          <p className="text-muted-foreground">This may take a few moments. We're creating a unique passage and questions just for you.</p>
         </div>
       );
     }
@@ -206,12 +206,18 @@ export default function PracticePage() {
                                 <Image 
                                     src={testData.imageUrl} 
                                     alt="Passage illustration"
-                                    layout="fill"
-                                    objectFit="cover"
-                                    data-ai-hint={testData.imageUrl.startsWith('https') ? 'passage illustration' : undefined}
+                                    fill
+                                    className="object-cover"
+                                    data-ai-hint="passage illustration"
                                 />
                            </div>
-                           <p className="whitespace-pre-line leading-relaxed">{testData.passage}</p>
+                           <div className="leading-relaxed text-justify space-y-4">
+                                {testData.passage.split('\n\n').filter(p => p.trim() !== '').map((paragraph, index) => (
+                                    <p key={index} className="indent-8">
+                                        {paragraph}
+                                    </p>
+                                ))}
+                            </div>
                         </ScrollArea>
                     </CardContent>
                 </Card>

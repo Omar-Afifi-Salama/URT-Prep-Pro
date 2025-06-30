@@ -22,9 +22,9 @@ const QuestionSchema = z.object({
 });
 
 const GenerateUrtPassageOutputSchema = z.object({
-  passage: z.string().describe('The generated URT passage of at least 300 words.'),
+  passage: z.string().describe('The generated URT passage of at least 400 words.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
-  imageUrl: z.string().describe('A data URI of a relevant image or graph for the passage.'),
+  imageUrl: z.string().describe('A URL for a relevant image or graph for the passage.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -41,7 +41,7 @@ const textGenerationPrompt = ai.definePrompt({
   })},
   prompt: `You are an expert URT passage and question generator.
 
-You will generate a URT passage of at least 300 words and associated multiple-choice questions on the given topic. The passage should be engaging and informative.
+You will generate a URT passage of at least 400 words and associated multiple-choice questions on the given topic. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
 
 The number of questions depends on the topic:
 - If the topic is "English", generate 10 questions.
@@ -66,16 +66,8 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Generate an image based on the passage
-    const {media} = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `Generate a visually appealing and relevant image or graph for the following educational passage about ${input.topic}. The image should be helpful for understanding the text, like a diagram, chart, or illustration. Passage: ${textOutput.passage.substring(0, 800)}`,
-        config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-        },
-    });
-
-    const imageUrl = media?.url || 'https://placehold.co/600x400.png';
+    // Step 2: Return a placeholder image URL instead of generating one.
+    const imageUrl = 'https://placehold.co/600x400.png';
 
     return {
         ...textOutput,
