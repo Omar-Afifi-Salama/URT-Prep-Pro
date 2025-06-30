@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,6 +39,9 @@ import { Separator } from "@/components/ui/separator";
 
 export default function PracticePage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [difficulty, setDifficulty] = useState("Medium");
+  const [wordLength, setWordLength] = useState("400");
+  const [numQuestions, setNumQuestions] = useState("6");
   const [isLoading, setIsLoading] = useState(false);
   const [testData, setTestData] = useState<UrtTest | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
@@ -61,7 +65,12 @@ export default function PracticePage() {
     setUserAnswers({});
     setResults([]);
     try {
-      const data = await generateUrtPassage({ topic: selectedSubject.name });
+      const data = await generateUrtPassage({
+        topic: selectedSubject.name,
+        difficulty,
+        wordLength: parseInt(wordLength, 10),
+        numQuestions: parseInt(numQuestions, 10),
+      });
       setTestData(data);
       setView("test");
     } catch (error) {
@@ -166,30 +175,76 @@ export default function PracticePage() {
             <CardHeader>
               <CardTitle className="font-headline text-2xl">New Practice Test</CardTitle>
               <CardDescription>
-                Select a subject to generate a new URT-style passage and questions.
+                Select a subject and customize your test options below.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <Select onValueChange={(value) => setSelectedSubject(SUBJECTS.find(s => s.name === value) || null)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a subject..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUBJECTS.map((subject) => (
-                    <SelectItem key={subject.name} value={subject.name}>
-                      <div className="flex items-center gap-2">
-                        <subject.icon className="h-4 w-4" />
-                        <span>{subject.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleGenerateTest} disabled={!selectedSubject || isLoading} className="w-full">
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Start Test
-              </Button>
+            <CardContent className="space-y-4">
+               <div className="space-y-2">
+                 <Label>Subject</Label>
+                 <Select onValueChange={(value) => setSelectedSubject(SUBJECTS.find(s => s.name === value) || null)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subject..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUBJECTS.map((subject) => (
+                        <SelectItem key={subject.name} value={subject.name}>
+                          <div className="flex items-center gap-2">
+                            <subject.icon className="h-4 w-4" />
+                            <span>{subject.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="difficulty">Difficulty</Label>
+                        <Select onValueChange={setDifficulty} defaultValue={difficulty}>
+                            <SelectTrigger id="difficulty">
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Easy">Easy</SelectItem>
+                                <SelectItem value="Medium">Medium</SelectItem>
+                                <SelectItem value="Hard">Hard</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="wordLength">Passage Length</Label>
+                        <Select onValueChange={setWordLength} defaultValue={wordLength}>
+                            <SelectTrigger id="wordLength">
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="300">~300 words</SelectItem>
+                                <SelectItem value="400">~400 words</SelectItem>
+                                <SelectItem value="500">~500 words</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="numQuestions">Questions</Label>
+                        <Select onValueChange={setNumQuestions} defaultValue={numQuestions}>
+                            <SelectTrigger id="numQuestions">
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="6">6 Questions</SelectItem>
+                                <SelectItem value="10">10 Questions</SelectItem>
+                                <SelectItem value="15">15 Questions</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+               </div>
             </CardContent>
+            <CardFooter>
+                <Button onClick={handleGenerateTest} disabled={!selectedSubject || isLoading} className="w-full">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Start Test
+                </Button>
+            </CardFooter>
           </Card>
         );
       case "test":
@@ -203,11 +258,11 @@ export default function PracticePage() {
                     <CardContent>
                        <div className="relative aspect-video mb-4 rounded-lg overflow-hidden">
                             <Image 
+                                key={testData.imageUrl}
                                 src={testData.imageUrl} 
                                 alt="Passage illustration"
                                 fill
                                 className="object-cover"
-                                data-ai-hint="passage illustration"
                             />
                        </div>
                        <div className="leading-relaxed text-justify space-y-4">

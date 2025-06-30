@@ -12,6 +12,9 @@ import {z} from 'genkit';
 
 const GenerateUrtPassageInputSchema = z.object({
   topic: z.string().describe('The topic to generate the URT passage and questions about (English, Physics, Chemistry, Biology, Geology).'),
+  difficulty: z.string().describe('The desired difficulty of the passage and questions (e.g., "Easy", "Medium", "Hard").'),
+  wordLength: z.number().describe('The approximate number of words for the passage.'),
+  numQuestions: z.number().describe('The number of questions to generate.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -22,9 +25,9 @@ const QuestionSchema = z.object({
 });
 
 const GenerateUrtPassageOutputSchema = z.object({
-  passage: z.string().describe('The generated URT passage of at least 400 words.'),
+  passage: z.string().describe('The generated URT passage.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
-  imageUrl: z.string().describe('A URL for a relevant image or graph for the passage.'),
+  imageUrl: z.string().describe('A URL for a relevant image from Unsplash.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -41,15 +44,14 @@ const textGenerationPrompt = ai.definePrompt({
   })},
   prompt: `You are an expert URT passage and question generator.
 
-You will generate a URT passage of at least 400 words and associated multiple-choice questions on the given topic. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
-
-The number of questions depends on the topic:
-- If the topic is "English", generate 10 questions.
-- If the topic is "Physics", "Chemistry", "Biology", or "Geology", generate 6 questions.
+You will generate a URT passage and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
 
 Each question must have exactly 4 options, and you must specify the correct answer, which must exactly match one of the provided options.
 
 Topic: {{{topic}}}
+Difficulty: {{{difficulty}}}
+Approximate Word Count: {{{wordLength}}}
+Number of Questions: {{{numQuestions}}}
 `,
 });
 
@@ -66,8 +68,8 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Return a placeholder image URL instead of generating one.
-    const imageUrl = 'https://placehold.co/600x400.png';
+    // Step 2: Generate a relevant image URL from Unsplash Source.
+    const imageUrl = `https://source.unsplash.com/600x400/?${input.topic}`;
 
     return {
         ...textOutput,
