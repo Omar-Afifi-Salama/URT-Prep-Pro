@@ -46,9 +46,9 @@ const textGenerationPrompt = ai.definePrompt({
     questions: GenerateUrtPassageOutputSchema.shape.questions,
     recommendedTime: GenerateUrtPassageOutputSchema.shape.recommendedTime,
   })},
-  prompt: `You are a senior curriculum designer for a national testing board. Your task is to write passages for the URT science exam. The tone must be formal, objective, and information-dense, completely avoiding conversational language. All facts must be presented with precision.
+  prompt: `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
-You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam.
+You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam. For "Hard" difficulty, the passage should involve multiple complex, interrelated concepts, require a high level of critical reading, and use advanced, domain-specific vocabulary.
 
 The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
 

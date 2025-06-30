@@ -44,7 +44,7 @@ import { TestTimer } from "@/components/test-timer";
 export default function PracticePage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [difficulty, setDifficulty] = useState("Medium");
-  const [wordLength, setWordLength] = useState("400");
+  const [wordLength, setWordLength] = useState("600");
   const [numQuestions, setNumQuestions] = useState("6");
   const [isLoading, setIsLoading] = useState(false);
   const [testData, setTestData] = useState<UrtTest | null>(null);
@@ -55,7 +55,7 @@ export default function PracticePage() {
   );
   const { toast } = useToast();
   const { font } = useFont();
-  const { apiKey, isApiKeySet } = useApiKey();
+  const { isApiKeySet } = useApiKey();
 
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
@@ -84,7 +84,6 @@ export default function PracticePage() {
         difficulty,
         wordLength: parseInt(wordLength, 10),
         numQuestions: parseInt(numQuestions, 10),
-        apiKey: apiKey!,
       });
       setTestData(data);
       setView("test");
@@ -116,7 +115,6 @@ export default function PracticePage() {
             question: q.question,
             answer: q.answer,
             userAnswer: userAnswer,
-            apiKey: apiKey!,
           }).then(res => ({ ...res, userAnswer, correctAnswer: q.answer, question: q.question }))
         })
       );
@@ -140,7 +138,8 @@ export default function PracticePage() {
       localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50))); // Keep last 50 tests
 
       setView("results");
-    } catch (error) {
+    } catch (error)
+{
       console.error("Failed to grade test:", error);
       toast({
         title: "Grading Failed",
@@ -234,9 +233,9 @@ export default function PracticePage() {
                                 <SelectValue placeholder="Select..." />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="300">~300 words</SelectItem>
                                 <SelectItem value="400">~400 words</SelectItem>
-                                <SelectItem value="500">~500 words</SelectItem>
+                                <SelectItem value="600">~600 words</SelectItem>
+                                <SelectItem value="800">~800 words</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
