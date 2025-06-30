@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Inter, Space_Grotesk, Lora, Roboto_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { FontProvider } from '@/context/font-provider';
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -14,6 +15,18 @@ const fontSpaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',
 });
+
+const fontLora = Lora({
+  subsets: ['latin'],
+  variable: '--font-lora',
+  weight: ['400', '700'],
+});
+
+const fontRobotoMono = Roboto_Mono({
+  subsets: ['latin'],
+  variable: '--font-roboto-mono',
+});
+
 
 export const metadata: Metadata = {
   title: 'URT Prep Pro',
@@ -31,17 +44,21 @@ export default function RootLayout({
         className={cn(
           'min-h-screen bg-background font-sans antialiased',
           fontInter.variable,
-          fontSpaceGrotesk.variable
+          fontSpaceGrotesk.variable,
+          fontLora.variable,
+          fontRobotoMono.variable
         )}
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <FontProvider>
+            {children}
+            <Toaster />
+          </FontProvider>
         </ThemeProvider>
       </body>
     </html>

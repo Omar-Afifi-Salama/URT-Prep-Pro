@@ -21,6 +21,8 @@ const config = {
       fontFamily: {
         sans: ["var(--font-inter)", ...fontFamily.sans],
         headline: ["var(--font-space-grotesk)", ...fontFamily.sans],
+        serif: ["var(--font-lora)"],
+        mono: ["var(--font-roboto-mono)"],
       },
       colors: {
         border: 'hsl(var(--border))',

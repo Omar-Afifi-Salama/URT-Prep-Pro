@@ -28,7 +28,7 @@ const GenerateUrtPassageOutputSchema = z.object({
   title: z.string().describe('An appropriate title for the passage.'),
   passage: z.string().describe('The generated URT passage.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
-  imageUrl: z.string().describe('A URL for a relevant image from Unsplash.'),
+  imageUrl: z.string().describe('A URL for a relevant placeholder image.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -47,6 +47,8 @@ const textGenerationPrompt = ai.definePrompt({
   prompt: `You are an expert URT passage and question generator.
 
 You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured with multiple paragraphs. Separate each paragraph with a double newline character (\\n\\n).
+
+For science topics (Physics, Chemistry, Biology, Geology), you will adopt an academic and authoritative tone, similar to a reference textbook, while ensuring the content remains engaging and accessible.
 
 If the topic is Physics or Chemistry, you MUST include relevant equations in the passage (e.g., F=ma, E=mc^2 for Physics; chemical formulas like H₂O or reaction equations for Chemistry). You must also ask at least one question that specifically requires understanding or using an equation from the passage.
 
@@ -72,8 +74,8 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Generate a relevant image URL from Unsplash Source.
-    const imageUrl = `https://source.unsplash.com/600x400/?${input.topic}`;
+    // Step 2: Generate a relevant placeholder image URL.
+    const imageUrl = `https://placehold.co/600x400.png`;
 
     return {
         ...textOutput,

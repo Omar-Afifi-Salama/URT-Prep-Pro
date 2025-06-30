@@ -36,6 +36,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+import { useFont } from "@/context/font-provider";
+import { cn } from "@/lib/utils";
 
 export default function PracticePage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -50,6 +52,7 @@ export default function PracticePage() {
     "generate"
   );
   const { toast } = useToast();
+  const { font } = useFont();
 
   const handleGenerateTest = async () => {
     if (!selectedSubject) {
@@ -264,10 +267,10 @@ export default function PracticePage() {
                                 width={600}
                                 height={400}
                                 className="object-cover w-full h-auto"
-                                data-ai-hint={selectedSubject?.name.toLowerCase()}
+                                data-ai-hint={selectedSubject?.name.toLowerCase() + " illustration"}
                             />
                        </div>
-                       <div className="leading-relaxed text-justify space-y-4">
+                       <div className={cn("leading-relaxed text-justify space-y-4", font)}>
                             {testData.passage.split('\n\n').filter(p => p.trim() !== '').map((paragraph, index) => (
                                 <p key={index} className="indent-8">
                                     {paragraph}
@@ -341,7 +344,7 @@ export default function PracticePage() {
                                     <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'}>{result.userAnswer}</span></p>
                                     <p><strong>Correct Answer:</strong> {result.correctAnswer}</p>
                                     <Separator />
-                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
                                         <h4 className="font-bold">Explanation (English)</h4>
                                         <p>{result.explanationEnglish}</p>
                                         <h4 className="font-bold">Explanation (Arabic)</h4>
