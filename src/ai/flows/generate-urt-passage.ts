@@ -7,7 +7,7 @@
  * - GenerateUrtPassageOutput - The return type for the generateUrtPassage function.
  */
 
-import {ai, getGoogleAI} from '@/ai/genkit';
+import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateUrtPassageInputSchema = z.object({
@@ -88,9 +88,8 @@ const generateUrtPassageFlow = ai.defineFlow(
     outputSchema: GenerateUrtPassageOutputSchema,
   },
   async input => {
-    const gemini = getGoogleAI(input.apiKey).model('gemini-1.5-flash');
     // Step 1: Generate passage and questions
-    const {output: textOutput} = await textGenerationPrompt(input, { model: gemini });
+    const {output: textOutput} = await textGenerationPrompt(input, { model: 'gemini-1.5-flash' });
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }
