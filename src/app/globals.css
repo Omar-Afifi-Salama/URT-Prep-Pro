@@ -163,7 +163,43 @@
 }
 
 @media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   .no-print {
     display: none !important;
+  }
+  .printable-area {
+    color: #000 !important;
+    background-color: #fff !important;
+  }
+  .printable-area .card {
+      border: 1px solid #ddd !important;
+      box-shadow: none !important;
+  }
+  .printable-area .text-primary,
+  .printable-area .dark\:prose-invert.prose-p\:text-foreground p,
+  .printable-area .dark\:prose-invert.prose-h4\:text-foreground h4,
+  .printable-area .dark\:prose-invert.prose-strong\:text-foreground strong
+   {
+      color: #000 !important;
+  }
+  .printable-area .text-red-500, .printable-area .text-red-600 {
+      color: #dc2626 !important; /* A dark red */
+  }
+  .printable-area .text-green-500, .printable-area .text-green-600 {
+      color: #16a34a !important; /* A dark green */
+  }
+  .printable-area .dark\:prose-invert {
+    --tw-prose-body: #000;
+    --tw-prose-headings: #000;
+    --tw-prose-bold: #000;
+    --tw-prose-invert-body: #000;
+    --tw-prose-invert-headings: #000;
+    --tw-prose-invert-bold: #000;
+  }
+  .printable-area p[dir="rtl"] {
+    font-family: 'Times New Roman', serif; /* A common serif font for printing */
   }
 }

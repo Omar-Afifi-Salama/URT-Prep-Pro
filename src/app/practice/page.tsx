@@ -91,16 +91,18 @@ export default function PracticePage() {
         }));
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
-            for (let i = 0; i < count; i++) {
-                const difficulties = ["Easy", "Medium", "Hard"];
-                const wordLengths = [400, 600, 800, 1000, 1200];
-                const numQuestionsOpts = [6, 10, 15];
-                generationTasks.push(generateUrtPassage({
-                    topic: subjectName,
-                    difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
-                    wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
-                    numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
-                }));
+            if (count > 0) {
+              for (let i = 0; i < count; i++) {
+                  const difficulties = ["Easy", "Medium", "Hard"];
+                  const wordLengths = [400, 600, 800, 1000, 1200];
+                  const numQuestionsOpts = [6, 10, 15];
+                  generationTasks.push(generateUrtPassage({
+                      topic: subjectName,
+                      difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
+                      wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
+                      numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
+                  }));
+              }
             }
         });
 
@@ -233,8 +235,8 @@ export default function PracticePage() {
             <CardContent>
               <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="single" className="gap-2"><BookOpen/>Single Passage</TabsTrigger>
-                  <TabsTrigger value="full" className="gap-2"><FileText/>Full Test</TabsTrigger>
+                  <TabsTrigger value="single" className="gap-2"><BookOpen className="h-4 w-4"/>Single Passage</TabsTrigger>
+                  <TabsTrigger value="full" className="gap-2"><FileText className="h-4 w-4"/>Full Test</TabsTrigger>
                 </TabsList>
                 <TabsContent value="single" className="mt-6">
                    <div className="space-y-4">
@@ -369,7 +371,7 @@ export default function PracticePage() {
         const lastTestHistory = JSON.parse(localStorage.getItem('testHistory') || '[]')[0] as TestHistoryItem;
 
         return (
-          <div ref={printableRef} className="w-full max-w-4xl">
+          <div ref={printableRef} className="w-full max-w-4xl printable-area">
               <Card className="mb-6">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl text-center">Test Results</CardTitle>

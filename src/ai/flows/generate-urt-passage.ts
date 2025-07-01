@@ -73,7 +73,7 @@ QUESTION FORMATTING:
 - Any equations or formulas in the questions or options MUST use the specified HTML formatting.
 
 TIMER:
-- Calculate a recommended time limit in minutes for this test. A good rule of thumb is 1.5 minutes per question, plus 3-5 minutes for reading the passage, depending on its length and complexity. Include this in the 'recommendedTime' field.
+- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 200) + (Number of Questions * 0.75). Round to the nearest whole number. Include this in the 'recommendedTime' field.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
@@ -95,8 +95,8 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Generate a relevant image URL from Unsplash.
-    const imageUrl = `https://source.unsplash.com/600x400/?${input.topic}`;
+    // Step 2: Generate a relevant image URL from Unsplash. Add a random signature to prevent caching.
+    const imageUrl = `https://source.unsplash.com/600x400/?${input.topic}&sig=${Math.random()}`;
 
     return {
         ...textOutput,
