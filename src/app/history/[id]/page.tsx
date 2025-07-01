@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useReactToPrint } from 'react-to-print';
 import { AppHeader } from '@/components/app-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,11 +32,11 @@ export default function HistoryDetailPage() {
   const { font } = useFont();
 
   const printableRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-      content: () => printableRef.current,
-      documentTitle: `URT Prep Pro - Test Review - ${test?.date ? new Date(test.date).toLocaleDateString() : ''}`,
-      trigger: () => <Button variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
-  });
+  const handlePrint = () => {
+    if (printableRef.current) {
+      window.print();
+    }
+  };
   
   useEffect(() => {
     const { id } = params;
@@ -98,10 +97,12 @@ export default function HistoryDetailPage() {
       <AppHeader />
       <main className="flex-1 p-4 md:p-8">
         <div className="container mx-auto max-w-4xl">
-            <Button variant="ghost" onClick={() => router.push('/dashboard')} className="mb-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
-            </Button>
+            <div className="no-print mb-4">
+              <Button variant="ghost" onClick={() => router.push('/dashboard')}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+              </Button>
+            </div>
             <div ref={printableRef} className="w-full printable-area">
               <Card className="mb-6">
                 <CardHeader>
@@ -129,7 +130,7 @@ export default function HistoryDetailPage() {
                     </div>
 
                     <div className="flex items-center justify-center gap-4 mt-8 no-print">
-                         {handlePrint()}
+                         <Button onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
                     </div>
                 </CardContent>
               </Card>

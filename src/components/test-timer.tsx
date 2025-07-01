@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Timer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 interface TestTimerProps {
   initialTime: number; // in seconds
@@ -14,21 +13,22 @@ interface TestTimerProps {
 export function TestTimer({ initialTime, onTimeUpdate }: TestTimerProps) {
   const [timeLeft, setTimeLeft] = useState(initialTime);
   const [isOvertime, setIsOvertime] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  
+  const elapsedRef = useRef(0);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setElapsed(prev => {
-        const newElapsed = prev + 1;
-        onTimeUpdate(newElapsed);
-        
-        const remaining = initialTime - newElapsed;
-        setTimeLeft(remaining);
-        if (remaining < 0 && !isOvertime) {
-          setIsOvertime(true);
-        }
-        return newElapsed;
-      });
+      elapsedRef.current += 1;
+      const newElapsed = elapsedRef.current;
+      
+      onTimeUpdate(newElapsed);
+      
+      const remaining = initialTime - newElapsed;
+      setTimeLeft(remaining);
+
+      if (remaining < 0 && !isOvertime) {
+        setIsOvertime(true);
+      }
     }, 1000);
 
     return () => clearInterval(intervalId);

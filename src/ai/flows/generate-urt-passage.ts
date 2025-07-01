@@ -95,8 +95,8 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Generate a relevant image URL from Unsplash. Add a random signature to prevent caching.
-    const imageUrl = `https://source.unsplash.com/600x400/?${input.topic}&sig=${Math.random()}`;
+    // Step 2: Generate a reliable placeholder image URL.
+    const imageUrl = 'https://placehold.co/600x400.png';
 
     return {
         ...textOutput,

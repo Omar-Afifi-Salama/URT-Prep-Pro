@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
 import { gradeAnswerAndExplain } from "@/ai/flows/grade-answer-and-explain.ts";
@@ -42,7 +42,6 @@ import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
 import { useApiKey } from "@/context/api-key-provider";
 import { TestTimer } from "@/components/test-timer";
-import { useReactToPrint } from "react-to-print";
 import { useRouter } from "next/navigation";
 
 type View = "setup" | "test" | "results";
@@ -63,7 +62,7 @@ export default function PracticePage() {
   const [userAnswers, setUserAnswers] = useState<Record<string, Record<number, string>>>({});
   const [results, setResults] = useState<GradedResult[][] | null>(null);
   const [view, setView] = useState<View>("setup");
-  const [testView, setTestView] = useState<TestView>('compact');
+  const [testView, setTestView] = useState<TestView>('normal');
   const [elapsedTime, setElapsedTime] = useState(0);
   
   // Hooks
@@ -72,13 +71,13 @@ export default function PracticePage() {
   const { isApiKeySet } = useApiKey();
   const router = useRouter();
   
-  const printableRef = useRef(null);
-  const printTriggerRef = useRef(null);
+  const printableRef = useRef<HTMLDivElement>(null);
   
-  const handlePrint = useReactToPrint({
-      content: () => printableRef.current,
-      documentTitle: "URT Prep Pro - Test Results",
-  });
+  const handlePrint = () => {
+    if (printableRef.current) {
+      window.print();
+    }
+  };
 
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
@@ -236,6 +235,10 @@ export default function PracticePage() {
     setFullTestSettings({});
   }
 
+  const handleTimeUpdate = useCallback((time: number) => {
+    setElapsedTime(time);
+  }, []);
+
   const renderContent = () => {
     if (isLoading && view === 'setup') {
       return (
@@ -355,7 +358,7 @@ export default function PracticePage() {
                     {totalRecommendedTime > 0 && (
                         <TestTimer 
                             initialTime={totalRecommendedTime * 60} 
-                            onTimeUpdate={setElapsedTime}
+                            onTimeUpdate={handleTimeUpdate}
                         />
                     )}
                 </CardHeader>
@@ -396,7 +399,7 @@ export default function PracticePage() {
         return (
             <div className="w-full">
                  <div className="flex justify-end mb-4 gap-2">
-                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
+                    <Button variant={testView === 'compact' ? 'outline' : 'default'} size="sm" onClick={() => setTestView('compact')}>
                         <Columns3 className="mr-2 h-4 w-4"/>
                         Compact
                     </Button>
@@ -482,7 +485,7 @@ export default function PracticePage() {
               </div>
               <div className="flex items-center justify-center gap-4 mt-8 no-print">
                   <Button onClick={handleStartNewTest}>Start Another Test</Button>
-                  <Button ref={printTriggerRef} onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
+                  <Button onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
                   <Button variant="secondary" onClick={() => router.push('/dashboard')}>View Dashboard</Button>
               </div>
           </div>
