@@ -6,46 +6,22 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
-} from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { TestHistoryItem } from '@/lib/types';
-import { SUBJECTS } from '@/lib/constants';
-import { Loader2, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
-
-
-const chartConfig = {
-  score: {
-    label: 'Score',
-  },
-  english: {
-    label: 'English',
-    color: 'hsl(var(--chart-1))',
-  },
-  physics: {
-    label: 'Physics',
-    color: 'hsl(var(--chart-2))',
-  },
-  chemistry: {
-    label: 'Chemistry',
-    color: 'hsl(var(--chart-3))',
-  },
-  biology: {
-    label: 'Biology',
-    color: 'hsl(var(--chart-4))',
-  },
-  geology: {
-    label: 'Geology',
-    color: 'hsl(var(--chart-5))',
-  },
-} satisfies ChartConfig;
+import { Loader2, Trophy, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function DashboardPage() {
   const [history, setHistory] = useState<TestHistoryItem[]>([]);
@@ -58,62 +34,6 @@ export default function DashboardPage() {
     }
     setIsLoading(false);
   }, []);
-
-  const stats = useMemo(() => {
-    if (history.length === 0) {
-      return {
-        totalTests: 0,
-        averageScore: 0,
-        bestSubject: { name: 'N/A', score: 0 },
-        worstSubject: { name: 'N/A', score: 0 },
-        recentHistory: [],
-      };
-    }
-
-    const totalTests = history.length;
-    const averageScore = history.reduce((acc, item) => acc + item.score, 0) / totalTests;
-
-    const subjectStats: Record<string, { scores: number[], count: number }> = {};
-    for (const item of history) {
-        if (!subjectStats[item.subject]) {
-            subjectStats[item.subject] = { scores: [], count: 0 };
-        }
-        subjectStats[item.subject].scores.push(item.score);
-        subjectStats[item.subject].count++;
-    }
-
-    const subjectAverages = Object.entries(subjectStats).map(([name, data]) => ({
-      name,
-      score: data.scores.reduce((a, b) => a + b, 0) / data.count,
-    }));
-    
-    const bestSubject = subjectAverages.reduce((max, s) => s.score > max.score ? s : max, { name: 'N/A', score: -1 });
-    const worstSubject = subjectAverages.reduce((min, s) => s.score < min.score ? s : min, { name: 'N/A', score: 101 });
-
-    return {
-      totalTests,
-      averageScore,
-      bestSubject,
-      worstSubject,
-      recentHistory: history.slice(0, 5)
-    };
-  }, [history]);
-
-  const chartData = useMemo(() => {
-    return SUBJECTS.map(subjectInfo => {
-      const subjectHistory = history.filter(h => h.subject === subjectInfo.name);
-      if (subjectHistory.length === 0) {
-        return { subject: subjectInfo.name, score: 0, fill: `var(--color-${subjectInfo.name.toLowerCase()})` };
-      }
-      const avgScore = subjectHistory.reduce((acc, item) => acc + item.score, 0) / subjectHistory.length;
-      return {
-        subject: subjectInfo.name,
-        score: Math.round(avgScore),
-        fill: `var(--color-${subjectInfo.name.toLowerCase()})`,
-      };
-    });
-  }, [history]);
-
 
   if (isLoading) {
     return (
@@ -149,71 +69,44 @@ export default function DashboardPage() {
       <AppHeader />
       <main className="flex-1 p-4 md:p-8">
         <div className="container mx-auto">
-          <h1 className="text-3xl font-headline font-bold mb-6">Dashboard</h1>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Tests Taken</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalTests}</div>
-                <p className="text-xs text-muted-foreground">Keep up the great work!</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.averageScore.toFixed(1)}%</div>
-                <p className="text-xs text-muted-foreground">Across all subjects</p>
-              </CardContent>
-            </Card>
-             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Best Subject</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.bestSubject.name}</div>
-                <p className="text-xs text-muted-foreground">{stats.bestSubject.score.toFixed(1)}% average score</p>
-              </CardContent>
-            </Card>
-             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Needs Improvement</CardTitle>
-                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.worstSubject.name}</div>
-                <p className="text-xs text-muted-foreground">{stats.worstSubject.score.toFixed(1)}% average score</p>
-              </CardContent>
-            </Card>
-          </div>
+          <h1 className="text-3xl font-headline font-bold mb-6">Test History</h1>
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline">Performance by Subject</CardTitle>
+                <CardTitle>Recent Tests</CardTitle>
+                <CardDescription>Review your past performance and track your progress.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                <BarChart accessibilityLayer data={chartData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="subject"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                  />
-                  <YAxis domain={[0, 100]} />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Bar dataKey="score" radius={4} />
-                </BarChart>
-              </ChartContainer>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Test Type</TableHead>
+                            <TableHead>Subjects</TableHead>
+                            <TableHead className="text-right">Overall Score</TableHead>
+                            <TableHead className="text-right">Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {history.map(item => (
+                            <TableRow key={item.id}>
+                                <TableCell>
+                                    <Badge variant={item.type === 'full' ? 'default' : 'secondary'}>
+                                        {item.type === 'full' ? 'Full Test' : 'Single Passage'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">{item.subjects.join(', ')}</TableCell>
+                                <TableCell className="text-right font-semibold text-primary">{item.overallScore.toFixed(1)}%</TableCell>
+                                <TableCell className="text-right">{format(new Date(item.date), 'PPp')}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </CardContent>
           </Card>
+           <div className="flex justify-center mt-8">
+                <Button asChild>
+                    <Link href="/practice">Start a New Test <ArrowRight className="ml-2" /></Link>
+                </Button>
+           </div>
         </div>
       </main>
     </div>

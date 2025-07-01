@@ -31,6 +31,7 @@ const GenerateUrtPassageOutputSchema = z.object({
   imageUrl: z.string().describe('A URL for a relevant placeholder image.'),
   recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
   tokenUsage: z.number().optional().describe('The number of tokens used for generation.'),
+  subject: z.string().describe('The subject of the passage.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -101,6 +102,7 @@ const generateUrtPassageFlow = ai.defineFlow(
         ...textOutput,
         imageUrl,
         tokenUsage: usage.totalTokens,
+        subject: input.topic,
     };
   }
 );

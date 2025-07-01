@@ -21,11 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
-import type { UrtTest, GradedResult, TestHistoryItem } from "@/lib/types";
+import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, FileDown } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, FileDown, Trophy, BookOpen, FileText } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +36,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
@@ -42,294 +44,309 @@ import { useApiKey } from "@/context/api-key-provider";
 import { TestTimer } from "@/components/test-timer";
 import { useReactToPrint } from "react-to-print";
 
+type View = "setup" | "test" | "results";
+
 export default function PracticePage() {
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  // Setup State
+  const [mode, setMode] = useState<"single" | "full">("single");
+  const [selectedSingleSubject, setSelectedSingleSubject] = useState<Subject | null>(null);
+  const [selectedFullSubjects, setSelectedFullSubjects] = useState<Subject[]>([]);
   const [difficulty, setDifficulty] = useState("Medium");
   const [wordLength, setWordLength] = useState("600");
   const [numQuestions, setNumQuestions] = useState("6");
+  
+  // App State
   const [isLoading, setIsLoading] = useState(false);
-  const [testData, setTestData] = useState<UrtTest | null>(null);
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
-  const [results, setResults] = useState<GradedResult[]>([]);
-  const [view, setView] = useState<"generate" | "test" | "results">(
-    "generate"
-  );
+  const [testData, setTestData] = useState<UrtTest[] | null>(null);
+  const [userAnswers, setUserAnswers] = useState<Record<string, Record<number, string>>>({});
+  const [results, setResults] = useState<GradedResult[][] | null>(null);
+  const [view, setView] = useState<View>("setup");
+  
+  // Hooks
   const { toast } = useToast();
   const { font } = useFont();
   const { isApiKeySet } = useApiKey();
-  
   const printableRef = useRef(null);
   const handlePrint = useReactToPrint({
       content: () => printableRef.current,
       documentTitle: "URT Prep Pro - Test Results",
   });
 
+  const handleFullSubjectToggle = (subject: Subject, checked: boolean) => {
+    setSelectedFullSubjects(prev => 
+      checked ? [...prev, subject] : prev.filter(s => s.name !== subject.name)
+    );
+  };
+
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
-        toast({
-            title: "API Key Required",
-            description: "Please set your Google AI API key in the user menu before generating a test.",
-            variant: "destructive",
-        });
+        toast({ title: "API Key Required", description: "Please set your Google AI API key in the user menu.", variant: "destructive" });
         return;
     }
-    if (!selectedSubject) {
-      toast({
-        title: "No Subject Selected",
-        description: "Please choose a subject to start a test.",
-        variant: "destructive",
-      });
-      return;
+
+    const generationTasks: Promise<UrtTest>[] = [];
+    if (mode === 'single') {
+        if (!selectedSingleSubject) {
+            toast({ title: "No Subject Selected", description: "Please choose a subject.", variant: "destructive" });
+            return;
+        }
+        generationTasks.push(generateUrtPassage({
+            topic: selectedSingleSubject.name,
+            difficulty,
+            wordLength: parseInt(wordLength, 10),
+            numQuestions: parseInt(numQuestions, 10),
+        }));
+    } else { // full test mode
+        if (selectedFullSubjects.length === 0) {
+            toast({ title: "No Subjects Selected", description: "Please choose at least one subject for the test.", variant: "destructive" });
+            return;
+        }
+        const difficulties = ["Easy", "Medium", "Hard"];
+        const wordLengths = [400, 600, 800];
+        const numQuestionsOpts = [6, 10, 15];
+
+        selectedFullSubjects.forEach(subject => {
+            generationTasks.push(generateUrtPassage({
+                topic: subject.name,
+                difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
+                wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
+                numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
+            }));
+        });
     }
+
     setIsLoading(true);
     setTestData(null);
     setUserAnswers({});
-    setResults([]);
+    setResults(null);
+
     try {
-      const data = await generateUrtPassage({
-        topic: selectedSubject.name,
-        difficulty,
-        wordLength: parseInt(wordLength, 10),
-        numQuestions: parseInt(numQuestions, 10),
-      });
-      setTestData(data);
-      setView("test");
-      toast({
-        title: "Test Generated Successfully",
-        description: `This generation used ${data.tokenUsage || 'an unknown amount of'} tokens.`,
-      });
+        const data = await Promise.all(generationTasks);
+        setTestData(data);
+        setView("test");
+        const totalTokens = data.reduce((sum, d) => sum + (d.tokenUsage || 0), 0);
+        toast({
+            title: "Test Generated Successfully",
+            description: `This generation used approximately ${totalTokens} tokens.`,
+        });
     } catch (error) {
-      console.error("Failed to generate test:", error);
-      toast({
-        title: "Generation Failed",
-        description: "Could not generate a new test. Check your API key and try again.",
-        variant: "destructive",
-      });
+        console.error("Failed to generate test:", error);
+        toast({ title: "Generation Failed", description: "Could not generate the test. Check your API key and try again.", variant: "destructive" });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
   
-  const handleAnswerChange = (questionIndex: number, value: string) => {
-    setUserAnswers(prev => ({ ...prev, [questionIndex]: value }));
+  const handleAnswerChange = (passageIndex: number, questionIndex: number, value: string) => {
+    setUserAnswers(prev => ({ 
+        ...prev, 
+        [passageIndex]: {
+            ...prev[passageIndex],
+            [questionIndex]: value
+        }
+    }));
   };
 
   const handleSubmitTest = async () => {
     if (!testData) return;
     setIsLoading(true);
     try {
-      const gradedResults = await Promise.all(
-        testData.questions.map(async (q, index) => {
-          const userAnswer = userAnswers[index] || "No answer";
-          return gradeAnswerAndExplain({
-            passage: testData.passage,
-            question: q.question,
-            answer: q.answer,
-            userAnswer: userAnswer,
-          }).then(res => ({ ...res, userAnswer, correctAnswer: q.answer, question: q.question }))
-        })
-      );
-      setResults(gradedResults);
-      
-      const correctCount = gradedResults.filter(r => r.isCorrect).length;
-      const totalCount = testData.questions.length;
-      const score = totalCount > 0 ? (correctCount / totalCount) * 100 : 0;
-      
-      const newHistoryItem: TestHistoryItem = {
-          id: new Date().toISOString() + Math.random(),
-          subject: selectedSubject!.name,
-          score: score,
-          correctQuestions: correctCount,
-          totalQuestions: totalCount,
-          date: new Date().toISOString(),
-      };
+        const gradingTasks: Promise<GradedResult[]>[] = testData.map((passageData, passageIndex) => {
+            return Promise.all(passageData.questions.map(async (q, questionIndex) => {
+                const userAnswer = userAnswers[passageIndex]?.[questionIndex] || "No answer";
+                return gradeAnswerAndExplain({
+                    passage: passageData.passage,
+                    question: q.question,
+                    answer: q.answer,
+                    userAnswer: userAnswer,
+                }).then(res => ({ ...res, userAnswer, correctAnswer: q.answer, question: q.question }))
+            }));
+        });
+        
+        const gradedResults = await Promise.all(gradingTasks);
+        setResults(gradedResults);
 
-      const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
-      history.unshift(newHistoryItem);
-      localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50))); // Keep last 50 tests
+        // --- Save to history ---
+        let totalCorrect = 0;
+        let totalQuestions = 0;
+        const scoresBySubject: SubjectScore[] = gradedResults.map((subjectResults, index) => {
+            const correctCount = subjectResults.filter(r => r.isCorrect).length;
+            const questionCount = subjectResults.length;
+            totalCorrect += correctCount;
+            totalQuestions += questionCount;
+            return {
+                subject: testData[index].subject,
+                score: questionCount > 0 ? (correctCount / questionCount) * 100 : 0,
+                correctQuestions: correctCount,
+                totalQuestions: questionCount,
+            };
+        });
 
-      setView("results");
-    } catch (error)
-{
+        const newHistoryItem: TestHistoryItem = {
+            id: new Date().toISOString() + Math.random(),
+            subjects: testData.map(t => t.subject),
+            overallScore: totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0,
+            correctQuestions: totalCorrect,
+            totalQuestions,
+            date: new Date().toISOString(),
+            scoresBySubject,
+            type: mode,
+        };
+
+        const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
+        history.unshift(newHistoryItem);
+        localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
+
+        setView("results");
+    } catch (error) {
       console.error("Failed to grade test:", error);
-      toast({
-        title: "Grading Failed",
-        description: "Could not grade your test. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Grading Failed", description: "Could not grade your test. Please try again.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleStartNewTest = () => {
-    setView("generate");
+    setView("setup");
     setTestData(null);
     setUserAnswers({});
-    setResults([]);
-    setSelectedSubject(null);
+    setResults(null);
+    setSelectedSingleSubject(null);
+    setSelectedFullSubjects([]);
   }
 
   const renderContent = () => {
-    if (isLoading && !testData) {
+    if (isLoading && view === 'setup') {
       return (
         <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-headline">
-            Generating your test...
-          </p>
-          <p className="text-muted-foreground">This may take a few moments. We're creating a unique passage and questions just for you.</p>
-        </div>
-      );
-    }
-    if (isLoading && view === 'results') {
-       return (
-        <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-headline">
-            Grading your answers...
-          </p>
-          <p className="text-muted-foreground">This may take a few moments. Please wait.</p>
+          <p className="text-lg font-headline">Generating your {mode === 'single' ? 'passage' : 'test'}...</p>
+          <p className="text-muted-foreground">This may take a few moments. We're creating unique content just for you.</p>
         </div>
       );
     }
 
     switch (view) {
-      case "generate":
+      case "setup":
         return (
-          <Card className="w-full max-w-lg">
+          <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle className="font-headline text-2xl">New Practice Test</CardTitle>
-              <CardDescription>
-                Select a subject and customize your test options below.
-              </CardDescription>
+              <CardTitle className="font-headline text-2xl">New Practice Session</CardTitle>
+              <CardDescription>Choose between a single focused passage or a full multi-subject test.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-               <div className="space-y-2">
-                 <Label>Subject</Label>
-                 <Select onValueChange={(value) => setSelectedSubject(SUBJECTS.find(s => s.name === value) || null)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a subject..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUBJECTS.map((subject) => (
-                        <SelectItem key={subject.name} value={subject.name}>
-                          <div className="flex items-center gap-2">
+            <CardContent>
+              <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="single"><BookOpen className="mr-2"/>Single Passage</TabsTrigger>
+                  <TabsTrigger value="full"><FileText className="mr-2"/>Full Test</TabsTrigger>
+                </TabsList>
+                <TabsContent value="single" className="mt-6">
+                   <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Subject</Label>
+                            <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
+                                <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
+                                <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="space-y-2"><Label htmlFor="difficulty">Difficulty</Label><Select onValueChange={setDifficulty} defaultValue={difficulty}><SelectTrigger id="difficulty"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select></div>
+                            <div className="space-y-2"><Label htmlFor="wordLength">Passage Length</Label><Select onValueChange={setWordLength} defaultValue={wordLength}><SelectTrigger id="wordLength"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="400">~400 words</SelectItem><SelectItem value="600">~600 words</SelectItem><SelectItem value="800">~800 words</SelectItem></SelectContent></Select></div>
+                            <div className="space-y-2"><Label htmlFor="numQuestions">Questions</Label><Select onValueChange={setNumQuestions} defaultValue={numQuestions}><SelectTrigger id="numQuestions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="6">6 Questions</SelectItem><SelectItem value="10">10 Questions</SelectItem><SelectItem value="15">15 Questions</SelectItem></SelectContent></Select></div>
+                        </div>
+                   </div>
+                </TabsContent>
+                <TabsContent value="full" className="mt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Select Subjects (up to 4)</Label>
+                      <CardDescription>A passage will be generated for each selected subject with random difficulty and length.</CardDescription>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {SUBJECTS.map(subject => (
+                        <div key={subject.name} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`subject-${subject.name}`}
+                            onCheckedChange={(checked) => handleFullSubjectToggle(subject, checked as boolean)}
+                            checked={selectedFullSubjects.some(s => s.name === subject.name)}
+                            disabled={selectedFullSubjects.length >= 4 && !selectedFullSubjects.some(s => s.name === subject.name)}
+                          />
+                          <label htmlFor={`subject-${subject.name}`} className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                             <subject.icon className="h-4 w-4" />
-                            <span>{subject.name}</span>
-                          </div>
-                        </SelectItem>
+                            {subject.name}
+                          </label>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
-               </div>
-               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="difficulty">Difficulty</Label>
-                        <Select onValueChange={setDifficulty} defaultValue={difficulty}>
-                            <SelectTrigger id="difficulty">
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="wordLength">Passage Length</Label>
-                        <Select onValueChange={setWordLength} defaultValue={wordLength}>
-                            <SelectTrigger id="wordLength">
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="400">~400 words</SelectItem>
-                                <SelectItem value="600">~600 words</SelectItem>
-                                <SelectItem value="800">~800 words</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="numQuestions">Questions</Label>
-                        <Select onValueChange={setNumQuestions} defaultValue={numQuestions}>
-                            <SelectTrigger id="numQuestions">
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="6">6 Questions</SelectItem>
-                                <SelectItem value="10">10 Questions</SelectItem>
-                                <SelectItem value="15">15 Questions</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-               </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
             <CardFooter>
-                <Button onClick={handleGenerateTest} disabled={!selectedSubject || isLoading} className="w-full">
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Start Test
-                </Button>
+              <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && selectedFullSubjects.length === 0)} className="w-full">
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Start Practice
+              </Button>
             </CardFooter>
           </Card>
         );
       case "test":
         if (!testData) return null;
+        const totalRecommendedTime = testData.reduce((sum, d) => sum + (d.recommendedTime || 0), 0);
         return (
             <div className="grid lg:grid-cols-2 gap-8 w-full items-start">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-2xl">{testData.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <div className="mb-4 rounded-lg overflow-hidden">
-                           <Image 
-                                key={testData.imageUrl}
-                                src={testData.imageUrl} 
-                                alt="Passage illustration"
-                                width={600}
-                                height={400}
-                                className="object-cover w-full h-auto"
-                                data-ai-hint={selectedSubject?.name.toLowerCase() + " illustration"}
-                            />
-                       </div>
-                       <div className={cn("prose dark:prose-invert max-w-none", font)}>
-                            <div dangerouslySetInnerHTML={{ __html: testData.passage.replace(/\n\n/g, '<br/><br/>') }} />
-                        </div>
-                    </CardContent>
-                </Card>
+                <Tabs defaultValue="0" className="w-full">
+                    <TabsList className="mb-4">
+                        {testData.map((data, index) => (
+                           <TabsTrigger key={index} value={String(index)}>{data.subject}</TabsTrigger>
+                        ))}
+                    </TabsList>
+                    {testData.map((data, index) => (
+                        <TabsContent key={index} value={String(index)}>
+                            <Card>
+                                <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
+                                <CardContent>
+                                    <div className="mb-4 rounded-lg overflow-hidden">
+                                        <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
+                                    </div>
+                                    <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    ))}
+                </Tabs>
                 <Card className="lg:sticky top-24">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="font-headline">Questions</CardTitle>
-                        {testData.recommendedTime && (
-                            <TestTimer 
-                                initialTime={testData.recommendedTime * 60} 
-                                onComplete={() => {
-                                    toast({ title: "Time's up!", description: "The test will be submitted automatically." });
-                                    handleSubmitTest();
-                                }} 
-                            />
+                        {totalRecommendedTime > 0 && (
+                            <TestTimer initialTime={totalRecommendedTime * 60} onComplete={handleSubmitTest} />
                         )}
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[60vh] pr-4">
-                            <div className="flex flex-col gap-6">
-                            {testData.questions.map((q, index) => (
-                                <div key={index}>
-                                    <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${index + 1}. ${q.question}`}} />
-                                    <RadioGroup onValueChange={(value) => handleAnswerChange(index, value)}>
-                                        <div className="space-y-2">
-                                        {q.options.map((option, optIndex) => (
-                                            <div key={optIndex} className="flex items-center space-x-2">
-                                                <RadioGroupItem value={option} id={`q${index}o${optIndex}`} />
-                                                <Label htmlFor={`q${index}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                            </div>
-                                        ))}
+                            {testData.map((data, passageIndex) => (
+                                <div key={passageIndex} className="mb-8">
+                                    <h3 className="font-bold text-lg mb-4 text-primary">{data.subject}</h3>
+                                    <div className="flex flex-col gap-6">
+                                    {data.questions.map((q, questionIndex) => (
+                                        <div key={questionIndex}>
+                                            <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                            <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)}>
+                                                <div className="space-y-2">
+                                                {q.options.map((option, optIndex) => (
+                                                    <div key={optIndex} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
+                                                        <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                    </div>
+                                                ))}
+                                                </div>
+                                            </RadioGroup>
                                         </div>
-                                    </RadioGroup>
+                                    ))}
+                                    </div>
+                                    {passageIndex < testData.length - 1 && <Separator className="mt-8"/>}
                                 </div>
                             ))}
-                            </div>
                         </ScrollArea>
                         <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
                           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -340,8 +357,11 @@ export default function PracticePage() {
             </div>
         );
       case "results":
-        const correctCount = results.filter(r => r.isCorrect).length;
-        const totalCount = results.length;
+        if (!results || !testData) return null;
+        const totalCorrect = results.flat().filter(r => r.isCorrect).length;
+        const totalQuestions = results.flat().length;
+        const lastTestHistory = JSON.parse(localStorage.getItem('testHistory') || '[]')[0] as TestHistoryItem;
+
         return (
           <div ref={printableRef} className="w-full max-w-4xl">
               <Card className="mb-6">
@@ -349,45 +369,64 @@ export default function PracticePage() {
                     <CardTitle className="font-headline text-3xl text-center">Test Results</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                    <p className="text-xl">You scored <span className="font-bold text-primary">{correctCount}</span> out of <span className="font-bold">{totalCount}</span></p>
-                    <p className="text-4xl font-bold mt-2 text-primary">
-                        {totalCount > 0 ? ((correctCount / totalCount) * 100).toFixed(1) : '0.0'}%
-                    </p>
-                    <div className="flex items-center justify-center gap-4 mt-6 no-print">
+                    <Trophy className="h-16 w-16 mx-auto text-primary mb-4" />
+                    <p className="text-xl">You scored <span className="font-bold text-primary">{totalCorrect}</span> out of <span className="font-bold">{totalQuestions}</span></p>
+                    <p className="text-5xl font-bold mt-2 text-primary">{lastTestHistory.overallScore.toFixed(1)}%</p>
+                    
+                    <div className="mx-auto max-w-md mt-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {lastTestHistory.scoresBySubject.map(subjectScore => (
+                                <Card key={subjectScore.subject} className="text-left">
+                                    <CardHeader className="p-4">
+                                        <CardTitle className="text-lg">{subjectScore.subject}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0">
+                                        <p className="text-2xl font-bold">{subjectScore.score.toFixed(1)}%</p>
+                                        <p className="text-xs text-muted-foreground">{subjectScore.correctQuestions}/{subjectScore.totalQuestions} correct</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-4 mt-8 no-print">
                         <Button onClick={handleStartNewTest}>Start Another Test</Button>
-                        <Button onClick={handlePrint} variant="outline">
-                            <FileDown className="mr-2"/>
-                            Export to PDF
-                        </Button>
+                        <Button onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
                     </div>
                 </CardContent>
               </Card>
 
+              <h3 className="font-headline text-2xl mb-4">Detailed Review</h3>
               <Accordion type="single" collapsible className="w-full">
-                {results.map((result, index) => (
-                    <Card key={index} className="mb-4">
-                        <AccordionItem value={`item-${index}`} className="border-b-0">
-                            <AccordionTrigger className="p-4 hover:no-underline">
-                                <div className="flex items-center gap-4 w-full">
-                                    {result.isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" /> : <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
-                                    <p className="text-left flex-1" dangerouslySetInnerHTML={{__html: `${index + 1}. ${result.question}`}}/>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="p-4 pt-0">
-                                <div className="space-y-4">
-                                    <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
-                                    <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
-                                    <Separator />
-                                    <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
-                                        <h4 className="font-bold">Explanation (English)</h4>
-                                        <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
-                                        <h4 className="font-bold">Explanation (Arabic)</h4>
-                                        <p dir="rtl" className="text-right font-sans" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
-                                    </div>
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Card>
+                {results.map((subjectResults, passageIndex) => (
+                    <div key={passageIndex} className="mb-4">
+                        <h4 className="font-bold text-xl mb-2">{testData[passageIndex].subject}</h4>
+                        {subjectResults.map((result, questionIndex) => (
+                            <Card key={questionIndex} className="mb-2">
+                                <AccordionItem value={`p${passageIndex}-q${questionIndex}`} className="border-b-0">
+                                    <AccordionTrigger className="p-4 hover:no-underline">
+                                        <div className="flex items-center gap-4 w-full">
+                                            {result.isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" /> : <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
+                                            <p className="text-left flex-1" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${result.question}`}}/>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-4 pt-0">
+                                        <div className="space-y-4">
+                                            <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
+                                            <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
+                                            <Separator />
+                                            <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
+                                                <h4 className="font-bold">Explanation (English)</h4>
+                                                <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
+                                                <h4 className="font-bold">Explanation (Arabic)</h4>
+                                                <p dir="rtl" className="text-right font-sans" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
+                                            </div>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Card>
+                        ))}
+                    </div>
                 ))}
               </Accordion>
           </div>

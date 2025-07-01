@@ -11,6 +11,7 @@ export interface UrtTest {
   imageUrl: string;
   recommendedTime?: number;
   tokenUsage?: number;
+  subject: string;
 }
 
 export interface GradedResult {
@@ -22,11 +23,20 @@ export interface GradedResult {
   question: string;
 }
 
-export interface TestHistoryItem {
-  id: string;
+export interface SubjectScore {
   subject: string;
   score: number;
+  correctQuestions: number;
+  totalQuestions: number;
+}
+
+export interface TestHistoryItem {
+  id: string;
+  subjects: string[];
+  overallScore: number;
   totalQuestions: number;
   correctQuestions: number;
   date: string;
+  scoresBySubject: SubjectScore[];
+  type: 'single' | 'full';
 }
