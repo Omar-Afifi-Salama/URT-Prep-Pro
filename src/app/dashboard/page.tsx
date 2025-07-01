@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/app-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,11 +26,22 @@ import { format } from 'date-fns';
 export default function DashboardPage() {
   const [history, setHistory] = useState<TestHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const storedHistory = localStorage.getItem('testHistory');
     if (storedHistory) {
-      setHistory(JSON.parse(storedHistory));
+      try {
+        const parsedHistory = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setHistory(parsedHistory);
+        }
+      } catch (error) {
+        console.error("Failed to parse test history:", error);
+        // Clear corrupted data
+        localStorage.removeItem('testHistory');
+        setHistory([]);
+      }
     }
     setIsLoading(false);
   }, []);
@@ -55,8 +66,8 @@ export default function DashboardPage() {
                 <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-2xl font-bold font-headline">Your Dashboard is Empty</h2>
                 <p className="text-muted-foreground mt-2 max-w-sm">Complete a practice test to see your performance analysis and track your progress over time.</p>
-                <Button asChild className="mt-6">
-                    <Link href="/practice">Start a New Test</Link>
+                <Button className="mt-6" onClick={() => router.push('/practice')}>
+                    Start a New Test
                 </Button>
             </div>
         </main>
@@ -95,7 +106,11 @@ export default function DashboardPage() {
                                 </TableCell>
                                 <TableCell className="font-medium">{item.subjects.join(', ')}</TableCell>
                                 <TableCell className="text-right font-semibold text-primary">{item.overallScore.toFixed(1)}%</TableCell>
-                                <TableCell className="text-right">{format(new Date(item.date), 'PPp')}</TableCell>
+                                <TableCell className="text-right">
+                                    {new Date(item.date).toString() !== 'Invalid Date'
+                                        ? format(new Date(item.date), 'PPp')
+                                        : 'Invalid Date'}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -103,8 +118,8 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
            <div className="flex justify-center mt-8">
-                <Button asChild>
-                    <Link href="/practice">Start a New Test <ArrowRight className="ml-2" /></Link>
+                <Button onClick={() => router.push('/practice')}>
+                    Start a New Test <ArrowRight className="ml-2" />
                 </Button>
            </div>
         </div>
