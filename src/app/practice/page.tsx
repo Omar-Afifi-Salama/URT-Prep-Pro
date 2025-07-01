@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
 import { gradeAnswerAndExplain } from "@/ai/flows/grade-answer-and-explain.ts";
@@ -25,7 +25,7 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, FileDown } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -40,6 +40,7 @@ import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
 import { useApiKey } from "@/context/api-key-provider";
 import { TestTimer } from "@/components/test-timer";
+import { useReactToPrint } from "react-to-print";
 
 export default function PracticePage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -56,6 +57,12 @@ export default function PracticePage() {
   const { toast } = useToast();
   const { font } = useFont();
   const { isApiKeySet } = useApiKey();
+  
+  const printableRef = useRef(null);
+  const handlePrint = useReactToPrint({
+      content: () => printableRef.current,
+      documentTitle: "URT Prep Pro - Test Results",
+  });
 
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
@@ -87,6 +94,10 @@ export default function PracticePage() {
       });
       setTestData(data);
       setView("test");
+      toast({
+        title: "Test Generated Successfully",
+        description: `This generation used ${data.tokenUsage || 'an unknown amount of'} tokens.`,
+      });
     } catch (error) {
       console.error("Failed to generate test:", error);
       toast({
@@ -332,7 +343,7 @@ export default function PracticePage() {
         const correctCount = results.filter(r => r.isCorrect).length;
         const totalCount = results.length;
         return (
-          <div className="w-full max-w-4xl">
+          <div ref={printableRef} className="w-full max-w-4xl">
               <Card className="mb-6">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl text-center">Test Results</CardTitle>
@@ -342,7 +353,13 @@ export default function PracticePage() {
                     <p className="text-4xl font-bold mt-2 text-primary">
                         {totalCount > 0 ? ((correctCount / totalCount) * 100).toFixed(1) : '0.0'}%
                     </p>
-                    <Button onClick={handleStartNewTest} className="mt-6">Start Another Test</Button>
+                    <div className="flex items-center justify-center gap-4 mt-6 no-print">
+                        <Button onClick={handleStartNewTest}>Start Another Test</Button>
+                        <Button onClick={handlePrint} variant="outline">
+                            <FileDown className="mr-2"/>
+                            Export to PDF
+                        </Button>
+                    </div>
                 </CardContent>
               </Card>
 

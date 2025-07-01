@@ -161,3 +161,9 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

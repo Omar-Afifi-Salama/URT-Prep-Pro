@@ -30,6 +30,7 @@ const GenerateUrtPassageOutputSchema = z.object({
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
   imageUrl: z.string().describe('A URL for a relevant placeholder image.'),
   recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
+  tokenUsage: z.number().optional().describe('The number of tokens used for generation.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -88,7 +89,7 @@ const generateUrtPassageFlow = ai.defineFlow(
   },
   async input => {
     // Step 1: Generate passage and questions
-    const {output: textOutput} = await textGenerationPrompt(input, { model: 'googleai/gemini-1.5-flash' });
+    const {output: textOutput, usage} = await textGenerationPrompt(input, { model: 'googleai/gemini-1.5-flash' });
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }
@@ -99,6 +100,7 @@ const generateUrtPassageFlow = ai.defineFlow(
     return {
         ...textOutput,
         imageUrl,
+        tokenUsage: usage.totalTokens,
     };
   }
 );

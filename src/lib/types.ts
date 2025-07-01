@@ -10,6 +10,7 @@ export interface UrtTest {
   questions: UrtQuestion[];
   imageUrl: string;
   recommendedTime?: number;
+  tokenUsage?: number;
 }
 
 export interface GradedResult {
