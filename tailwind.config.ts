@@ -23,6 +23,7 @@ const config = {
         headline: ["var(--font-space-grotesk)", ...fontFamily.sans],
         serif: ["var(--font-lora)"],
         mono: ["var(--font-roboto-mono)"],
+        arabic: ["var(--font-noto-sans-arabic)"],
       },
       colors: {
         border: 'hsl(var(--border))',

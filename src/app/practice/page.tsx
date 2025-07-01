@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore } from "@/lib/types";
@@ -50,7 +49,7 @@ export default function PracticePage() {
   // Setup State
   const [mode, setMode] = useState<"single" | "full">("single");
   const [selectedSingleSubject, setSelectedSingleSubject] = useState<Subject | null>(null);
-  const [selectedFullSubjects, setSelectedFullSubjects] = useState<Subject[]>([]);
+  const [fullTestSettings, setFullTestSettings] = useState<Record<string, number>>({});
   const [difficulty, setDifficulty] = useState("Medium");
   const [wordLength, setWordLength] = useState("600");
   const [numQuestions, setNumQuestions] = useState("6");
@@ -72,12 +71,6 @@ export default function PracticePage() {
       documentTitle: "URT Prep Pro - Test Results",
   });
 
-  const handleFullSubjectToggle = (subject: Subject, checked: boolean) => {
-    setSelectedFullSubjects(prev => 
-      checked ? [...prev, subject] : prev.filter(s => s.name !== subject.name)
-    );
-  };
-
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
         toast({ title: "API Key Required", description: "Please set your Google AI API key in the user menu.", variant: "destructive" });
@@ -97,22 +90,24 @@ export default function PracticePage() {
             numQuestions: parseInt(numQuestions, 10),
         }));
     } else { // full test mode
-        if (selectedFullSubjects.length === 0) {
-            toast({ title: "No Subjects Selected", description: "Please choose at least one subject for the test.", variant: "destructive" });
+        Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
+            for (let i = 0; i < count; i++) {
+                const difficulties = ["Easy", "Medium", "Hard"];
+                const wordLengths = [400, 600, 800, 1000, 1200];
+                const numQuestionsOpts = [6, 10, 15];
+                generationTasks.push(generateUrtPassage({
+                    topic: subjectName,
+                    difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
+                    wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
+                    numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
+                }));
+            }
+        });
+
+        if (generationTasks.length === 0) {
+            toast({ title: "No Subjects Selected", description: "Please choose at least one passage for the test.", variant: "destructive" });
             return;
         }
-        const difficulties = ["Easy", "Medium", "Hard"];
-        const wordLengths = [400, 600, 800];
-        const numQuestionsOpts = [6, 10, 15];
-
-        selectedFullSubjects.forEach(subject => {
-            generationTasks.push(generateUrtPassage({
-                topic: subject.name,
-                difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
-                wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
-                numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
-            }));
-        });
     }
 
     setIsLoading(true);
@@ -212,7 +207,7 @@ export default function PracticePage() {
     setUserAnswers({});
     setResults(null);
     setSelectedSingleSubject(null);
-    setSelectedFullSubjects([]);
+    setFullTestSettings({});
   }
 
   const renderContent = () => {
@@ -228,6 +223,7 @@ export default function PracticePage() {
 
     switch (view) {
       case "setup":
+        const totalFullTestPassages = Object.values(fullTestSettings).reduce((sum, count) => sum + count, 0);
         return (
           <Card className="w-full max-w-2xl">
             <CardHeader>
@@ -237,8 +233,8 @@ export default function PracticePage() {
             <CardContent>
               <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="single"><BookOpen className="mr-2"/>Single Passage</TabsTrigger>
-                  <TabsTrigger value="full"><FileText className="mr-2"/>Full Test</TabsTrigger>
+                  <TabsTrigger value="single" className="gap-2"><BookOpen/>Single Passage</TabsTrigger>
+                  <TabsTrigger value="full" className="gap-2"><FileText/>Full Test</TabsTrigger>
                 </TabsList>
                 <TabsContent value="single" className="mt-6">
                    <div className="space-y-4">
@@ -251,7 +247,7 @@ export default function PracticePage() {
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="space-y-2"><Label htmlFor="difficulty">Difficulty</Label><Select onValueChange={setDifficulty} defaultValue={difficulty}><SelectTrigger id="difficulty"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select></div>
-                            <div className="space-y-2"><Label htmlFor="wordLength">Passage Length</Label><Select onValueChange={setWordLength} defaultValue={wordLength}><SelectTrigger id="wordLength"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="400">~400 words</SelectItem><SelectItem value="600">~600 words</SelectItem><SelectItem value="800">~800 words</SelectItem></SelectContent></Select></div>
+                            <div className="space-y-2"><Label htmlFor="wordLength">Passage Length</Label><Select onValueChange={setWordLength} defaultValue={wordLength}><SelectTrigger id="wordLength"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="400">~400 words</SelectItem><SelectItem value="600">~600 words</SelectItem><SelectItem value="800">~800 words</SelectItem><SelectItem value="1000">~1000 words</SelectItem><SelectItem value="1200">~1200 words</SelectItem></SelectContent></Select></div>
                             <div className="space-y-2"><Label htmlFor="numQuestions">Questions</Label><Select onValueChange={setNumQuestions} defaultValue={numQuestions}><SelectTrigger id="numQuestions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="6">6 Questions</SelectItem><SelectItem value="10">10 Questions</SelectItem><SelectItem value="15">15 Questions</SelectItem></SelectContent></Select></div>
                         </div>
                    </div>
@@ -259,22 +255,32 @@ export default function PracticePage() {
                 <TabsContent value="full" className="mt-6">
                   <div className="space-y-4">
                     <div>
-                      <Label>Select Subjects (up to 4)</Label>
-                      <CardDescription>A passage will be generated for each selected subject with random difficulty and length.</CardDescription>
+                      <Label>Select Subjects</Label>
+                      <CardDescription>Choose the number of passages for each subject. Passages will have random difficulty and length.</CardDescription>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="space-y-3">
                       {SUBJECTS.map(subject => (
-                        <div key={subject.name} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`subject-${subject.name}`}
-                            onCheckedChange={(checked) => handleFullSubjectToggle(subject, checked as boolean)}
-                            checked={selectedFullSubjects.some(s => s.name === subject.name)}
-                            disabled={selectedFullSubjects.length >= 4 && !selectedFullSubjects.some(s => s.name === subject.name)}
-                          />
-                          <label htmlFor={`subject-${subject.name}`} className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <div key={subject.name} className="flex items-center justify-between">
+                          <label htmlFor={`subject-count-${subject.name}`} className="flex items-center gap-2 text-sm font-medium">
                             <subject.icon className="h-4 w-4" />
                             {subject.name}
                           </label>
+                          <Select
+                            onValueChange={(value) => {
+                              setFullTestSettings(prev => ({ ...prev, [subject.name]: parseInt(value, 10) }));
+                            }}
+                            defaultValue="0"
+                          >
+                            <SelectTrigger id={`subject-count-${subject.name}`} className="w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">0 passages</SelectItem>
+                              <SelectItem value="1">1 passage</SelectItem>
+                              <SelectItem value="2">2 passages</SelectItem>
+                              <SelectItem value="3">3 passages</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       ))}
                     </div>
@@ -283,7 +289,7 @@ export default function PracticePage() {
               </Tabs>
             </CardContent>
             <CardFooter>
-              <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && selectedFullSubjects.length === 0)} className="w-full">
+              <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && totalFullTestPassages === 0)} className="w-full">
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Start Practice
               </Button>
@@ -419,7 +425,7 @@ export default function PracticePage() {
                                                 <h4 className="font-bold">Explanation (English)</h4>
                                                 <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
                                                 <h4 className="font-bold">Explanation (Arabic)</h4>
-                                                <p dir="rtl" className="text-right font-sans" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
+                                                <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
                                             </div>
                                         </div>
                                     </AccordionContent>

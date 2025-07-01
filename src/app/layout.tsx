@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk, Lora, Roboto_Mono } from 'next/font/google';
+import { Inter, Space_Grotesk, Lora, Roboto_Mono, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
@@ -28,6 +28,12 @@ const fontRobotoMono = Roboto_Mono({
   variable: '--font-roboto-mono',
 });
 
+const fontNotoSansArabic = Noto_Sans_Arabic({
+  subsets: ['arabic'],
+  variable: '--font-noto-sans-arabic',
+  weight: ['400', '700'],
+});
+
 
 export const metadata: Metadata = {
   title: 'URT Prep Pro',
@@ -47,7 +53,8 @@ export default function RootLayout({
           fontInter.variable,
           fontSpaceGrotesk.variable,
           fontLora.variable,
-          fontRobotoMono.variable
+          fontRobotoMono.variable,
+          fontNotoSansArabic.variable
         )}
       >
         <ThemeProvider
