@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
 import { gradeAnswerAndExplain } from "@/ai/flows/grade-answer-and-explain.ts";
@@ -42,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { useApiKey } from "@/context/api-key-provider";
 import { TestTimer } from "@/components/test-timer";
 import { useReactToPrint } from "react-to-print";
+import { useRouter } from "next/navigation";
 
 type View = "setup" | "test" | "results";
 type TestView = "compact" | "normal";
@@ -62,12 +64,17 @@ export default function PracticePage() {
   const [results, setResults] = useState<GradedResult[][] | null>(null);
   const [view, setView] = useState<View>("setup");
   const [testView, setTestView] = useState<TestView>('compact');
+  const [elapsedTime, setElapsedTime] = useState(0);
   
   // Hooks
   const { toast } = useToast();
   const { font } = useFont();
   const { isApiKeySet } = useApiKey();
+  const router = useRouter();
+  
   const printableRef = useRef(null);
+  const printTriggerRef = useRef(null);
+  
   const handlePrint = useReactToPrint({
       content: () => printableRef.current,
       documentTitle: "URT Prep Pro - Test Results",
@@ -118,16 +125,19 @@ export default function PracticePage() {
     setTestData(null);
     setUserAnswers({});
     setResults(null);
+    setElapsedTime(0);
 
     try {
         const data = await Promise.all(generationTasks);
         setTestData(data);
         setView("test");
         const totalTokens = data.reduce((sum, d) => sum + (d.tokenUsage || 0), 0);
-        toast({
-            title: "Test Generated Successfully",
-            description: `This generation used approximately ${totalTokens} tokens.`,
-        });
+        if (totalTokens > 0) {
+            toast({
+                title: "Test Generated Successfully",
+                description: `This generation used approximately ${totalTokens} tokens.`,
+            });
+        }
     } catch (error) {
         console.error("Failed to generate test:", error);
         toast({ title: "Generation Failed", description: "Could not generate the test. Check your API key and try again.", variant: "destructive" });
@@ -149,6 +159,7 @@ export default function PracticePage() {
   const handleSubmitTest = async () => {
     if (!testData) return;
     setIsLoading(true);
+    let gradedResults: GradedResult[][] = [];
     try {
         const gradingTasks: Promise<GradedResult[]>[] = testData.map((passageData, passageIndex) => {
             return Promise.all(passageData.questions.map(async (q, questionIndex) => {
@@ -162,9 +173,17 @@ export default function PracticePage() {
             }));
         });
         
-        const gradedResults = await Promise.all(gradingTasks);
+        gradedResults = await Promise.all(gradingTasks);
         setResults(gradedResults);
+        setView("results");
 
+    } catch (error) {
+      console.error("Failed to grade test:", error);
+      toast({ title: "Grading Failed", description: "Could not grade your test. Please try again.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+      
+      if (gradedResults.length > 0) {
         // --- Save to history ---
         let totalCorrect = 0;
         let totalQuestions = 0;
@@ -190,20 +209,23 @@ export default function PracticePage() {
             date: new Date().toISOString(),
             scoresBySubject,
             type: mode,
+            testData: testData,
+            results: gradedResults,
+            timeTaken: elapsedTime,
         };
 
         const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
         history.unshift(newHistoryItem);
         localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
-
-        setView("results");
-    } catch (error) {
-      console.error("Failed to grade test:", error);
-      toast({ title: "Grading Failed", description: "Could not grade your test. Please try again.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
+      }
     }
   };
+
+  const lastTestHistory = useMemo(() => {
+    if (view !== 'results') return null;
+    const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
+    return history[0] || null;
+  }, [view]);
 
   const handleStartNewTest = () => {
     setView("setup");
@@ -279,11 +301,9 @@ export default function PracticePage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="0">0 passages</SelectItem>
-                              <SelectItem value="1">1 passage</SelectItem>
-                              <SelectItem value="2">2 passages</SelectItem>
-                              <SelectItem value="3">3 passages</SelectItem>
-                              <SelectItem value="4">4 passages</SelectItem>
+                              {[0, 1, 2, 3, 4].map(i => (
+                                <SelectItem key={i} value={String(i)}>{i} passage{i !== 1 ? 's' : ''}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -333,7 +353,10 @@ export default function PracticePage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="font-headline">Questions</CardTitle>
                     {totalRecommendedTime > 0 && (
-                        <TestTimer initialTime={totalRecommendedTime * 60} onComplete={handleSubmitTest} />
+                        <TestTimer 
+                            initialTime={totalRecommendedTime * 60} 
+                            onTimeUpdate={setElapsedTime}
+                        />
                     )}
                 </CardHeader>
                 <CardContent>
@@ -389,78 +412,79 @@ export default function PracticePage() {
             </div>
         );
       case "results":
-        if (!results || !testData) return null;
+        if (!results || !testData || !lastTestHistory) return null;
         const totalCorrect = results.flat().filter(r => r.isCorrect).length;
         const totalQuestions = results.flat().length;
-        const lastTestHistory = JSON.parse(localStorage.getItem('testHistory') || '[]')[0] as TestHistoryItem;
 
         return (
-          <div ref={printableRef} className="w-full max-w-4xl printable-area">
-              <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle className="font-headline text-3xl text-center">Test Results</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                    <Trophy className="h-16 w-16 mx-auto text-primary mb-4" />
-                    <p className="text-xl">You scored <span className="font-bold text-primary">{totalCorrect}</span> out of <span className="font-bold">{totalQuestions}</span></p>
-                    <p className="text-5xl font-bold mt-2 text-primary">{lastTestHistory.overallScore.toFixed(1)}%</p>
-                    
-                    <div className="mx-auto max-w-md mt-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {lastTestHistory.scoresBySubject.map(subjectScore => (
-                                <Card key={subjectScore.subject} className="text-left">
-                                    <CardHeader className="p-4">
-                                        <CardTitle className="text-lg">{subjectScore.subject}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-0">
-                                        <p className="text-2xl font-bold">{subjectScore.score.toFixed(1)}%</p>
-                                        <p className="text-xs text-muted-foreground">{subjectScore.correctQuestions}/{subjectScore.totalQuestions} correct</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </div>
+          <div className="w-full max-w-4xl">
+              <div ref={printableRef} className="printable-area">
+                <Card className="mb-6">
+                  <CardHeader>
+                      <CardTitle className="font-headline text-3xl text-center">Test Results</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                      <Trophy className="h-16 w-16 mx-auto text-primary mb-4" />
+                      <p className="text-xl">You scored <span className="font-bold text-primary">{totalCorrect}</span> out of <span className="font-bold">{totalQuestions}</span></p>
+                      <p className="text-5xl font-bold mt-2 text-primary">{lastTestHistory.overallScore.toFixed(1)}%</p>
+                      
+                      <div className="mx-auto max-w-md mt-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {lastTestHistory.scoresBySubject.map(subjectScore => (
+                                  <Card key={subjectScore.subject} className="text-left">
+                                      <CardHeader className="p-4">
+                                          <CardTitle className="text-lg">{subjectScore.subject}</CardTitle>
+                                      </CardHeader>
+                                      <CardContent className="p-4 pt-0">
+                                          <p className="text-2xl font-bold">{subjectScore.score.toFixed(1)}%</p>
+                                          <p className="text-xs text-muted-foreground">{subjectScore.correctQuestions}/{subjectScore.totalQuestions} correct</p>
+                                      </CardContent>
+                                  </Card>
+                              ))}
+                          </div>
+                      </div>
+                  </CardContent>
+                </Card>
 
-                    <div className="flex items-center justify-center gap-4 mt-8 no-print">
-                        <Button onClick={handleStartNewTest}>Start Another Test</Button>
-                        <Button onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
-                    </div>
-                </CardContent>
-              </Card>
-
-              <h3 className="font-headline text-2xl mb-4">Detailed Review</h3>
-              <Accordion type="single" collapsible className="w-full">
-                {results.map((subjectResults, passageIndex) => (
-                    <div key={passageIndex} className="mb-4">
-                        <h4 className="font-bold text-xl mb-2">{testData[passageIndex].subject}</h4>
-                        {subjectResults.map((result, questionIndex) => (
-                            <Card key={questionIndex} className="mb-2">
-                                <AccordionItem value={`p${passageIndex}-q${questionIndex}`} className="border-b-0">
-                                    <AccordionTrigger className="p-4 hover:no-underline">
-                                        <div className="flex items-center gap-4 w-full">
-                                            {result.isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" /> : <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
-                                            <p className="text-left flex-1" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${result.question}`}}/>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-4 pt-0">
-                                        <div className="space-y-4">
-                                            <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
-                                            <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
-                                            <Separator />
-                                            <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
-                                                <h4 className="font-bold">Explanation (English)</h4>
-                                                <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
-                                                <h4 className="font-bold">Explanation (Arabic)</h4>
-                                                <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
-                                            </div>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Card>
-                        ))}
-                    </div>
-                ))}
-              </Accordion>
+                <h3 className="font-headline text-2xl mb-4">Detailed Review</h3>
+                <Accordion type="single" collapsible className="w-full">
+                  {results.map((subjectResults, passageIndex) => (
+                      <div key={passageIndex} className="mb-4">
+                          <h4 className="font-bold text-xl mb-2">{testData[passageIndex].subject}</h4>
+                          {subjectResults.map((result, questionIndex) => (
+                              <Card key={questionIndex} className="mb-2">
+                                  <AccordionItem value={`p${passageIndex}-q${questionIndex}`} className="border-b-0">
+                                      <AccordionTrigger className="p-4 hover:no-underline">
+                                          <div className="flex items-center gap-4 w-full">
+                                              {result.isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" /> : <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
+                                              <p className="text-left flex-1" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${result.question}`}}/>
+                                          </div>
+                                      </AccordionTrigger>
+                                      <AccordionContent className="p-4 pt-0">
+                                          <div className="space-y-4">
+                                              <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
+                                              <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
+                                              <Separator />
+                                              <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
+                                                  <h4 className="font-bold">Explanation (English)</h4>
+                                                  <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
+                                                  <h4 className="font-bold">Explanation (Arabic)</h4>
+                                                  <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
+                                              </div>
+                                          </div>
+                                      </AccordionContent>
+                                  </AccordionItem>
+                              </Card>
+                          ))}
+                      </div>
+                  ))}
+                </Accordion>
+              </div>
+              <div className="flex items-center justify-center gap-4 mt-8 no-print">
+                  <Button onClick={handleStartNewTest}>Start Another Test</Button>
+                  <Button ref={printTriggerRef} onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
+                  <Button variant="secondary" onClick={() => router.push('/dashboard')}>View Dashboard</Button>
+              </div>
           </div>
         )
     }

@@ -1,3 +1,4 @@
+
 export interface UrtQuestion {
   question: string;
   options: string[];
@@ -39,4 +40,7 @@ export interface TestHistoryItem {
   date: string;
   scoresBySubject: SubjectScore[];
   type: 'single' | 'full';
+  testData: UrtTest[];
+  results: GradedResult[][];
+  timeTaken: number;
 }
