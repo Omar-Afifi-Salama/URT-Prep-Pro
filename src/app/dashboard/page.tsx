@@ -34,11 +34,12 @@ export default function DashboardPage() {
       try {
         const parsedHistory = JSON.parse(storedHistory);
         if (Array.isArray(parsedHistory)) {
-          setHistory(parsedHistory);
+          // Filter out any potentially corrupted items
+          const validHistory = parsedHistory.filter(item => item && item.id && item.subjects);
+          setHistory(validHistory);
         }
       } catch (error) {
         console.error("Failed to parse test history:", error);
-        // Clear corrupted data
         localStorage.removeItem('testHistory');
         setHistory([]);
       }
@@ -104,10 +105,12 @@ export default function DashboardPage() {
                                         {item.type === 'full' ? 'Full Test' : 'Single Passage'}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="font-medium">{item.subjects.join(', ')}</TableCell>
-                                <TableCell className="text-right font-semibold text-primary">{item.overallScore.toFixed(1)}%</TableCell>
+                                <TableCell className="font-medium">{Array.isArray(item.subjects) ? item.subjects.join(', ') : 'N/A'}</TableCell>
+                                <TableCell className="text-right font-semibold text-primary">
+                                  {typeof item.overallScore === 'number' ? `${item.overallScore.toFixed(1)}%` : 'N/A'}
+                                </TableCell>
                                 <TableCell className="text-right">
-                                    {new Date(item.date).toString() !== 'Invalid Date'
+                                    {item.date && new Date(item.date).toString() !== 'Invalid Date'
                                         ? format(new Date(item.date), 'PPp')
                                         : 'Invalid Date'}
                                 </TableCell>

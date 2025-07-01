@@ -27,6 +27,12 @@ export function AppHeader() {
             >
               Dashboard
             </Link>
+             <Link
+              href="/about"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              About
+            </Link>
             <Link
               href="/billing"
               className="transition-colors hover:text-foreground/80 text-foreground/60"

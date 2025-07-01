@@ -25,7 +25,7 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, FileDown, Trophy, BookOpen, FileText } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, FileDown, Trophy, BookOpen, FileText, Rows, Columns3 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -44,6 +44,7 @@ import { TestTimer } from "@/components/test-timer";
 import { useReactToPrint } from "react-to-print";
 
 type View = "setup" | "test" | "results";
+type TestView = "compact" | "normal";
 
 export default function PracticePage() {
   // Setup State
@@ -60,6 +61,7 @@ export default function PracticePage() {
   const [userAnswers, setUserAnswers] = useState<Record<string, Record<number, string>>>({});
   const [results, setResults] = useState<GradedResult[][] | null>(null);
   const [view, setView] = useState<View>("setup");
+  const [testView, setTestView] = useState<TestView>('compact');
   
   // Hooks
   const { toast } = useToast();
@@ -281,6 +283,7 @@ export default function PracticePage() {
                               <SelectItem value="1">1 passage</SelectItem>
                               <SelectItem value="2">2 passages</SelectItem>
                               <SelectItem value="3">3 passages</SelectItem>
+                              <SelectItem value="4">4 passages</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -301,67 +304,88 @@ export default function PracticePage() {
       case "test":
         if (!testData) return null;
         const totalRecommendedTime = testData.reduce((sum, d) => sum + (d.recommendedTime || 0), 0);
-        return (
-            <div className="grid lg:grid-cols-2 gap-8 w-full items-start">
-                <Tabs defaultValue="0" className="w-full">
-                    <TabsList className="mb-4">
-                        {testData.map((data, index) => (
-                           <TabsTrigger key={index} value={String(index)}>{data.subject}</TabsTrigger>
-                        ))}
-                    </TabsList>
+
+        const passageContent = (
+             <Tabs defaultValue="0" className="w-full">
+                <TabsList className="mb-4">
                     {testData.map((data, index) => (
-                        <TabsContent key={index} value={String(index)}>
-                            <Card>
-                                <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
-                                <CardContent>
-                                    <div className="mb-4 rounded-lg overflow-hidden">
-                                        <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
-                                    </div>
-                                    <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
+                       <TabsTrigger key={index} value={String(index)}>{data.subject}</TabsTrigger>
                     ))}
-                </Tabs>
-                <Card className="lg:sticky top-24">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="font-headline">Questions</CardTitle>
-                        {totalRecommendedTime > 0 && (
-                            <TestTimer initialTime={totalRecommendedTime * 60} onComplete={handleSubmitTest} />
-                        )}
-                    </CardHeader>
-                    <CardContent>
-                        <ScrollArea className="h-[60vh] pr-4">
-                            {testData.map((data, passageIndex) => (
-                                <div key={passageIndex} className="mb-8">
-                                    <h3 className="font-bold text-lg mb-4 text-primary">{data.subject}</h3>
-                                    <div className="flex flex-col gap-6">
-                                    {data.questions.map((q, questionIndex) => (
-                                        <div key={questionIndex}>
-                                            <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                            <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)}>
-                                                <div className="space-y-2">
-                                                {q.options.map((option, optIndex) => (
-                                                    <div key={optIndex} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
-                                                        <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                    </div>
-                                                ))}
-                                                </div>
-                                            </RadioGroup>
-                                        </div>
-                                    ))}
-                                    </div>
-                                    {passageIndex < testData.length - 1 && <Separator className="mt-8"/>}
+                </TabsList>
+                {testData.map((data, index) => (
+                    <TabsContent key={index} value={String(index)}>
+                        <Card>
+                            <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
+                            <CardContent>
+                                <div className="mb-4 rounded-lg overflow-hidden">
+                                    <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
                                 </div>
-                            ))}
-                        </ScrollArea>
-                        <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
-                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                          Submit Answers
-                        </Button>
-                    </CardContent>
-                </Card>
+                                <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                ))}
+            </Tabs>
+        );
+
+        const questionsContent = (
+            <Card className={cn(testView === 'compact' && 'lg:sticky top-24')}>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="font-headline">Questions</CardTitle>
+                    {totalRecommendedTime > 0 && (
+                        <TestTimer initialTime={totalRecommendedTime * 60} onComplete={handleSubmitTest} />
+                    )}
+                </CardHeader>
+                <CardContent>
+                    <ScrollArea className={cn(testView === 'compact' ? "h-[60vh]" : "h-auto", "pr-4")}>
+                        {testData.map((data, passageIndex) => (
+                            <div key={passageIndex} className="mb-8">
+                                <h3 className="font-bold text-lg mb-4 text-primary">{data.subject}</h3>
+                                <div className="flex flex-col gap-6">
+                                {data.questions.map((q, questionIndex) => (
+                                    <div key={questionIndex}>
+                                        <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                        <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)}>
+                                            <div className="space-y-2">
+                                            {q.options.map((option, optIndex) => (
+                                                <div key={optIndex} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
+                                                    <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                </div>
+                                            ))}
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                ))}
+                                </div>
+                                {passageIndex < testData.length - 1 && <Separator className="mt-8"/>}
+                            </div>
+                        ))}
+                    </ScrollArea>
+                    <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
+                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Submit Answers
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+
+        return (
+            <div className="w-full">
+                 <div className="flex justify-end mb-4 gap-2">
+                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
+                        <Columns3 className="mr-2 h-4 w-4"/>
+                        Compact
+                    </Button>
+                    <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
+                        <Rows className="mr-2 h-4 w-4"/>
+                        Normal
+                    </Button>
+                </div>
+                <div className={cn('w-full items-start', testView === 'compact' ? 'grid lg:grid-cols-2 gap-8' : 'flex flex-col gap-8')}>
+                    {passageContent}
+                    {questionsContent}
+                </div>
             </div>
         );
       case "results":
