@@ -27,7 +27,7 @@ const QuestionSchema = z.object({
 
 const ChartDataSchema = z.object({
     type: z.string().describe("The type of chart to render. Must be 'bar'."),
-    data: z.array(z.any()).describe('An array of data objects for the chart.'),
+    data: z.array(z.record(z.any())).describe('An array of data objects for the chart.'),
     xAxisKey: z.string().describe('The key in the data objects to use for the X-axis.'),
     yAxisKey: z.string().describe('The key in the data objects to use for the Y-axis.'),
     yAxisLabel: z.string().describe('A short label for the Y-axis (e.g., "Temperature (°C)").'),
