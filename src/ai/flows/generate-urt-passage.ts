@@ -11,6 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const GenerateUrtPassageInputSchema = z.object({
   topic: z.string().describe('The topic to generate the URT passage and questions about (English, Physics, Chemistry, Biology, Geology).'),
@@ -101,7 +102,7 @@ Number of Questions: {{numQuestions}}
 Uniqueness Seed: {{randomSeed}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
 IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object. Your entire response should be only the JSON.
-The required JSON schema is: ${JSON.stringify(GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true }).jsonSchema())}
+The required JSON schema is: ${JSON.stringify(zodToJsonSchema(GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })))}
 `;
 
 const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long to provide sufficient depth.
@@ -137,7 +138,7 @@ Number of Questions: {{numQuestions}}
 Uniqueness Seed: {{randomSeed}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
 IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object. Your entire response should be only the JSON.
-The required JSON schema is: ${JSON.stringify(ActStyleAiOutputSchema.jsonSchema())}
+The required JSON schema is: ${JSON.stringify(zodToJsonSchema(ActStyleAiOutputSchema))}
 `;
 
 const generateUrtPassageFlow = ai.defineFlow(
