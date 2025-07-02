@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useGenkit } from '@genkit-ai/next';
+import { useGenkit } from '@genkit-ai/next/client';
 import {
   Dialog,
   DialogContent,
