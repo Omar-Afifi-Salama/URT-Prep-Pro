@@ -8,8 +8,7 @@
  * - GenerateUrtPassageOutput - The return type for the generateUrtPassage function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'zod';
+import { z } from 'zod';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -138,16 +137,6 @@ The required JSON schema is: ${JSON.stringify(zodToJsonSchema(ActStyleAiOutputSc
 `;
 
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
-    return generateUrtPassageFlow(input);
-}
-
-const generateUrtPassageFlow = ai.defineFlow(
-  {
-    name: 'generateUrtPassageFlow',
-    inputSchema: GenerateUrtPassageInputSchema,
-    outputSchema: GenerateUrtPassageOutputSchema,
-  },
-  async (input) => {
     const validatedInput = GenerateUrtPassageInputSchema.parse(input);
 
     if (!validatedInput.apiKey) {
@@ -226,8 +215,7 @@ const generateUrtPassageFlow = ai.defineFlow(
         if (e.message && (e.message.includes('429') || e.message.includes('resource has been exhausted'))) {
             throw new Error('You have exceeded the request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again later.');
         }
-        console.error("Error in generateUrtPassageFlow:", e);
+        console.error("Error in generateUrtPassage:", e);
         throw new Error('An unexpected error occurred while generating the passage.');
     }
-  }
-);
+}
