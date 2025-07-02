@@ -1,7 +1,7 @@
 import { AppHeader } from '@/components/app-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, KeyRound, Rocket } from 'lucide-react';
+import { CheckCircle, KeyRound, Rocket, Heart } from 'lucide-react';
 import Link from 'next/link';
 
 export default function WelcomePage() {
@@ -90,7 +90,9 @@ export default function WelcomePage() {
           </div>
 
           <footer className="text-center text-sm text-muted-foreground pt-8">
-            <p>Created with ❤️ by Omar Afifi</p>
+            <p className="flex items-center justify-center gap-1.5">
+              Created with <Heart className="h-4 w-4 text-red-500 fill-current" /> by Omar Afifi
+            </p>
           </footer>
         </div>
       </main>
