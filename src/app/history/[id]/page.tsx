@@ -26,6 +26,7 @@ import { useFont } from '@/context/font-provider';
 import { cn } from '@/lib/utils';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
+import { flushSync } from 'react-dom';
 
 export default function HistoryDetailPage() {
   const [test, setTest] = useState<TestHistoryItem | null>(null);
@@ -46,12 +47,8 @@ export default function HistoryDetailPage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     onBeforeGetContent: () => {
-      return new Promise<void>((resolve) => {
+      flushSync(() => {
         setOpenAccordionItems(allItemValues);
-        // Allow state to update before printing
-        setTimeout(() => {
-          resolve();
-        }, 300);
       });
     },
     onAfterPrint: () => {
@@ -105,12 +102,15 @@ export default function HistoryDetailPage() {
   }, [params, router]);
 
   const renderChart = (chartData: ChartData) => {
-    const chartConfig: ChartConfig = {
-      [chartData.yAxisKey]: {
-        label: chartData.yAxisLabel,
-        color: "hsl(var(--primary))",
-      },
-    };
+    const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+    
+    const chartConfig = chartData.yAxisKeys.reduce((acc: ChartConfig, key, index) => {
+      acc[key] = {
+        label: key,
+        color: chartColors[index % chartColors.length],
+      };
+      return acc;
+    }, {});
 
     return (
       <Card className="mt-6">
@@ -119,7 +119,7 @@ export default function HistoryDetailPage() {
           <CardDescription>A graphical representation of the data from the passage.</CardDescription>
         </CardHeader>
         <CardContent className="pl-2">
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <RechartsBarChart accessibilityLayer data={chartData.data}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey={chartData.xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
@@ -132,7 +132,14 @@ export default function HistoryDetailPage() {
                 label={{ value: chartData.yAxisLabel, angle: -90, position: 'insideLeft' }}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Bar dataKey={chartData.yAxisKey} fill="var(--color-primary)" radius={4} />
+              {chartData.yAxisKeys.map((key) => (
+                  <Bar
+                      key={key}
+                      dataKey={key}
+                      fill={chartConfig[key]?.color}
+                      radius={4}
+                  />
+              ))}
             </RechartsBarChart>
           </ChartContainer>
         </CardContent>
@@ -218,7 +225,7 @@ export default function HistoryDetailPage() {
                     <Card className="mb-4">
                         <CardHeader><CardTitle className="font-headline text-2xl">{passageData.title}</CardTitle></CardHeader>
                         <CardContent>
-                            <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: passageData.passage.replace(/\n\n/g, '<br/><br/>') }} />
+                            <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: passageData.passage }} />
                              {passageData.chartData && renderChart(passageData.chartData)}
                         </CardContent>
                     </Card>

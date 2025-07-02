@@ -11,7 +11,7 @@ export interface ChartData {
   type: 'bar';
   data: any[];
   xAxisKey: string;
-  yAxisKey: string;
+  yAxisKeys: string[];
   yAxisLabel: string;
 }
 

@@ -34,13 +34,13 @@ const ChartDataSchema = z.object({
     type: z.string().describe("The type of chart to render. Must be 'bar'."),
     data: z.array(z.record(z.any())).describe('An array of data objects for the chart.'),
     xAxisKey: z.string().describe('The key in the data objects to use for the X-axis.'),
-    yAxisKey: z.string().describe('The key in the data objects to use for the Y-axis.'),
+    yAxisKeys: z.array(z.string()).describe('The keys in the data objects to use for the Y-axis. Can contain multiple keys for grouped bar charts.'),
     yAxisLabel: z.string().describe('A short label for the Y-axis (e.g., "Temperature (°C)").'),
 });
 
 const GenerateUrtPassageOutputSchema = z.object({
   title: z.string().describe('An appropriate title for the passage.'),
-  passage: z.string().describe('The generated URT passage.'),
+  passage: z.string().describe('The generated URT passage, formatted with HTML tags.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
   imageUrl: z.string().describe('A URL for a relevant placeholder image.'),
   recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
@@ -68,10 +68,10 @@ You will generate a URT passage with a title, and associated multiple-choice que
 The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
 
 PASSAGE FORMATTING:
-- Number each paragraph, starting with 1. (e.g., "1. First paragraph text...")
-- When appropriate, include data in an HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>).
+- All paragraphs must be wrapped in <p> tags.
+- Number each paragraph, starting with 1. (e.g., "<p>1. The first paragraph text...</p>")
+- When appropriate, include data in a well-structured HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>).
 - When a table is included, refer to it in the text (e.g., "as shown in Table 1").
-- Separate each paragraph with a double newline character (\\n\\n).
 
 EQUATION FORMATTING:
 - When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
@@ -100,17 +100,17 @@ IMPORTANT: You must format your response as a single, valid JSON object that adh
 The required JSON schema is: ${JSON.stringify(zodToJsonSchema(GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })))}
 `;
 
-const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long to provide sufficient depth.
+const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long. The scientific concepts should be nuanced and require careful reading to distinguish between different experiments or viewpoints. The data presented in tables should not be straightforward and may require interpolation or extrapolation to answer some questions.
 
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
 
-The passage MUST include data presented in a detailed HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). The table should contain multiple variables and trials. You must refer to the table in the text (e.g., "as shown in Table 1").
+The passage MUST include data presented in a detailed HTML table. The first column of the table MUST be 'Trial', 'Sample', or a similar identifier for the row (e.g., 1, 2, 3...). The table must contain multiple variables and trials. You must refer to the table in the text (e.g., "as shown in Table 1").
 
-Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents a subset of the table's data, suitable for rendering a simple bar chart. The data should be complex enough to support multiple questions.
+Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart, potentially with multiple data series.
 - 'type' must be 'bar'.
 - 'data' must be a JSON-formatted string representing the array of objects from the table. For example: '[{"trial":1,"resultA":15,"resultB":18},{"trial":2,"resultA":25,"resultB":29}]'.
 - 'xAxisKey' must be the name of the property to use for the X-axis (e.g., 'substance' or 'trialNumber').
-- 'yAxisKey' must be the name of the property for the Y-axis (must be a numerical value).
+- 'yAxisKeys' must be an array of strings, where each string is a property name from the data objects to be plotted on the Y-axis (e.g., ['Result A', 'Result B']).
 - 'yAxisLabel' must be a short string describing the Y-axis unit (e.g., 'pH Level' or 'Temperature (°C)').
 
 EQUATION FORMATTING:
