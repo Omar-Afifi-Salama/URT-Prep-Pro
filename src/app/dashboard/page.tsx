@@ -65,14 +65,19 @@ export default function DashboardPage() {
         const rawHistory = JSON.parse(storedHistory);
         // Defensively filter for valid history items to prevent crashes
         if (Array.isArray(rawHistory)) {
-          parsedHistory = rawHistory.filter(item => 
+          parsedHistory = rawHistory.filter((item): item is TestHistoryItem => 
             item && 
             typeof item.id === 'string' &&
+            typeof item.date === 'string' &&
             Array.isArray(item.subjects) &&
             typeof item.overallScore === 'number' &&
+            typeof item.totalQuestions === 'number' &&
+            typeof item.correctQuestions === 'number' &&
             Array.isArray(item.scoresBySubject) &&
+            (item.type === 'single' || item.type === 'full') &&
             Array.isArray(item.testData) &&
-            Array.isArray(item.results)
+            Array.isArray(item.results) &&
+            typeof item.timeTaken === 'number'
           );
         }
       } catch (error) {

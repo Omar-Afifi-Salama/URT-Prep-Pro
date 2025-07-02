@@ -168,55 +168,68 @@ export default function PracticePage() {
     setIsLoading(true);
 
     try {
-        const gradedResults: GradedResult[][] = testData.map((passageData, passageIndex) => {
-            return passageData.questions.map((q, questionIndex) => {
-                const userAnswer = userAnswers[passageIndex]?.[questionIndex] || "No answer";
-                const isCorrect = userAnswer === q.answer;
-                return {
-                    isCorrect,
-                    userAnswer,
-                    correctAnswer: q.answer,
-                    question: q.question,
-                    explanationEnglish: q.explanationEnglish,
-                    explanationArabic: q.explanationArabic,
-                };
-            });
-        });
+      const allResults: GradedResult[][] = testData.map((passageData, passageIndex) =>
+        passageData.questions.map((q, questionIndex) => {
+          const userAnswer = userAnswers[passageIndex]?.[questionIndex] || 'No answer';
+          return {
+            isCorrect: userAnswer === q.answer,
+            userAnswer,
+            correctAnswer: q.answer,
+            question: q.question,
+            explanationEnglish: q.explanationEnglish,
+            explanationArabic: q.explanationArabic,
+          };
+        })
+      );
 
-        let totalCorrect = 0;
-        let totalQuestions = 0;
-        const scoresBySubject: SubjectScore[] = gradedResults.map((subjectResults, index) => {
-            const correctCount = subjectResults.filter(r => r.isCorrect).length;
-            const questionCount = subjectResults.length;
-            totalCorrect += correctCount;
-            totalQuestions += questionCount;
-            return {
-                subject: testData[index].subject,
-                score: questionCount > 0 ? (correctCount / questionCount) * 100 : 0,
-                correctQuestions: correctCount,
-                totalQuestions: questionCount,
-            };
-        });
-
-        const newHistoryItem: TestHistoryItem = {
-            id: new Date().toISOString() + Math.random(),
-            subjects: testData.map(t => t.subject),
-            overallScore: totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0,
-            correctQuestions: totalCorrect,
-            totalQuestions,
-            date: new Date().toISOString(),
-            scoresBySubject,
-            type: mode,
-            testData: testData,
-            results: gradedResults,
-            timeTaken: elapsedTime,
+      const scoresBySubject: SubjectScore[] = testData.map((passage, index) => {
+        const subjectResults = allResults[index];
+        const correctCount = subjectResults.filter(r => r.isCorrect).length;
+        const questionCount = subjectResults.length;
+        return {
+          subject: passage.subject,
+          score: questionCount > 0 ? (correctCount / questionCount) * 100 : 0,
+          correctQuestions: correctCount,
+          totalQuestions: questionCount,
         };
+      });
 
-        const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
-        history.unshift(newHistoryItem);
-        localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
+      const totalCorrect = scoresBySubject.reduce((sum, s) => sum + s.correctQuestions, 0);
+      const totalQuestions = scoresBySubject.reduce((sum, s) => sum + s.totalQuestions, 0);
+      const overallScore = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
 
-        router.push(`/history/${newHistoryItem.id}`);
+      const newHistoryItem: TestHistoryItem = {
+        id: new Date().toISOString() + Math.random(),
+        date: new Date().toISOString(),
+        subjects: testData.map(t => t.subject),
+        type: mode,
+        testData,
+        results: allResults,
+        timeTaken: elapsedTime,
+        scoresBySubject,
+        totalQuestions,
+        correctQuestions: totalCorrect,
+        overallScore,
+      };
+
+      let history: TestHistoryItem[] = [];
+      try {
+        const storedHistory = localStorage.getItem('testHistory');
+        if (storedHistory) {
+          const parsed = JSON.parse(storedHistory);
+          if (Array.isArray(parsed)) {
+            history = parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Could not parse test history, starting fresh.', e);
+        history = [];
+      }
+      
+      history.unshift(newHistoryItem);
+      localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
+
+      router.push(`/history/${newHistoryItem.id}`);
 
     } catch (error) {
       console.error("Failed to process test results:", error);

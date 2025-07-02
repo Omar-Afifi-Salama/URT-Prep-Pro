@@ -47,16 +47,20 @@ export default function HistoryDetailPage() {
                 const rawHistory = JSON.parse(storedHistory);
                 let parsedHistory: TestHistoryItem[] = [];
                 
-                // Defensively filter for valid history items to prevent crashes
                 if (Array.isArray(rawHistory)) {
-                    parsedHistory = rawHistory.filter(item => 
-                        item && 
-                        typeof item.id === 'string' &&
-                        Array.isArray(item.subjects) &&
-                        typeof item.overallScore === 'number' &&
-                        Array.isArray(item.scoresBySubject) &&
-                        Array.isArray(item.testData) &&
-                        Array.isArray(item.results)
+                    parsedHistory = rawHistory.filter((item): item is TestHistoryItem => 
+                      item && 
+                      typeof item.id === 'string' &&
+                      typeof item.date === 'string' &&
+                      Array.isArray(item.subjects) &&
+                      typeof item.overallScore === 'number' &&
+                      typeof item.totalQuestions === 'number' &&
+                      typeof item.correctQuestions === 'number' &&
+                      Array.isArray(item.scoresBySubject) &&
+                      (item.type === 'single' || item.type === 'full') &&
+                      Array.isArray(item.testData) &&
+                      Array.isArray(item.results) &&
+                      typeof item.timeTaken === 'number'
                     );
                 }
 
