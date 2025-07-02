@@ -5,7 +5,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FontProvider } from '@/context/font-provider';
-import { ApiKeyProvider } from '@/context/api-key-provider';
 import { UsageProvider } from '@/context/usage-provider';
 
 const fontInter = Inter({
@@ -64,14 +63,12 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <ApiKeyProvider>
-            <UsageProvider>
-              <FontProvider>
-                {children}
-                <Toaster />
-              </FontProvider>
-            </UsageProvider>
-          </ApiKeyProvider>
+          <UsageProvider>
+            <FontProvider>
+              {children}
+              <Toaster />
+            </FontProvider>
+          </UsageProvider>
         </ThemeProvider>
       </body>
     </html>

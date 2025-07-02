@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+// This file is no longer used and is replaced by the GenkitProvider.
+// It is kept to avoid breaking the build process if referenced somewhere,
+// but it provides no functionality.
 
-const API_KEY_STORAGE_KEY = 'urt-prep-pro-api-key';
+import { createContext, useContext, ReactNode } from 'react';
 
 type ApiKeyContextType = {
   apiKey: string | null;
@@ -15,33 +17,15 @@ type ApiKeyContextType = {
 const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined);
 
 export function ApiKeyProvider({ children }: { children: ReactNode }) {
-  const [apiKey, setApiKeyState] = useState<string | null>(null);
-  const [isApiKeySet, setIsApiKeySet] = useState(false);
-  const [isDialogOpen, setDialogOpen] = useState(false);
-  
-  useEffect(() => {
-    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-    if (storedKey) {
-        setApiKeyState(storedKey);
-        setIsApiKeySet(true);
-    } else {
-        setIsApiKeySet(false);
-    }
-  }, []);
-
-  const setApiKey = useCallback((key: string | null) => {
-    setApiKeyState(key);
-    if (key) {
-      localStorage.setItem(API_KEY_STORAGE_KEY, key);
-      setIsApiKeySet(true);
-    } else {
-      localStorage.removeItem(API_KEY_STORAGE_KEY);
-      setIsApiKeySet(false);
-    }
-  }, []);
-
+  const value: ApiKeyContextType = {
+    apiKey: null,
+    setApiKey: () => {},
+    isApiKeySet: false,
+    isDialogOpen: false,
+    setDialogOpen: () => {},
+  };
   return (
-    <ApiKeyContext.Provider value={{ apiKey, setApiKey, isApiKeySet, isDialogOpen, setDialogOpen }}>
+    <ApiKeyContext.Provider value={value}>
       {children}
     </ApiKeyContext.Provider>
   );

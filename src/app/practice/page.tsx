@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
-import { useApiKey } from "@/context/api-key-provider";
+import { useGenkit } from "@genkit-ai/next/client";
 import { TestTimer } from "@/components/test-timer";
 import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
@@ -63,7 +63,8 @@ export default function PracticePage() {
   // Hooks
   const { toast } = useToast();
   const { font } = useFont();
-  const { isApiKeySet } = useApiKey();
+  const { apiKey } = useGenkit();
+  const isApiKeySet = !!apiKey;
   const { addUsage } = useUsage();
   const router = useRouter();
   
@@ -84,6 +85,7 @@ export default function PracticePage() {
             difficulty,
             wordLength: parseInt(wordLength, 10),
             numQuestions: parseInt(numQuestions, 10),
+            randomSeed: Math.random(),
         }));
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
@@ -97,6 +99,7 @@ export default function PracticePage() {
                       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
+                      randomSeed: Math.random(),
                   }));
               }
             }
@@ -117,6 +120,7 @@ export default function PracticePage() {
         const data = await Promise.all(generationTasks);
         setTestData(data);
         setView("test");
+        setTestView('normal');
         
         const totalTokens = data.reduce((sum, d) => sum + (d.tokenUsage || 0), 0);
         const totalRequests = data.length;
@@ -154,7 +158,6 @@ export default function PracticePage() {
     setIsLoading(true);
 
     try {
-        // The grading logic is now synchronous since explanations are pre-fetched.
         const gradedResults: GradedResult[][] = testData.map((passageData, passageIndex) => {
             return passageData.questions.map((q, questionIndex) => {
                 const userAnswer = userAnswers[passageIndex]?.[questionIndex] || "No answer";
@@ -164,7 +167,6 @@ export default function PracticePage() {
                     userAnswer,
                     correctAnswer: q.answer,
                     question: q.question,
-                    // Use pre-fetched explanations
                     explanationEnglish: q.explanationEnglish,
                     explanationArabic: q.explanationArabic,
                 };
@@ -356,7 +358,7 @@ export default function PracticePage() {
                             <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
                             <CardContent>
                                 {data.imageUrl && (
-                                <div className="mb-4 rounded-lg overflow-hidden">
+                                <div className="mb-4 rounded-lg overflow-hidden h-auto">
                                     <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
                                 </div>
                                 )}
@@ -373,15 +375,9 @@ export default function PracticePage() {
             <Card className={cn(testView === 'compact' && 'lg:sticky top-24')}>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="font-headline">Questions</CardTitle>
-                    {testView === 'compact' && totalRecommendedTime > 0 && (
-                        <TestTimer 
-                            initialTime={totalRecommendedTime * 60} 
-                            onTimeUpdate={handleTimeUpdate}
-                        />
-                    )}
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className={cn(testView === 'compact' ? "h-[60vh]" : "h-auto", "pr-4")}>
+                    <ScrollArea className={cn(testView === 'compact' ? "h-[calc(100vh-12rem)]" : "h-auto", "pr-4")}>
                         {testData.map((data, passageIndex) => (
                             <div key={passageIndex} className="mb-8">
                                 <h3 className="font-bold text-lg mb-4 text-primary">{data.subject}</h3>
@@ -416,23 +412,25 @@ export default function PracticePage() {
 
         return (
             <div className="w-full relative">
-                 <div className="flex justify-end mb-4 gap-2">
-                    {totalRecommendedTime > 0 && testView === 'normal' && (
-                       <div className="sticky top-20 z-10 mr-auto">
+                 <div className="flex justify-between items-start mb-4 gap-2">
+                    {totalRecommendedTime > 0 && (
+                       <div className="sticky top-20 z-10">
                          <TestTimer 
                             initialTime={totalRecommendedTime * 60} 
                             onTimeUpdate={handleTimeUpdate}
                           />
                        </div>
                     )}
-                    <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
-                        <Rows className="mr-2 h-4 w-4"/>
-                        Normal
-                    </Button>
-                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
-                        <Columns3 className="mr-2 h-4 w-4"/>
-                        Compact
-                    </Button>
+                    <div className="flex gap-2 ml-auto">
+                        <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
+                            <Rows className="mr-2 h-4 w-4"/>
+                            Normal
+                        </Button>
+                        <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
+                            <Columns3 className="mr-2 h-4 w-4"/>
+                            Compact
+                        </Button>
+                    </div>
                 </div>
                 <div className={cn('w-full items-start', testView === 'compact' ? 'grid lg:grid-cols-2 gap-8' : 'flex flex-col gap-8')}>
                     {passageContent}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,18 +13,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useApiKey } from "@/context/api-key-provider";
+import { useGenkit } from "@genkit-ai/next/client";
 import { ApiKeyDialog } from "./api-key-dialog";
 
 export function UserNav() {
-  const { isApiKeySet, setDialogOpen, isDialogOpen } = useApiKey();
+  const { apiKey } = useGenkit();
+  const [isDialogOpen, setDialogOpen] = useState(false);
+  const isApiKeySet = !!apiKey;
 
   useEffect(() => {
     // Open the dialog on initial load if the key is not set
     if (!isApiKeySet) {
       setDialogOpen(true);
     }
-  }, [isApiKeySet, setDialogOpen]);
+  }, [isApiKeySet]);
 
   return (
     <>
@@ -61,7 +63,7 @@ export function UserNav() {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      {isDialogOpen && <ApiKeyDialog />}
+      <ApiKeyDialog open={isDialogOpen} onOpenChange={setDialogOpen} />
     </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useApiKey } from '@/context/api-key-provider';
+import { useGenkit } from '@genkit-ai/next/client';
 import {
   Dialog,
   DialogContent,
@@ -16,15 +16,20 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-export function ApiKeyDialog() {
-  const { apiKey, setApiKey, isDialogOpen, setDialogOpen } = useApiKey();
+interface ApiKeyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
+  const { apiKey, setApiKey } = useGenkit();
   const [localKey, setLocalKey] = useState(apiKey || '');
   const { toast } = useToast();
 
   const handleSave = () => {
     if (localKey.trim()) {
       setApiKey(localKey);
-      setDialogOpen(false);
+      onOpenChange(false);
       toast({
         title: 'API Key Saved',
         description: 'Your Google AI API key has been saved.',
@@ -39,7 +44,7 @@ export function ApiKeyDialog() {
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Set Google AI API Key</DialogTitle>
