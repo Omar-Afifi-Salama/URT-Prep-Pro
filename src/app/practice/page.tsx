@@ -4,7 +4,6 @@
 import { useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
-import { gradeAnswerAndExplain } from "@/ai/flows/grade-answer-and-explain.ts";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -123,9 +122,9 @@ export default function PracticePage() {
                 description: `This generation used approximately ${totalTokens.toLocaleString()} tokens.`,
             });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to generate test:", error);
-        toast({ title: "Generation Failed", description: "Could not generate the test. Check your API key and try again.", variant: "destructive" });
+        toast({ title: "Generation Failed", description: error.message || "Could not generate the test. Check your API key and try again.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -144,22 +143,25 @@ export default function PracticePage() {
   const handleSubmitTest = async () => {
     if (!testData) return;
     setIsLoading(true);
-    
+
     try {
-        const gradingTasks: Promise<GradedResult[]>[] = testData.map((passageData, passageIndex) => {
-            return Promise.all(passageData.questions.map(async (q, questionIndex) => {
+        // The grading logic is now synchronous since explanations are pre-fetched.
+        const gradedResults: GradedResult[][] = testData.map((passageData, passageIndex) => {
+            return passageData.questions.map((q, questionIndex) => {
                 const userAnswer = userAnswers[passageIndex]?.[questionIndex] || "No answer";
-                return gradeAnswerAndExplain({
-                    passage: passageData.passage,
+                const isCorrect = userAnswer === q.answer;
+                return {
+                    isCorrect,
+                    userAnswer,
+                    correctAnswer: q.answer,
                     question: q.question,
-                    answer: q.answer,
-                    userAnswer: userAnswer,
-                }).then(res => ({ ...res, userAnswer, correctAnswer: q.answer, question: q.question }))
-            }));
+                    // Use pre-fetched explanations
+                    explanationEnglish: q.explanationEnglish,
+                    explanationArabic: q.explanationArabic,
+                };
+            });
         });
-        
-        const gradedResults = await Promise.all(gradingTasks);
-        
+
         let totalCorrect = 0;
         let totalQuestions = 0;
         const scoresBySubject: SubjectScore[] = gradedResults.map((subjectResults, index) => {
@@ -196,9 +198,10 @@ export default function PracticePage() {
         router.push(`/history/${newHistoryItem.id}`);
 
     } catch (error) {
-      console.error("Failed to grade test:", error);
-      toast({ title: "Grading Failed", description: "Could not grade your test. Please try again.", variant: "destructive" });
-      setIsLoading(false);
+      console.error("Failed to process test results:", error);
+      toast({ title: "Submission Failed", description: "Could not process your test results. Please try again.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -344,8 +347,8 @@ export default function PracticePage() {
                             <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
                             <CardContent>
                                 {data.imageUrl && (
-                                <div className="mb-4 rounded-lg overflow-hidden">
-                                    <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
+                                <div className="mb-4 rounded-lg overflow-hidden max-h-[400px]">
+                                    <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-full" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
                                 </div>
                                 )}
                                 <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />

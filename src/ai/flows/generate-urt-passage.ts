@@ -24,6 +24,8 @@ const QuestionSchema = z.object({
   question: z.string().describe('The question text.'),
   options: z.array(z.string()).length(4).describe('An array of 4 multiple choice options.'),
   answer: z.string().describe('The correct answer, which must be one of the provided options.'),
+  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
 });
 
 const ChartDataSchema = z.object({
@@ -83,10 +85,11 @@ SUBJECT-SPECIFIC INSTRUCTIONS:
 - For science topics (Physics, Chemistry, Biology, Geology), adopt an academic and authoritative tone, similar to a reference textbook, while ensuring the content remains engaging and accessible.
 - If the topic is Physics or Chemistry, you MUST include relevant equations in the passage. You must also ask at least one question that specifically requires understanding or using an equation from the passage. These equations must use the specified HTML formatting.
 
-QUESTION FORMATTING:
+QUESTION AND EXPLANATION FORMATTING:
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
-- Any equations or formulas in the questions or options MUST use the specified HTML formatting.
+- For EACH question, you MUST provide a detailed explanation in both English and Arabic. The explanation should clarify why the correct answer is correct and why the other options are incorrect. Store these in the 'explanationEnglish' and 'explanationArabic' fields respectively. This is a mandatory part of the output for every question.
+- Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting.
 
 TIMER:
 - Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
@@ -120,10 +123,11 @@ Crucially, you MUST also provide a structured JSON object in the 'chartData' fie
 EQUATION FORMATTING:
 - When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
 
-QUESTION FORMATTING:
+QUESTION AND EXPLANATION FORMATTING:
 - Generate questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information from different parts of the passage.
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
+- For EACH question, you MUST provide a detailed explanation in both English and Arabic. The explanation should clarify why the correct answer is correct and why the other options are incorrect, referencing the passage, tables, or charts as needed. Store these in the 'explanationEnglish' and 'explanationArabic' fields respectively. This is a mandatory part of the output for every question.
 
 TIMER:
 - Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.

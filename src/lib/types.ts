@@ -3,6 +3,8 @@ export interface UrtQuestion {
   question: string;
   options: string[];
   answer: string;
+  explanationEnglish: string;
+  explanationArabic: string;
 }
 
 export interface ChartData {
