@@ -49,10 +49,20 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
   return generateUrtPassageFlow(input);
 }
 
+// AI-specific output schema where chartData.data is a string
+const ActStyleAiOutputSchema = GenerateUrtPassageOutputSchema
+  .omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })
+  .extend({
+      chartData: z.optional(ChartDataSchema.omit({ data: true }).extend({
+          data: z.string().describe('A JSON string representing an array of data objects for the chart. This MUST be a valid, minified JSON array string.'),
+      })),
+  });
+
 const standardTextGenerationPrompt = ai.definePrompt({
   name: 'standardUrtPassageTextPrompt',
   input: {schema: GenerateUrtPassageInputSchema},
-  output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true })},
+  // Omit chartData entirely for this prompt to avoid schema validation issues
+  output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })},
   prompt: `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
 You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam. For "Hard" difficulty, the passage should involve multiple complex, interrelated concepts, require a high level of critical reading, and use advanced, domain-specific vocabulary.
@@ -92,14 +102,14 @@ IMPORTANT: You must format your response as a single, valid JSON object that adh
 const actStyleSciencePrompt = ai.definePrompt({
   name: 'actStyleSciencePassagePrompt',
   input: {schema: GenerateUrtPassageInputSchema},
-  output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true })},
+  output: {schema: ActStyleAiOutputSchema},
   prompt: `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 1-2 experiments) or "Conflicting Viewpoints" (presenting hypotheses from Scientist 1 and Scientist 2). The tone should be objective and data-focused.
 
 The passage MUST include data presented in an HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). You must refer to the table in the text (e.g., "as shown in Table 1").
 
 Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents a subset of the table's data, suitable for rendering a simple bar chart.
 - 'type' must be 'bar'.
-- 'data' must be an array of objects from the table.
+- 'data' must be a JSON-formatted string representing the array of objects from the table. For example: '[{"trial":1,"result":15},{"trial":2,"result":25}]'.
 - 'xAxisKey' must be the name of the property to use for the X-axis (e.g., 'substance' or 'trialNumber').
 - 'yAxisKey' must be the name of the property for the Y-axis (must be a numerical value).
 - 'yAxisLabel' must be a short string describing the Y-axis unit (e.g., 'pH Level' or 'Temperature (°C)').
@@ -130,15 +140,30 @@ const generateUrtPassageFlow = ai.defineFlow(
     inputSchema: GenerateUrtPassageInputSchema,
     outputSchema: GenerateUrtPassageOutputSchema,
   },
-  async input => {
+  async (input): Promise<GenerateUrtPassageOutput> => {
     const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
     const isScience = scienceSubjects.includes(input.topic);
     const shouldUseActStyle = isScience && Math.random() < 0.3;
 
-    let textOutput, usage;
+    let textOutput: any;
+    let usage;
 
     if (shouldUseActStyle) {
-      ({output: textOutput, usage} = await actStyleSciencePrompt(input, { model: 'googleai/gemini-1.5-pro-latest' }));
+      const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(input, { model: 'googleai/gemini-1.5-pro-latest' });
+      textOutput = aiOutput;
+      usage = actUsage;
+      
+      if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
+        try {
+          const parsedData = JSON.parse(textOutput.chartData.data);
+          // Mutate the object to match the final schema the app expects
+          textOutput.chartData.data = parsedData;
+        } catch (e) {
+          console.error("Failed to parse chartData JSON from AI", e);
+          textOutput.chartData = undefined; // Drop chartData if parsing fails
+        }
+      }
+
     } else {
       ({output: textOutput, usage} = await standardTextGenerationPrompt(input, { model: 'googleai/gemini-1.5-pro-latest' }));
     }
@@ -147,13 +172,12 @@ const generateUrtPassageFlow = ai.defineFlow(
         throw new Error('Failed to generate text content.');
     }
 
-    // Step 2: Generate a reliable placeholder image URL.
     const imageUrl = 'https://placehold.co/600x400.png';
 
     return {
         ...textOutput,
         imageUrl,
-        tokenUsage: usage.totalTokens,
+        tokenUsage: usage?.totalTokens,
         subject: input.topic,
     };
   }
