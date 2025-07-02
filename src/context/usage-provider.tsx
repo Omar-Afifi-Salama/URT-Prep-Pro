@@ -5,6 +5,7 @@ import { createContext, useContext, useState, ReactNode, useEffect, useCallback 
 
 const USAGE_STORAGE_KEY = 'urt-prep-pro-usage';
 const DAILY_REQUEST_LIMIT = 50;
+const TOKEN_PER_MINUTE_LIMIT = 25000;
 
 type UsageData = {
     requests: number;
@@ -16,6 +17,7 @@ type UsageContextType = {
     requests: number;
     tokens: number;
     limit: number;
+    tpm_limit: number;
     addUsage: (usage: { requests: number; tokens: number }) => void;
 };
 
@@ -60,7 +62,7 @@ export function UsageProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-    <UsageContext.Provider value={{ ...usage, limit: DAILY_REQUEST_LIMIT, addUsage }}>
+    <UsageContext.Provider value={{ ...usage, limit: DAILY_REQUEST_LIMIT, tpm_limit: TOKEN_PER_MINUTE_LIMIT, addUsage }}>
         {children}
     </UsageContext.Provider>
     );

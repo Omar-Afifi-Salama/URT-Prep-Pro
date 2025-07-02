@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Cpu, Fuel } from 'lucide-react';
 
 export function UsageCounter() {
-    const { requests, tokens, limit } = useUsage();
+    const { requests, tokens, limit, tpm_limit } = useUsage();
 
     return (
         <TooltipProvider>
@@ -24,13 +24,23 @@ export function UsageCounter() {
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p className="font-semibold">Daily API Usage (Free Tier)</p>
-                    <p className="text-xs text-muted-foreground">Resets daily.</p>
-                    <div className="mt-2 space-y-1 text-xs">
-                        <p>Tokens Used: {tokens.toLocaleString()}</p>
-                        <p>Requests Used: {requests} of {limit}</p>
+                    <p className="font-semibold">Free Tier Usage</p>
+                    <p className="text-xs text-muted-foreground">Based on browser storage. Resets daily.</p>
+                    <div className="mt-2 space-y-1.5 text-xs">
+                        <div className="flex justify-between gap-4">
+                          <span>Daily Requests:</span>
+                          <span className="font-medium">{requests} / {limit}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span>Daily Tokens Used:</span>
+                          <span className="font-medium">{tokens.toLocaleString()}</span>
+                        </div>
+                         <div className="flex justify-between gap-4">
+                          <span>Tokens Per Minute:</span>
+                          <span className="font-medium">Up to {tpm_limit.toLocaleString()}</span>
+                        </div>
                     </div>
-                        <p className="text-xs text-muted-foreground mt-2">Based on browser storage.</p>
+                    <p className="text-xs text-muted-foreground mt-2">The main daily limit is on requests, not tokens.</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
