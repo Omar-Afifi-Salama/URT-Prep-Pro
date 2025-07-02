@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
-import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore } from "@/lib/types";
+import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle, FileDown, Trophy, BookOpen, FileText, Rows, Columns3 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -43,6 +43,8 @@ import { cn } from "@/lib/utils";
 import { useApiKey } from "@/context/api-key-provider";
 import { TestTimer } from "@/components/test-timer";
 import { useRouter } from "next/navigation";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
+import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 
 type View = "setup" | "test" | "results";
 type TestView = "compact" | "normal";
@@ -74,9 +76,7 @@ export default function PracticePage() {
   const printableRef = useRef<HTMLDivElement>(null);
   
   const handlePrint = () => {
-    if (printableRef.current) {
-      window.print();
-    }
+    window.print();
   };
 
   const handleGenerateTest = async () => {
@@ -239,6 +239,42 @@ export default function PracticePage() {
     setElapsedTime(time);
   }, []);
 
+  const renderChart = (chartData: ChartData) => {
+    const chartConfig: ChartConfig = {
+      [chartData.yAxisKey]: {
+        label: chartData.yAxisLabel,
+        color: "hsl(var(--primary))",
+      },
+    };
+
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Data Visualization</CardTitle>
+          <CardDescription>A graphical representation of the data from the passage.</CardDescription>
+        </CardHeader>
+        <CardContent className="pl-2">
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <RechartsBarChart accessibilityLayer data={chartData.data}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey={chartData.xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <YAxis
+                stroke="#888888"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `${value}`}
+                label={{ value: chartData.yAxisLabel, angle: -90, position: 'insideLeft' }}
+              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey={chartData.yAxisKey} fill="var(--color-value)" radius={4} />
+            </RechartsBarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const renderContent = () => {
     if (isLoading && view === 'setup') {
       return (
@@ -344,6 +380,7 @@ export default function PracticePage() {
                                     <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
                                 </div>
                                 <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />
+                                {data.chartData && renderChart(data.chartData)}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -399,7 +436,7 @@ export default function PracticePage() {
         return (
             <div className="w-full">
                  <div className="flex justify-end mb-4 gap-2">
-                    <Button variant={testView === 'compact' ? 'outline' : 'default'} size="sm" onClick={() => setTestView('compact')}>
+                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
                         <Columns3 className="mr-2 h-4 w-4"/>
                         Compact
                     </Button>

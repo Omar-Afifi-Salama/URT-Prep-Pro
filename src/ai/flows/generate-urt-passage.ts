@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A URT passage and question generator AI agent.
@@ -24,6 +25,14 @@ const QuestionSchema = z.object({
   answer: z.string().describe('The correct answer, which must be one of the provided options.'),
 });
 
+const ChartDataSchema = z.object({
+    type: z.literal('bar').describe("The type of chart to render. Must be 'bar'."),
+    data: z.array(z.any()).describe('An array of data objects for the chart.'),
+    xAxisKey: z.string().describe('The key in the data objects to use for the X-axis.'),
+    yAxisKey: z.string().describe('The key in the data objects to use for the Y-axis.'),
+    yAxisLabel: z.string().describe('A short label for the Y-axis (e.g., "Temperature (°C)").'),
+});
+
 const GenerateUrtPassageOutputSchema = z.object({
   title: z.string().describe('An appropriate title for the passage.'),
   passage: z.string().describe('The generated URT passage.'),
@@ -32,6 +41,7 @@ const GenerateUrtPassageOutputSchema = z.object({
   recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
   tokenUsage: z.number().optional().describe('The number of tokens used for generation.'),
   subject: z.string().describe('The subject of the passage.'),
+  chartData: z.optional(ChartDataSchema).describe('Optional structured data for rendering a chart.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -39,15 +49,10 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
   return generateUrtPassageFlow(input);
 }
 
-const textGenerationPrompt = ai.definePrompt({
-  name: 'generateUrtPassageTextPrompt',
+const standardTextGenerationPrompt = ai.definePrompt({
+  name: 'standardUrtPassageTextPrompt',
   input: {schema: GenerateUrtPassageInputSchema},
-  output: {schema: z.object({
-    title: GenerateUrtPassageOutputSchema.shape.title,
-    passage: GenerateUrtPassageOutputSchema.shape.passage,
-    questions: GenerateUrtPassageOutputSchema.shape.questions,
-    recommendedTime: GenerateUrtPassageOutputSchema.shape.recommendedTime,
-  })},
+  output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true })},
   prompt: `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
 You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam. For "Hard" difficulty, the passage should involve multiple complex, interrelated concepts, require a high level of critical reading, and use advanced, domain-specific vocabulary.
@@ -84,6 +89,41 @@ IMPORTANT: You must format your response as a single, valid JSON object that adh
 `,
 });
 
+const actStyleSciencePrompt = ai.definePrompt({
+  name: 'actStyleSciencePassagePrompt',
+  input: {schema: GenerateUrtPassageInputSchema},
+  output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true })},
+  prompt: `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 1-2 experiments) or "Conflicting Viewpoints" (presenting hypotheses from Scientist 1 and Scientist 2). The tone should be objective and data-focused.
+
+The passage MUST include data presented in an HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). You must refer to the table in the text (e.g., "as shown in Table 1").
+
+Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents a subset of the table's data, suitable for rendering a simple bar chart.
+- 'type' must be 'bar'.
+- 'data' must be an array of objects from the table.
+- 'xAxisKey' must be the name of the property to use for the X-axis (e.g., 'substance' or 'trialNumber').
+- 'yAxisKey' must be the name of the property for the Y-axis (must be a numerical value).
+- 'yAxisLabel' must be a short string describing the Y-axis unit (e.g., 'pH Level' or 'Temperature (°C)').
+
+EQUATION FORMATTING:
+- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
+
+QUESTION FORMATTING:
+- Generate questions that require interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall.
+- Each question must have exactly 4 options.
+- The correct answer must exactly match one of the provided options.
+
+TIMER:
+- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 200) + (Number of Questions * 0.75). Round to the nearest whole number. Include this in the 'recommendedTime' field.
+
+Topic: {{{topic}}}
+Difficulty: {{{difficulty}}}
+Approximate Word Count: {{{wordLength}}}
+Number of Questions: {{{numQuestions}}}
+
+IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object.
+`,
+});
+
 const generateUrtPassageFlow = ai.defineFlow(
   {
     name: 'generateUrtPassageFlow',
@@ -91,8 +131,18 @@ const generateUrtPassageFlow = ai.defineFlow(
     outputSchema: GenerateUrtPassageOutputSchema,
   },
   async input => {
-    // Step 1: Generate passage and questions
-    const {output: textOutput, usage} = await textGenerationPrompt(input, { model: 'googleai/gemini-1.5-pro-latest' });
+    const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
+    const isScience = scienceSubjects.includes(input.topic);
+    const shouldUseActStyle = isScience && Math.random() < 0.3;
+
+    let textOutput, usage;
+
+    if (shouldUseActStyle) {
+      ({output: textOutput, usage} = await actStyleSciencePrompt(input, { model: 'googleai/gemini-1.5-pro-latest' }));
+    } else {
+      ({output: textOutput, usage} = await standardTextGenerationPrompt(input, { model: 'googleai/gemini-1.5-pro-latest' }));
+    }
+
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }

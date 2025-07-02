@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -19,10 +20,12 @@ import {
 } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ArrowLeft, FileDown, CheckCircle, XCircle, Trophy } from 'lucide-react';
-import type { TestHistoryItem } from '@/lib/types';
+import type { TestHistoryItem, ChartData } from '@/lib/types';
 import { useFont } from '@/context/font-provider';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
+import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 
 export default function HistoryDetailPage() {
   const [test, setTest] = useState<TestHistoryItem | null>(null);
@@ -31,11 +34,8 @@ export default function HistoryDetailPage() {
   const router = useRouter();
   const { font } = useFont();
 
-  const printableRef = useRef<HTMLDivElement>(null);
   const handlePrint = () => {
-    if (printableRef.current) {
-      window.print();
-    }
+    window.print();
   };
   
   useEffect(() => {
@@ -60,6 +60,42 @@ export default function HistoryDetailPage() {
     }
     setIsLoading(false);
   }, [params, router]);
+
+  const renderChart = (chartData: ChartData) => {
+    const chartConfig: ChartConfig = {
+      [chartData.yAxisKey]: {
+        label: chartData.yAxisLabel,
+        color: "hsl(var(--primary))",
+      },
+    };
+
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Data Visualization</CardTitle>
+          <CardDescription>A graphical representation of the data from the passage.</CardDescription>
+        </CardHeader>
+        <CardContent className="pl-2">
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <RechartsBarChart accessibilityLayer data={chartData.data}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey={chartData.xAxisKey} tickLine={false} tickMargin={10} axisLine={false} />
+              <YAxis
+                stroke="#888888"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `${value}`}
+                label={{ value: chartData.yAxisLabel, angle: -90, position: 'insideLeft' }}
+              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <Bar dataKey={chartData.yAxisKey} fill="var(--color-value)" radius={4} />
+            </RechartsBarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -103,7 +139,7 @@ export default function HistoryDetailPage() {
                   Back to Dashboard
               </Button>
             </div>
-            <div ref={printableRef} className="w-full printable-area">
+            <div className="w-full printable-area">
               <Card className="mb-6">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl text-center">Test Review</CardTitle>
@@ -146,6 +182,7 @@ export default function HistoryDetailPage() {
                                 <Image key={passageData.imageUrl} src={passageData.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${passageData.subject.toLowerCase()} illustration`} priority={passageIndex === 0}/>
                             </div>
                             <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: passageData.passage.replace(/\n\n/g, '<br/><br/>') }} />
+                             {passageData.chartData && renderChart(passageData.chartData)}
                         </CardContent>
                     </Card>
 
@@ -184,4 +221,3 @@ export default function HistoryDetailPage() {
     </div>
   );
 }
-

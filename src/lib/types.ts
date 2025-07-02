@@ -5,6 +5,14 @@ export interface UrtQuestion {
   answer: string;
 }
 
+export interface ChartData {
+  type: 'bar';
+  data: any[];
+  xAxisKey: string;
+  yAxisKey: string;
+  yAxisLabel: string;
+}
+
 export interface UrtTest {
   title: string;
   passage: string;
@@ -13,6 +21,7 @@ export interface UrtTest {
   recommendedTime?: number;
   tokenUsage?: number;
   subject: string;
+  chartData?: ChartData;
 }
 
 export interface GradedResult {
