@@ -228,7 +228,7 @@ export default function HistoryDetailPage() {
               {testData.map((passageData, passageIndex) => (
                 <div key={passageIndex} className="mb-8">
                     <Card className="mb-4">
-                        <CardHeader><CardTitle className="font-headline text-2xl">{passageData.title}</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: passageData.title }} /></CardHeader>
                         <CardContent>
                             <div className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: passageData.passage }} />
                              {passageData.chartData && renderChart(passageData.chartData)}
