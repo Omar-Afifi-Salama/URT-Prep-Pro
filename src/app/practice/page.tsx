@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
-import { useGenkit } from "@genkit-ai/next/client";
+import { useGenkit } from "@genkit-ai/next";
 import { TestTimer } from "@/components/test-timer";
 import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
