@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FontProvider } from '@/context/font-provider';
 import { UsageProvider } from '@/context/usage-provider';
+import { Analytics } from '@vercel/analytics/react';
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -71,6 +72,7 @@ export default function RootLayout({
             </FontProvider>
           </UsageProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
