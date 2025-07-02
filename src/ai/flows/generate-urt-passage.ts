@@ -180,10 +180,26 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       
       const generationResult = await model.generateContent(prompt);
       const response = generationResult.response;
-      const responseText = response.text();
-      
-      let textOutput = JSON.parse(responseText);
 
+      if (!response || !response.candidates || response.candidates.length === 0) {
+        console.error("AI Generation Error: No response or candidates returned.", response?.promptFeedback);
+        const blockReason = response?.promptFeedback?.blockReason;
+        if (blockReason) {
+            throw new Error(`Generation blocked by safety settings: ${blockReason}. Please adjust the prompt or topic.`);
+        }
+        throw new Error('The AI model returned an empty response. Please try again.');
+      }
+      
+      const responseText = response.text();
+      let textOutput;
+      try {
+        textOutput = JSON.parse(responseText);
+      } catch (jsonError: any) {
+        console.error("Failed to parse JSON response from AI:", jsonError);
+        console.error("Raw AI response:", responseText);
+        throw new Error("The AI model returned an invalid format. Please try again.");
+      }
+      
       const usage = await model.countTokens(prompt);
       
       if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
@@ -214,6 +230,10 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         }
         if (e.message && (e.message.includes('429') || e.message.includes('resource has been exhausted'))) {
             throw new Error('You have exceeded the request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again later.');
+        }
+        // Re-throw specific errors from the try block
+        if (e.message.startsWith('Generation blocked') || e.message.startsWith('The AI model')) {
+            throw e;
         }
         console.error("Error in generateUrtPassage:", e);
         throw new Error('An unexpected error occurred while generating the passage.');
