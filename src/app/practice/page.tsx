@@ -38,9 +38,10 @@ import { TestTimer } from "@/components/test-timer";
 import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
+import { useUsage } from "@/context/usage-provider";
 
 type View = "setup" | "test";
-type TestView = "compact" | "normal";
+type TestView = "normal" | "compact";
 
 export default function PracticePage() {
   // Setup State
@@ -63,6 +64,7 @@ export default function PracticePage() {
   const { toast } = useToast();
   const { font } = useFont();
   const { isApiKeySet } = useApiKey();
+  const { addUsage } = useUsage();
   const router = useRouter();
   
   const handleGenerateTest = async () => {
@@ -115,7 +117,14 @@ export default function PracticePage() {
         const data = await Promise.all(generationTasks);
         setTestData(data);
         setView("test");
+        
         const totalTokens = data.reduce((sum, d) => sum + (d.tokenUsage || 0), 0);
+        const totalRequests = data.length;
+
+        if (totalRequests > 0) {
+          addUsage({ requests: totalRequests, tokens: totalTokens });
+        }
+
         if (totalTokens > 0) {
             toast({
                 title: "Test Generated Successfully",
