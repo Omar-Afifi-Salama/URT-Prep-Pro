@@ -25,7 +25,7 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, BookOpen, FileText, Rows, Columns3 } from "lucide-react";
+import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,6 +39,7 @@ import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 import { useUsage } from "@/context/usage-provider";
+import { biologyDemoSet, geologyDemoSet } from "@/lib/demo-data";
 
 type View = "setup" | "test";
 type TestView = "normal" | "compact";
@@ -67,6 +68,23 @@ export default function PracticePage() {
   const isApiKeySet = !!apiKey;
   const { addUsage } = useUsage();
   const router = useRouter();
+
+  const handleStartDemo = (demoSet: UrtTest[]) => {
+    setIsLoading(true);
+    setTestData(null);
+    setUserAnswers({});
+    setElapsedTime(0);
+    setTimeout(() => {
+        setTestData(demoSet);
+        setView("test");
+        setTestView('normal');
+        setIsLoading(false);
+        toast({
+            title: "Demo Started",
+            description: "This is a pre-generated demo. No API key or tokens are required.",
+        });
+    }, 500);
+  }
   
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
@@ -85,7 +103,6 @@ export default function PracticePage() {
             difficulty,
             wordLength: parseInt(wordLength, 10),
             numQuestions: parseInt(numQuestions, 10),
-            randomSeed: Math.random(),
         }));
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
@@ -99,7 +116,6 @@ export default function PracticePage() {
                       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
-                      randomSeed: Math.random(),
                   }));
               }
             }
@@ -257,12 +273,12 @@ export default function PracticePage() {
   }
 
   const renderContent = () => {
-    if (isLoading && view === 'setup') {
+    if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-headline">Generating your {mode === 'single' ? 'passage' : 'test'}...</p>
-          <p className="text-muted-foreground">This may take a few moments. We're creating unique content just for you.</p>
+          <p className="text-lg font-headline">Loading your test...</p>
+          <p className="text-muted-foreground">This may take a few moments.</p>
         </div>
       );
     }
@@ -271,75 +287,94 @@ export default function PracticePage() {
       case "setup":
         const totalFullTestPassages = Object.values(fullTestSettings).reduce((sum, count) => sum + count, 0);
         return (
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle className="font-headline text-2xl">New Practice Session</CardTitle>
-              <CardDescription>Choose between a single focused passage or a full multi-subject test.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="single" className="gap-2"><BookOpen className="h-4 w-4"/>Single Passage</TabsTrigger>
-                  <TabsTrigger value="full" className="gap-2"><FileText className="h-4 w-4"/>Full Test</TabsTrigger>
-                </TabsList>
-                <TabsContent value="single" className="mt-6">
-                   <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Subject</Label>
-                            <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
-                                <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
-                                <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
+          <div className="w-full max-w-2xl space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-2xl">Demo Area</CardTitle>
+                    <CardDescription>Try the app without an API key using these pre-generated test sets.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid sm:grid-cols-2 gap-4">
+                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet)}>
+                        <FlaskConical className="mr-2 h-5 w-5"/>
+                        Biology Demo Set
+                    </Button>
+                     <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet)}>
+                        <Mountain className="mr-2 h-5 w-5"/>
+                        Geology Demo Set
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <Card className="w-full">
+                <CardHeader>
+                <CardTitle className="font-headline text-2xl">New AI-Generated Practice</CardTitle>
+                <CardDescription>Use your own API key to generate unlimited new practice sessions.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="single" className="gap-2"><BookOpen className="h-4 w-4"/>Single Passage</TabsTrigger>
+                    <TabsTrigger value="full" className="gap-2"><FileText className="h-4 w-4"/>Full Test</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="single" className="mt-6">
+                    <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Subject</Label>
+                                <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
+                                    <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
+                                    <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="space-y-2"><Label htmlFor="difficulty">Difficulty</Label><Select onValueChange={setDifficulty} defaultValue={difficulty}><SelectTrigger id="difficulty"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select></div>
+                                <div className="space-y-2"><Label htmlFor="wordLength">Passage Length</Label><Select onValueChange={setWordLength} defaultValue={wordLength}><SelectTrigger id="wordLength"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="400">~400 words</SelectItem><SelectItem value="600">~600 words</SelectItem><SelectItem value="800">~800 words</SelectItem><SelectItem value="1000">~1000 words</SelectItem><SelectItem value="1200">~1200 words</SelectItem></SelectContent></Select></div>
+                                <div className="space-y-2"><Label htmlFor="numQuestions">Questions</Label><Select onValueChange={setNumQuestions} defaultValue={numQuestions}><SelectTrigger id="numQuestions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="6">6 Questions</SelectItem><SelectItem value="10">10 Questions</SelectItem><SelectItem value="15">15 Questions</SelectItem></SelectContent></Select></div>
+                            </div>
+                    </div>
+                    </TabsContent>
+                    <TabsContent value="full" className="mt-6">
+                    <div className="space-y-4">
+                        <div>
+                        <Label>Select Subjects</Label>
+                        <CardDescription>Choose the number of passages for each subject. Passages will have random difficulty and length.</CardDescription>
+                        </div>
+                        <div className="space-y-3">
+                        {SUBJECTS.map(subject => (
+                            <div key={subject.name} className="flex items-center justify-between">
+                            <label htmlFor={`subject-count-${subject.name}`} className="flex items-center gap-2 text-sm font-medium">
+                                <subject.icon className="h-4 w-4" />
+                                {subject.name}
+                            </label>
+                            <Select
+                                onValueChange={(value) => {
+                                setFullTestSettings(prev => ({ ...prev, [subject.name]: parseInt(value, 10) }));
+                                }}
+                                defaultValue="0"
+                            >
+                                <SelectTrigger id={`subject-count-${subject.name}`} className="w-[120px]">
+                                <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                {[0, 1, 2, 3, 4].map(i => (
+                                    <SelectItem key={i} value={String(i)}>{i} passage{i !== 1 ? 's' : ''}</SelectItem>
+                                ))}
+                                </SelectContent>
                             </Select>
+                            </div>
+                        ))}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="space-y-2"><Label htmlFor="difficulty">Difficulty</Label><Select onValueChange={setDifficulty} defaultValue={difficulty}><SelectTrigger id="difficulty"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select></div>
-                            <div className="space-y-2"><Label htmlFor="wordLength">Passage Length</Label><Select onValueChange={setWordLength} defaultValue={wordLength}><SelectTrigger id="wordLength"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="400">~400 words</SelectItem><SelectItem value="600">~600 words</SelectItem><SelectItem value="800">~800 words</SelectItem><SelectItem value="1000">~1000 words</SelectItem><SelectItem value="1200">~1200 words</SelectItem></SelectContent></Select></div>
-                            <div className="space-y-2"><Label htmlFor="numQuestions">Questions</Label><Select onValueChange={setNumQuestions} defaultValue={numQuestions}><SelectTrigger id="numQuestions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="6">6 Questions</SelectItem><SelectItem value="10">10 Questions</SelectItem><SelectItem value="15">15 Questions</SelectItem></SelectContent></Select></div>
-                        </div>
-                   </div>
-                </TabsContent>
-                <TabsContent value="full" className="mt-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Select Subjects</Label>
-                      <CardDescription>Choose the number of passages for each subject. Passages will have random difficulty and length.</CardDescription>
                     </div>
-                    <div className="space-y-3">
-                      {SUBJECTS.map(subject => (
-                        <div key={subject.name} className="flex items-center justify-between">
-                          <label htmlFor={`subject-count-${subject.name}`} className="flex items-center gap-2 text-sm font-medium">
-                            <subject.icon className="h-4 w-4" />
-                            {subject.name}
-                          </label>
-                          <Select
-                            onValueChange={(value) => {
-                              setFullTestSettings(prev => ({ ...prev, [subject.name]: parseInt(value, 10) }));
-                            }}
-                            defaultValue="0"
-                          >
-                            <SelectTrigger id={`subject-count-${subject.name}`} className="w-[120px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[0, 1, 2, 3, 4].map(i => (
-                                <SelectItem key={i} value={String(i)}>{i} passage{i !== 1 ? 's' : ''}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && totalFullTestPassages === 0)} className="w-full">
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Start Practice
-              </Button>
-            </CardFooter>
-          </Card>
+                    </TabsContent>
+                </Tabs>
+                </CardContent>
+                <CardFooter>
+                <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && totalFullTestPassages === 0)} className="w-full">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Start Practice
+                </Button>
+                </CardFooter>
+            </Card>
+          </div>
         );
       case "test":
         if (!testData) return null;
