@@ -146,54 +146,54 @@ const generateUrtPassageFlow = ai.defineFlow(
     outputSchema: GenerateUrtPassageOutputSchema,
   },
   async (input): Promise<GenerateUrtPassageOutput> => {
-    const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
-    const isScience = scienceSubjects.includes(input.topic);
-    const shouldUseActStyle = isScience && Math.random() < 0.3;
+    try {
+      const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
+      const isScience = scienceSubjects.includes(input.topic);
+      const shouldUseActStyle = isScience && Math.random() < 0.3;
 
-    const finalInput = { ...input, randomSeed: Math.random() };
+      const finalInput = { ...input, randomSeed: Math.random() };
 
-    let textOutput: any;
-    let usage;
+      let textOutput: any;
+      let usage;
 
-    if (shouldUseActStyle) {
-      const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' });
-      textOutput = aiOutput;
-      usage = actUsage;
-      
-      if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
-        try {
-          const parsedData = JSON.parse(textOutput.chartData.data);
-          // Mutate the object to match the final schema the app expects
-          textOutput.chartData.data = parsedData;
-        } catch (e) {
-          console.error("Failed to parse chartData JSON from AI", e);
-          textOutput.chartData = undefined; // Drop chartData if parsing fails
+      if (shouldUseActStyle) {
+        const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' });
+        textOutput = aiOutput;
+        usage = actUsage;
+        
+        if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
+          try {
+            const parsedData = JSON.parse(textOutput.chartData.data);
+            // Mutate the object to match the final schema the app expects
+            textOutput.chartData.data = parsedData;
+          } catch (e) {
+            console.error("Failed to parse chartData JSON from AI", e);
+            textOutput.chartData = undefined; // Drop chartData if parsing fails
+          }
         }
+
+      } else {
+        ({output: textOutput, usage} = await standardTextGenerationPrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' }));
       }
 
-    } else {
-      ({output: textOutput, usage} = await standardTextGenerationPrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' }));
-    }
+      if (!textOutput) {
+          throw new Error('Failed to generate text content.');
+      }
+      
+      const imageUrl = `https://placehold.co/600x400.png`;
 
-    if (!textOutput) {
-        throw new Error('Failed to generate text content.');
+      return {
+          ...textOutput,
+          imageUrl,
+          tokenUsage: usage?.totalTokens,
+          subject: input.topic,
+      };
+    } catch (e: any) {
+        if (e.message && e.message.includes('429')) {
+            throw new Error('You have exceeded the daily request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again tomorrow.');
+        }
+        // Re-throw other errors
+        throw e;
     }
-    
-    const imageKeywords: Record<string, string> = {
-        "English": "books library",
-        "Physics": "physics laboratory",
-        "Chemistry": "chemistry lab",
-        "Biology": "biology microscope",
-        "Geology": "geology rocks",
-    };
-    const keywords = imageKeywords[input.topic] || input.topic.toLowerCase();
-    const imageUrl = `https://placehold.co/600x400.png`;
-
-    return {
-        ...textOutput,
-        imageUrl,
-        tokenUsage: usage?.totalTokens,
-        subject: input.topic,
-    };
   }
 );

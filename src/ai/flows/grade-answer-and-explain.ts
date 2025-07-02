@@ -64,7 +64,15 @@ const gradeAnswerAndExplainFlow = ai.defineFlow(
     outputSchema: GradeAnswerAndExplainOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input, { model: 'googleai/gemini-1.5-flash-latest' });
-    return output!;
+    try {
+      const {output} = await prompt(input, { model: 'googleai/gemini-1.5-flash-latest' });
+      return output!;
+    } catch (e: any) {
+        if (e.message && e.message.includes('429')) {
+            throw new Error('You have exceeded the daily request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again tomorrow.');
+        }
+        // Re-throw other errors
+        throw e;
+    }
   }
 );
