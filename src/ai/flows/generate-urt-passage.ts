@@ -8,7 +8,6 @@
  * - GenerateUrtPassageOutput - The return type for the generateUrtPassage function.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -50,10 +49,6 @@ const GenerateUrtPassageOutputSchema = z.object({
   chartData: z.optional(ChartDataSchema).describe('Optional structured data for rendering a chart.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
-
-export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
-  return generateUrtPassageFlow(input);
-}
 
 // AI-specific output schema where chartData.data is a string
 const ActStyleAiOutputSchema = GenerateUrtPassageOutputSchema
@@ -141,23 +136,20 @@ IMPORTANT: You must format your response as a single, valid JSON object that adh
 The required JSON schema is: ${JSON.stringify(zodToJsonSchema(ActStyleAiOutputSchema))}
 `;
 
-const generateUrtPassageFlow = ai.defineFlow(
-  {
-    name: 'generateUrtPassageFlow',
-    inputSchema: GenerateUrtPassageInputSchema,
-    outputSchema: GenerateUrtPassageOutputSchema,
-  },
-  async (input): Promise<GenerateUrtPassageOutput> => {
-    if (!input.apiKey) {
+
+export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
+    const validatedInput = GenerateUrtPassageInputSchema.parse(input);
+
+    if (!validatedInput.apiKey) {
       throw new Error('API Key is required for AI generation.');
     }
 
     try {
       const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
-      const isScience = scienceSubjects.includes(input.topic);
+      const isScience = scienceSubjects.includes(validatedInput.topic);
       const shouldUseActStyle = isScience && Math.random() < 0.3;
 
-      const finalInput = { ...input, randomSeed: Math.random() };
+      const finalInput = { ...validatedInput, randomSeed: Math.random() };
 
       let promptTemplate;
       if (shouldUseActStyle) {
@@ -173,7 +165,7 @@ const generateUrtPassageFlow = ai.defineFlow(
         .replace('{{numQuestions}}', String(finalInput.numQuestions))
         .replace('{{randomSeed}}', String(finalInput.randomSeed));
 
-      const genAI = new GoogleGenerativeAI(input.apiKey);
+      const genAI = new GoogleGenerativeAI(validatedInput.apiKey);
       const model = genAI.getGenerativeModel({ 
         model: "gemini-1.5-flash-latest",
         generationConfig: {
@@ -215,7 +207,7 @@ const generateUrtPassageFlow = ai.defineFlow(
           ...textOutput,
           imageUrl,
           tokenUsage: usage?.totalTokens,
-          subject: input.topic,
+          subject: validatedInput.topic,
       };
     } catch (e: any) {
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
@@ -227,5 +219,4 @@ const generateUrtPassageFlow = ai.defineFlow(
         console.error("Error in generateUrtPassageFlow:", e);
         throw new Error('An unexpected error occurred while generating the passage.');
     }
-  }
-);
+}

@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useReactToPrint } from 'react-to-print';
 import { AppHeader } from '@/components/app-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,13 +30,34 @@ import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from '
 export default function HistoryDetailPage() {
   const [test, setTest] = useState<TestHistoryItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
   const params = useParams();
   const router = useRouter();
   const { font } = useFont();
+  const printRef = useRef<HTMLDivElement>(null);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const allItemValues = useMemo(() => {
+    if (!test) return [];
+    return test.testData.flatMap((passageData, passageIndex) =>
+      passageData.questions.map((q, questionIndex) => `p${passageIndex}-q${questionIndex}`)
+    );
+  }, [test]);
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    onBeforeGetContent: () => {
+      return new Promise<void>((resolve) => {
+        setOpenAccordionItems(allItemValues);
+        // Allow state to update before printing
+        setTimeout(() => {
+          resolve();
+        }, 300);
+      });
+    },
+    onAfterPrint: () => {
+      setOpenAccordionItems([]);
+    },
+  });
   
   useEffect(() => {
     setIsLoading(true);
@@ -161,7 +183,7 @@ export default function HistoryDetailPage() {
               </Button>
                <Button onClick={handlePrint} variant="outline"><Printer className="mr-2"/>Export to PDF</Button>
             </div>
-            <div className="w-full printable-area">
+            <div ref={printRef} className="w-full printable-area">
               <Card className="mb-6">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl text-center">Test Review</CardTitle>
@@ -201,7 +223,7 @@ export default function HistoryDetailPage() {
                         </CardContent>
                     </Card>
 
-                    <Accordion type="single" collapsible className="w-full">
+                    <Accordion type="multiple" className="w-full" value={openAccordionItems} onValueChange={setOpenAccordionItems}>
                         {results[passageIndex] && results[passageIndex].map((result, questionIndex) => (
                             <Card key={questionIndex} className="mb-2">
                                 <AccordionItem value={`p${passageIndex}-q${questionIndex}`} className="border-b-0">

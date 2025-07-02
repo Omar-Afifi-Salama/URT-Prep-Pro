@@ -7,6 +7,6 @@ import type { ThemeProviderProps } from "next-themes/dist/types"
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return <NextThemesProvider 
     {...props}
-    themes={['light', 'dark', 'orange', 'dark-orange', 'green', 'dark-green']}
+    themes={['light', 'dark', 'orange', 'dark-orange', 'green', 'dark-green', 'blue', 'dark-blue', 'violet', 'dark-violet']}
     >{children}</NextThemesProvider>
 }
