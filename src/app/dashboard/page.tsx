@@ -164,7 +164,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{globalStats.averageScore.toFixed(1)}%</div>
-                    <p className="text-xs text-muted-foreground">Across {globalStats.totalTests} tests taken</p>
+                    <p className="text-xs text-muted-foreground">Across {globalStats.totalTests} {globalStats.totalTests === 1 ? 'test' : 'tests'} taken</p>
                 </CardContent>
             </Card>
             <Card>

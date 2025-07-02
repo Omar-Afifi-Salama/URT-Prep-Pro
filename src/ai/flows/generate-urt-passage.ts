@@ -8,7 +8,8 @@
  * - GenerateUrtPassageOutput - The return type for the generateUrtPassage function.
  */
 
-import {z} from 'genkit';
+import {ai} from '@/ai/genkit';
+import {z} from 'zod';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -100,7 +101,7 @@ IMPORTANT: You must format your response as a single, valid JSON object that adh
 The required JSON schema is: ${JSON.stringify(zodToJsonSchema(GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })))}
 `;
 
-const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long. The scientific concepts should be nuanced and require careful reading to distinguish between different experiments or viewpoints. The data presented in tables should not be straightforward and may require interpolation or extrapolation to answer some questions.
+const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The scientific concepts should be complex, interrelated, and require careful reading to distinguish between different experiments or viewpoints. The data presented in tables should be non-linear and may require interpolation, extrapolation, or ratio analysis to answer some questions.
 
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
 
@@ -136,8 +137,17 @@ IMPORTANT: You must format your response as a single, valid JSON object that adh
 The required JSON schema is: ${JSON.stringify(zodToJsonSchema(ActStyleAiOutputSchema))}
 `;
 
-
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
+    return generateUrtPassageFlow(input);
+}
+
+const generateUrtPassageFlow = ai.defineFlow(
+  {
+    name: 'generateUrtPassageFlow',
+    inputSchema: GenerateUrtPassageInputSchema,
+    outputSchema: GenerateUrtPassageOutputSchema,
+  },
+  async (input) => {
     const validatedInput = GenerateUrtPassageInputSchema.parse(input);
 
     if (!validatedInput.apiKey) {
@@ -147,7 +157,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
     try {
       const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
       const isScience = scienceSubjects.includes(validatedInput.topic);
-      const shouldUseActStyle = isScience && Math.random() < 0.3;
+      const shouldUseActStyle = isScience && Math.random() < 0.5;
 
       const finalInput = { ...validatedInput, randomSeed: Math.random() };
 
@@ -219,4 +229,5 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         console.error("Error in generateUrtPassageFlow:", e);
         throw new Error('An unexpected error occurred while generating the passage.');
     }
-}
+  }
+);
