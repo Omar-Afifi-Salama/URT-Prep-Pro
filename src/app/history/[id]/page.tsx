@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/app-header';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, FileDown, CheckCircle, XCircle, Trophy } from 'lucide-react';
+import { Loader2, ArrowLeft, Printer, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import type { TestHistoryItem, ChartData } from '@/lib/types';
 import { useFont } from '@/context/font-provider';
 import { cn } from '@/lib/utils';
@@ -39,23 +39,25 @@ export default function HistoryDetailPage() {
   };
   
   useEffect(() => {
+    setIsLoading(true);
     const { id } = params;
     if (typeof id === 'string') {
         const storedHistory = localStorage.getItem('testHistory');
         if (storedHistory) {
             try {
                 const parsedHistory: TestHistoryItem[] = JSON.parse(storedHistory);
-                const foundTest = parsedHistory.find(item => item.id === id);
+                const foundTest = parsedHistory.find(item => item && item.id === id);
                 if (foundTest) {
                     setTest(foundTest);
                 } else {
-                    // Test not found, maybe redirect
                     router.push('/dashboard');
                 }
             } catch (error) {
                 console.error("Failed to parse history", error);
                 router.push('/dashboard');
             }
+        } else {
+            router.push('/dashboard');
         }
     }
     setIsLoading(false);
@@ -89,7 +91,7 @@ export default function HistoryDetailPage() {
                 label={{ value: chartData.yAxisLabel, angle: -90, position: 'insideLeft' }}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Bar dataKey={chartData.yAxisKey} fill="var(--color-value)" radius={4} />
+              <Bar dataKey={chartData.yAxisKey} fill="var(--color-primary)" radius={4} />
             </RechartsBarChart>
           </ChartContainer>
         </CardContent>
@@ -112,7 +114,7 @@ export default function HistoryDetailPage() {
     return (
       <div className="min-h-screen w-full flex flex-col">
         <AppHeader />
-        <main className="flex-1 flex items-center justify-center text-center">
+        <main className="flex-1 flex items-center justify-center text-center p-4">
           <div>
             <h2 className="text-2xl font-bold">Test Not Found</h2>
             <p className="text-muted-foreground">The test you are looking for does not exist or has been removed.</p>
@@ -129,15 +131,16 @@ export default function HistoryDetailPage() {
   const totalCorrect = results.flat().filter(r => r.isCorrect).length;
 
   return (
-    <div className="min-h-screen w-full flex flex-col">
+    <div className="min-h-screen w-full flex flex-col bg-background">
       <AppHeader />
       <main className="flex-1 p-4 md:p-8">
         <div className="container mx-auto max-w-4xl">
-            <div className="no-print mb-4">
+            <div className="no-print mb-4 flex justify-between items-center">
               <Button variant="ghost" onClick={() => router.push('/dashboard')}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Dashboard
               </Button>
+               <Button onClick={handlePrint} variant="outline"><Printer className="mr-2"/>Export to PDF</Button>
             </div>
             <div className="w-full printable-area">
               <Card className="mb-6">
@@ -164,23 +167,21 @@ export default function HistoryDetailPage() {
                             ))}
                         </div>
                     </div>
-
-                    <div className="flex items-center justify-center gap-4 mt-8 no-print">
-                         <Button onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
-                    </div>
                 </CardContent>
               </Card>
 
-              <h3 className="font-headline text-2xl mb-4">Detailed Review</h3>
+              <h3 className="font-headline text-2xl mb-4 mt-8">Detailed Review</h3>
               
               {testData.map((passageData, passageIndex) => (
                 <div key={passageIndex} className="mb-8">
                     <Card className="mb-4">
                         <CardHeader><CardTitle className="font-headline text-2xl">{passageData.title}</CardTitle></CardHeader>
                         <CardContent>
-                            <div className="mb-4 rounded-lg overflow-hidden">
-                                <Image key={passageData.imageUrl} src={passageData.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${passageData.subject.toLowerCase()} illustration`} priority={passageIndex === 0}/>
-                            </div>
+                            {passageData.imageUrl &&
+                              <div className="mb-4 rounded-lg overflow-hidden">
+                                  <Image key={passageData.imageUrl} src={passageData.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${passageData.subject.toLowerCase()} illustration`} priority={passageIndex === 0}/>
+                              </div>
+                            }
                             <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: passageData.passage.replace(/\n\n/g, '<br/><br/>') }} />
                              {passageData.chartData && renderChart(passageData.chartData)}
                         </CardContent>

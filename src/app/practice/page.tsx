@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
 import { gradeAnswerAndExplain } from "@/ai/flows/grade-answer-and-explain.ts";
@@ -26,16 +26,10 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, FileDown, Trophy, BookOpen, FileText, Rows, Columns3 } from "lucide-react";
+import { Loader2, BookOpen, FileText, Rows, Columns3 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useFont } from "@/context/font-provider";
@@ -46,7 +40,7 @@ import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 
-type View = "setup" | "test" | "results";
+type View = "setup" | "test";
 type TestView = "compact" | "normal";
 
 export default function PracticePage() {
@@ -62,7 +56,6 @@ export default function PracticePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [testData, setTestData] = useState<UrtTest[] | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<string, Record<number, string>>>({});
-  const [results, setResults] = useState<GradedResult[][] | null>(null);
   const [view, setView] = useState<View>("setup");
   const [testView, setTestView] = useState<TestView>('normal');
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -73,12 +66,6 @@ export default function PracticePage() {
   const { isApiKeySet } = useApiKey();
   const router = useRouter();
   
-  const printableRef = useRef<HTMLDivElement>(null);
-  
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleGenerateTest = async () => {
     if (!isApiKeySet) {
         toast({ title: "API Key Required", description: "Please set your Google AI API key in the user menu.", variant: "destructive" });
@@ -123,7 +110,6 @@ export default function PracticePage() {
     setIsLoading(true);
     setTestData(null);
     setUserAnswers({});
-    setResults(null);
     setElapsedTime(0);
 
     try {
@@ -158,7 +144,7 @@ export default function PracticePage() {
   const handleSubmitTest = async () => {
     if (!testData) return;
     setIsLoading(true);
-    let gradedResults: GradedResult[][] = [];
+    
     try {
         const gradingTasks: Promise<GradedResult[]>[] = testData.map((passageData, passageIndex) => {
             return Promise.all(passageData.questions.map(async (q, questionIndex) => {
@@ -172,17 +158,8 @@ export default function PracticePage() {
             }));
         });
         
-        gradedResults = await Promise.all(gradingTasks);
-        setResults(gradedResults);
-        setView("results");
-
-    } catch (error) {
-      console.error("Failed to grade test:", error);
-      toast({ title: "Grading Failed", description: "Could not grade your test. Please try again.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-      
-      if (gradedResults.length > 0) {
+        const gradedResults = await Promise.all(gradingTasks);
+        
         // --- Save to history ---
         let totalCorrect = 0;
         let totalQuestions = 0;
@@ -216,24 +193,16 @@ export default function PracticePage() {
         const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
         history.unshift(newHistoryItem);
         localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
-      }
+
+        // Redirect to the new history page
+        router.push(`/history/${newHistoryItem.id}`);
+
+    } catch (error) {
+      console.error("Failed to grade test:", error);
+      toast({ title: "Grading Failed", description: "Could not grade your test. Please try again.", variant: "destructive" });
+      setIsLoading(false);
     }
   };
-
-  const lastTestHistory = useMemo(() => {
-    if (view !== 'results') return null;
-    const history = JSON.parse(localStorage.getItem('testHistory') || '[]') as TestHistoryItem[];
-    return history[0] || null;
-  }, [view]);
-
-  const handleStartNewTest = () => {
-    setView("setup");
-    setTestData(null);
-    setUserAnswers({});
-    setResults(null);
-    setSelectedSingleSubject(null);
-    setFullTestSettings({});
-  }
 
   const handleTimeUpdate = useCallback((time: number) => {
     setElapsedTime(time);
@@ -267,7 +236,7 @@ export default function PracticePage() {
                 label={{ value: chartData.yAxisLabel, angle: -90, position: 'insideLeft' }}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Bar dataKey={chartData.yAxisKey} fill="var(--color-value)" radius={4} />
+              <Bar dataKey={chartData.yAxisKey} fill="var(--color-primary)" radius={4} />
             </RechartsBarChart>
           </ChartContainer>
         </CardContent>
@@ -392,7 +361,7 @@ export default function PracticePage() {
             <Card className={cn(testView === 'compact' && 'lg:sticky top-24')}>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="font-headline">Questions</CardTitle>
-                    {totalRecommendedTime > 0 && (
+                    {testView === 'compact' && totalRecommendedTime > 0 && (
                         <TestTimer 
                             initialTime={totalRecommendedTime * 60} 
                             onTimeUpdate={handleTimeUpdate}
@@ -434,15 +403,23 @@ export default function PracticePage() {
         );
 
         return (
-            <div className="w-full">
+            <div className="w-full relative">
                  <div className="flex justify-end mb-4 gap-2">
-                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
-                        <Columns3 className="mr-2 h-4 w-4"/>
-                        Compact
-                    </Button>
+                    {totalRecommendedTime > 0 && testView === 'normal' && (
+                       <div className="sticky top-20 z-10 mr-auto">
+                         <TestTimer 
+                            initialTime={totalRecommendedTime * 60} 
+                            onTimeUpdate={handleTimeUpdate}
+                          />
+                       </div>
+                    )}
                     <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
                         <Rows className="mr-2 h-4 w-4"/>
                         Normal
+                    </Button>
+                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
+                        <Columns3 className="mr-2 h-4 w-4"/>
+                        Compact
                     </Button>
                 </div>
                 <div className={cn('w-full items-start', testView === 'compact' ? 'grid lg:grid-cols-2 gap-8' : 'flex flex-col gap-8')}>
@@ -451,82 +428,8 @@ export default function PracticePage() {
                 </div>
             </div>
         );
-      case "results":
-        if (!results || !testData || !lastTestHistory) return null;
-        const totalCorrect = results.flat().filter(r => r.isCorrect).length;
-        const totalQuestions = results.flat().length;
-
-        return (
-          <div className="w-full max-w-4xl">
-              <div ref={printableRef} className="printable-area">
-                <Card className="mb-6">
-                  <CardHeader>
-                      <CardTitle className="font-headline text-3xl text-center">Test Results</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                      <Trophy className="h-16 w-16 mx-auto text-primary mb-4" />
-                      <p className="text-xl">You scored <span className="font-bold text-primary">{totalCorrect}</span> out of <span className="font-bold">{totalQuestions}</span></p>
-                      <p className="text-5xl font-bold mt-2 text-primary">{lastTestHistory.overallScore.toFixed(1)}%</p>
-                      
-                      <div className="mx-auto max-w-md mt-6">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              {lastTestHistory.scoresBySubject.map(subjectScore => (
-                                  <Card key={subjectScore.subject} className="text-left">
-                                      <CardHeader className="p-4">
-                                          <CardTitle className="text-lg">{subjectScore.subject}</CardTitle>
-                                      </CardHeader>
-                                      <CardContent className="p-4 pt-0">
-                                          <p className="text-2xl font-bold">{subjectScore.score.toFixed(1)}%</p>
-                                          <p className="text-xs text-muted-foreground">{subjectScore.correctQuestions}/{subjectScore.totalQuestions} correct</p>
-                                      </CardContent>
-                                  </Card>
-                              ))}
-                          </div>
-                      </div>
-                  </CardContent>
-                </Card>
-
-                <h3 className="font-headline text-2xl mb-4">Detailed Review</h3>
-                <Accordion type="single" collapsible className="w-full">
-                  {results.map((subjectResults, passageIndex) => (
-                      <div key={passageIndex} className="mb-4">
-                          <h4 className="font-bold text-xl mb-2">{testData[passageIndex].subject}</h4>
-                          {subjectResults.map((result, questionIndex) => (
-                              <Card key={questionIndex} className="mb-2">
-                                  <AccordionItem value={`p${passageIndex}-q${questionIndex}`} className="border-b-0">
-                                      <AccordionTrigger className="p-4 hover:no-underline">
-                                          <div className="flex items-center gap-4 w-full">
-                                              {result.isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" /> : <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />}
-                                              <p className="text-left flex-1" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${result.question}`}}/>
-                                          </div>
-                                      </AccordionTrigger>
-                                      <AccordionContent className="p-4 pt-0">
-                                          <div className="space-y-4">
-                                              <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
-                                              <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
-                                              <Separator />
-                                              <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
-                                                  <h4 className="font-bold">Explanation (English)</h4>
-                                                  <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
-                                                  <h4 className="font-bold">Explanation (Arabic)</h4>
-                                                  <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
-                                              </div>
-                                          </div>
-                                      </AccordionContent>
-                                  </AccordionItem>
-                              </Card>
-                          ))}
-                      </div>
-                  ))}
-                </Accordion>
-              </div>
-              <div className="flex items-center justify-center gap-4 mt-8 no-print">
-                  <Button onClick={handleStartNewTest}>Start Another Test</Button>
-                  <Button onClick={handlePrint} variant="outline"><FileDown className="mr-2"/>Export to PDF</Button>
-                  <Button variant="secondary" onClick={() => router.push('/dashboard')}>View Dashboard</Button>
-              </div>
-          </div>
-        )
+      default:
+        return null;
     }
   };
 

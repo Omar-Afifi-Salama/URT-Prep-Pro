@@ -44,7 +44,7 @@
     --secondary: 180 20% 15%;
     --secondary-foreground: 180 25% 95%;
     --muted: 180 20% 15%;
-    --muted-foreground: 180 20% 65%;
+    --muted-foreground: 180 20% 75%;
     --accent: 180 20% 20%;
     --accent-foreground: 180 25% 95%;
     --destructive: 0 62.8% 30.6%;
@@ -94,7 +94,7 @@
     --secondary: 20 10% 15%;
     --secondary-foreground: 30 100% 98%;
     --muted: 20 10% 15%;
-    --muted-foreground: 20 5% 65%;
+    --muted-foreground: 20 5% 75%;
     --accent: 20 15% 18%;
     --accent-foreground: 30 100% 98%;
     --destructive: 0 62.8% 30.6%;
@@ -140,7 +140,7 @@
     --secondary: 140 10% 15%;
     --secondary-foreground: 140 30% 98%;
     --muted: 140 10% 15%;
-    --muted-foreground: 140 5% 65%;
+    --muted-foreground: 140 5% 75%;
     --accent: 140 15% 18%;
     --accent-foreground: 140 30% 98%;
     --destructive: 0 62.8% 30.6%;
@@ -160,6 +160,24 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  .dark .prose-invert {
+    --tw-prose-body: hsl(var(--foreground));
+    --tw-prose-headings: hsl(var(--primary));
+    --tw-prose-lead: hsl(var(--muted-foreground));
+    --tw-prose-links: hsl(var(--primary));
+    --tw-prose-bold: hsl(var(--foreground));
+    --tw-prose-counters: hsl(var(--muted-foreground));
+    --tw-prose-bullets: hsl(var(--border));
+    --tw-prose-hr: hsl(var(--border));
+    --tw-prose-quotes: hsl(var(--primary));
+    --tw-prose-quote-borders: hsl(var(--border));
+    --tw-prose-captions: hsl(var(--muted-foreground));
+    --tw-prose-code: hsl(var(--foreground));
+    --tw-prose-pre-code: hsl(var(--foreground));
+    --tw-prose-pre-bg: hsl(var(--background));
+    --tw-prose-th-borders: hsl(var(--border));
+    --tw-prose-td-borders: hsl(var(--border));
+  }
 }
 
 @media print {
@@ -174,30 +192,49 @@
     color: #000 !important;
     background-color: #fff !important;
   }
-  .printable-area .card {
+  .printable-area .card,
+  .printable-area .accordion-item {
       border: 1px solid #ddd !important;
       box-shadow: none !important;
+      break-inside: avoid;
   }
-  .printable-area .text-primary,
-  .printable-area .dark\:prose-invert.prose-p\:text-foreground p,
-  .printable-area .dark\:prose-invert.prose-h4\:text-foreground h4,
-  .printable-area .dark\:prose-invert.prose-strong\:text-foreground strong
-   {
+  .printable-area h1,
+  .printable-area h2,
+  .printable-area h3,
+  .printable-area h4,
+  .printable-area p,
+  .printable-area div,
+  .printable-area span,
+  .printable-area td,
+  .printable-area th {
+    color: #000 !important;
+  }
+  
+  .printable-area .text-primary {
       color: #000 !important;
   }
+
   .printable-area .text-red-500, .printable-area .text-red-600 {
       color: #dc2626 !important; /* A dark red */
   }
   .printable-area .text-green-500, .printable-area .text-green-600 {
       color: #16a34a !important; /* A dark green */
   }
+
+  /* Ensure prose styles are overridden for printing */
+  .printable-area .prose {
+    color: #000 !important;
+  }
+
   .printable-area .dark\:prose-invert {
     --tw-prose-body: #000;
     --tw-prose-headings: #000;
     --tw-prose-bold: #000;
+    --tw-prose-links: #000;
     --tw-prose-invert-body: #000;
     --tw-prose-invert-headings: #000;
     --tw-prose-invert-bold: #000;
+    --tw-prose-invert-links: #000;
   }
   .printable-area p[dir="rtl"] {
     font-family: 'Times New Roman', serif; /* A common serif font for printing */

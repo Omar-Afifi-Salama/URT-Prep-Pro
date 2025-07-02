@@ -88,7 +88,8 @@ QUESTION FORMATTING:
 - Any equations or formulas in the questions or options MUST use the specified HTML formatting.
 
 TIMER:
-- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 200) + (Number of Questions * 0.75). Round to the nearest whole number. Include this in the 'recommendedTime' field.
+- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
+- Include this in the 'recommendedTime' field.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
@@ -103,13 +104,13 @@ const actStyleSciencePrompt = ai.definePrompt({
   name: 'actStyleSciencePassagePrompt',
   input: {schema: GenerateUrtPassageInputSchema},
   output: {schema: ActStyleAiOutputSchema},
-  prompt: `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 1-2 experiments) or "Conflicting Viewpoints" (presenting hypotheses from Scientist 1 and Scientist 2). The tone should be objective and data-focused.
+  prompt: `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long to provide sufficient depth.
 
-The passage MUST include data presented in an HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). You must refer to the table in the text (e.g., "as shown in Table 1").
+The passage MUST include data presented in a detailed HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). The table should contain multiple variables and trials. You must refer to the table in the text (e.g., "as shown in Table 1").
 
-Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents a subset of the table's data, suitable for rendering a simple bar chart.
+Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents a subset of the table's data, suitable for rendering a simple bar chart. The data should be complex enough to support multiple questions.
 - 'type' must be 'bar'.
-- 'data' must be a JSON-formatted string representing the array of objects from the table. For example: '[{"trial":1,"result":15},{"trial":2,"result":25}]'.
+- 'data' must be a JSON-formatted string representing the array of objects from the table. For example: '[{"trial":1,"resultA":15,"resultB":18},{"trial":2,"resultA":25,"resultB":29}]'.
 - 'xAxisKey' must be the name of the property to use for the X-axis (e.g., 'substance' or 'trialNumber').
 - 'yAxisKey' must be the name of the property for the Y-axis (must be a numerical value).
 - 'yAxisLabel' must be a short string describing the Y-axis unit (e.g., 'pH Level' or 'Temperature (°C)').
@@ -118,12 +119,13 @@ EQUATION FORMATTING:
 - When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
 
 QUESTION FORMATTING:
-- Generate questions that require interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall.
+- Generate questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information from different parts of the passage.
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
 
 TIMER:
-- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 200) + (Number of Questions * 0.75). Round to the nearest whole number. Include this in the 'recommendedTime' field.
+- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
+- Include this in the 'recommendedTime' field.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
@@ -171,8 +173,16 @@ const generateUrtPassageFlow = ai.defineFlow(
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }
-
-    const imageUrl = 'https://placehold.co/600x400.png';
+    
+    const imageKeywords: Record<string, string> = {
+        "English": "books library",
+        "Physics": "physics laboratory",
+        "Chemistry": "chemistry lab",
+        "Biology": "biology microscope",
+        "Geology": "geology rocks",
+    };
+    const keywords = imageKeywords[input.topic] || input.topic.toLowerCase();
+    const imageUrl = `https://source.unsplash.com/600x400/?${encodeURIComponent(keywords)}`;
 
     return {
         ...textOutput,
