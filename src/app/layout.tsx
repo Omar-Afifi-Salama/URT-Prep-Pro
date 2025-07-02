@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk, Lora, Roboto_Mono, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';

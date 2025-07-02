@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CreditCard, ExternalLink } from 'lucide-react';
+import { CreditCard, ExternalLink, FileTerminal } from 'lucide-react';
 import Link from 'next/link';
 
 export default function BillingPage() {
@@ -21,21 +21,21 @@ export default function BillingPage() {
                  <CardHeader>
                     <div className="flex items-center gap-4">
                         <div className="bg-primary/10 p-3 rounded-lg">
-                            <CreditCard className="h-6 w-6 text-primary" />
+                            <FileTerminal className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="font-headline text-2xl">API Usage & Billing</CardTitle>
+                            <CardTitle className="font-headline text-2xl">API Key Configuration</CardTitle>
                             <CardDescription>
-                                To keep URT Prep Pro free, you must provide your own API key.
+                                This app uses a local `.env` file to manage your API key.
                             </CardDescription>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div>
-                        <h3 className="font-semibold text-lg mb-2">Why do I need my own key?</h3>
+                        <h3 className="font-semibold text-lg mb-2">Why use a `.env` file?</h3>
                         <p className="text-muted-foreground">
-                            This application uses Google's powerful Gemini AI models to generate passages and grade answers. Each time you use these features, it makes an API call that has a small cost. By using your own API key, you are responsible for these costs, which allows us to offer this tool to everyone for free.
+                            This application uses Google's powerful Gemini AI models. To use the AI features, you must provide your own API key. Storing the key in a `.env` file is a standard and secure practice for web development. It keeps your key separate from the main codebase and ensures it's loaded securely on the server.
                         </p>
                         <p className="text-muted-foreground mt-2">
                             Google provides a generous free tier that is sufficient for most users' study needs.
@@ -43,7 +43,7 @@ export default function BillingPage() {
                     </div>
 
                      <div>
-                        <h3 className="font-semibold text-lg mb-2">How to Get Your Google AI API Key</h3>
+                        <h3 className="font-semibold text-lg mb-2">How to Configure Your API Key</h3>
                         <ol className="list-decimal list-inside space-y-3 text-muted-foreground">
                             <li>
                                 Go to the <Link href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google AI Studio</Link>. You may need to sign in with your Google account.
@@ -55,7 +55,14 @@ export default function BillingPage() {
                                 A new key will be generated for you. Copy this key.
                             </li>
                             <li>
-                                Back in URT Prep Pro, click on your user avatar in the top-right corner, select <span className="font-semibold text-foreground">"Set API Key,"</span> and paste your key into the dialog.
+                                In this project's file explorer, open the file named <span className="font-semibold font-mono text-foreground">.env</span>.
+                            </li>
+                             <li>
+                                Paste your key into the file after the equals sign, like this: <br />
+                                <code className="block bg-muted p-2 rounded-md mt-1 text-foreground font-mono">GOOGLE_AI_API_KEY=YourApiKeyHere</code>
+                            </li>
+                            <li>
+                                Restart the application for the change to take effect. The app will now use your key for all AI-powered features.
                             </li>
                         </ol>
                     </div>

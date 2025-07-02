@@ -33,7 +33,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useFont } from "@/context/font-provider";
 import { cn } from "@/lib/utils";
-import { useGenkit } from "@genkit-ai/next";
 import { TestTimer } from "@/components/test-timer";
 import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
@@ -64,8 +63,6 @@ export default function PracticePage() {
   // Hooks
   const { toast } = useToast();
   const { font } = useFont();
-  const { apiKey } = useGenkit();
-  const isApiKeySet = !!apiKey;
   const { addUsage } = useUsage();
   const router = useRouter();
 
@@ -81,17 +78,12 @@ export default function PracticePage() {
         setIsLoading(false);
         toast({
             title: "Demo Started",
-            description: "This is a pre-generated demo. No API key or tokens are required.",
+            description: "This is a pre-generated demo. No API key is required.",
         });
     }, 500);
   }
   
   const handleGenerateTest = async () => {
-    if (!isApiKeySet) {
-        toast({ title: "API Key Required", description: "Please set your Google AI API key in the user menu.", variant: "destructive" });
-        return;
-    }
-
     const generationTasks: Promise<UrtTest>[] = [];
     if (mode === 'single') {
         if (!selectedSingleSubject) {
@@ -308,7 +300,7 @@ export default function PracticePage() {
             <Card className="w-full">
                 <CardHeader>
                 <CardTitle className="font-headline text-2xl">New AI-Generated Practice</CardTitle>
-                <CardDescription>Use your own API key to generate unlimited new practice sessions.</CardDescription>
+                <CardDescription>Configure your API key in the project's `.env` file to generate unlimited new practice sessions.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
