@@ -149,7 +149,7 @@ const generateUrtPassageFlow = ai.defineFlow(
     let usage;
 
     if (shouldUseActStyle) {
-      const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(input, { model: 'googleai/gemini-1.5-pro-latest' });
+      const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(input, { model: 'googleai/gemini-1.5-flash-latest' });
       textOutput = aiOutput;
       usage = actUsage;
       
@@ -165,7 +165,7 @@ const generateUrtPassageFlow = ai.defineFlow(
       }
 
     } else {
-      ({output: textOutput, usage} = await standardTextGenerationPrompt(input, { model: 'googleai/gemini-1.5-pro-latest' }));
+      ({output: textOutput, usage} = await standardTextGenerationPrompt(input, { model: 'googleai/gemini-1.5-flash-latest' }));
     }
 
     if (!textOutput) {
