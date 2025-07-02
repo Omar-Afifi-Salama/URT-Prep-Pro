@@ -481,7 +481,7 @@ export default function PracticePage() {
                       {testData.map((data, passageIndex) => (
                           <TabsContent key={passageIndex} value={String(passageIndex)}>
                               <Card>
-                                  <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
+                                  <CardHeader><CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} /></CardHeader>
                                   <CardContent>
                                       <div className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
                                       {data.chartData && renderChart(data.chartData)}
@@ -489,7 +489,7 @@ export default function PracticePage() {
                               </Card>
                               <Card className="mt-6">
                                 <CardHeader>
-                                  <CardTitle className="font-headline">Questions for "{data.title}"</CardTitle>
+                                  <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
                                 </CardHeader>
                                 <CardContent>
                                   <div className="flex flex-col gap-6">
@@ -532,7 +532,7 @@ export default function PracticePage() {
                           {testData.map((data, index) => (
                               <TabsContent key={index} value={String(index)}>
                                   <Card className="lg:sticky top-40">
-                                      <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
+                                      <CardHeader><CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} /></CardHeader>
                                       <CardContent>
                                         <ScrollArea className="h-[calc(100vh-20rem)]">
                                           <div className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
@@ -548,7 +548,7 @@ export default function PracticePage() {
                           <CardHeader>
                             <CardTitle className="font-headline">Questions</CardTitle>
                             <CardDescription>
-                              Showing questions for: <span className="font-semibold text-primary">{testData[parseInt(activeTab)].title}</span>
+                              Showing questions for: <span className="font-semibold text-primary" dangerouslySetInnerHTML={{ __html: testData[parseInt(activeTab)].title }} />
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
