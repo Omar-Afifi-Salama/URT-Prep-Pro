@@ -89,6 +89,9 @@ export default function WelcomePage() {
             </Button>
           </div>
 
+          <footer className="text-center text-sm text-muted-foreground pt-8">
+            <p>Created with ❤️ by Omar Afifi</p>
+          </footer>
         </div>
       </main>
     </div>
