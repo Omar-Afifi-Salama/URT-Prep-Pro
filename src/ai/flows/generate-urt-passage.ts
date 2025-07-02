@@ -10,12 +10,14 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 const GenerateUrtPassageInputSchema = z.object({
   topic: z.string().describe('The topic to generate the URT passage and questions about (English, Physics, Chemistry, Biology, Geology).'),
   difficulty: z.string().describe('The desired difficulty of the passage and questions (e.g., "Easy", "Medium", "Hard").'),
   wordLength: z.number().describe('The approximate number of words for the passage.'),
   numQuestions: z.number().describe('The number of questions to generate.'),
+  apiKey: z.string().describe('The user-provided Google AI API key.'),
   randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
@@ -61,12 +63,7 @@ const ActStyleAiOutputSchema = GenerateUrtPassageOutputSchema
       })),
   });
 
-const standardTextGenerationPrompt = ai.definePrompt({
-  name: 'standardUrtPassageTextPrompt',
-  input: {schema: GenerateUrtPassageInputSchema},
-  // Omit chartData entirely for this prompt to avoid schema validation issues
-  output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })},
-  prompt: `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
+const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
 
@@ -97,21 +94,17 @@ TIMER:
 - Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
 - Include this in the 'recommendedTime' field.
 
-Topic: {{{topic}}}
-Difficulty: {{{difficulty}}}
-Approximate Word Count: {{{wordLength}}}
-Number of Questions: {{{numQuestions}}}
-Uniqueness Seed: {{{randomSeed}}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
+Topic: {{topic}}
+Difficulty: {{difficulty}}
+Approximate Word Count: {{wordLength}}
+Number of Questions: {{numQuestions}}
+Uniqueness Seed: {{randomSeed}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
-IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object.
-`,
-});
+IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object. Your entire response should be only the JSON.
+The required JSON schema is: ${JSON.stringify(GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true }).jsonSchema())}
+`;
 
-const actStyleSciencePrompt = ai.definePrompt({
-  name: 'actStyleSciencePassagePrompt',
-  input: {schema: GenerateUrtPassageInputSchema},
-  output: {schema: ActStyleAiOutputSchema},
-  prompt: `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long to provide sufficient depth.
+const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long to provide sufficient depth.
 
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
 
@@ -137,15 +130,15 @@ TIMER:
 - Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
 - Include this in the 'recommendedTime' field.
 
-Topic: {{{topic}}}
-Difficulty: {{{difficulty}}}
-Approximate Word Count: {{{wordLength}}}
-Number of Questions: {{{numQuestions}}}
-Uniqueness Seed: {{{randomSeed}}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
+Topic: {{topic}}
+Difficulty: {{difficulty}}
+Approximate Word Count: {{wordLength}}
+Number of Questions: {{numQuestions}}
+Uniqueness Seed: {{randomSeed}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
-IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object.
-`,
-});
+IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object. Your entire response should be only the JSON.
+The required JSON schema is: ${JSON.stringify(ActStyleAiOutputSchema.jsonSchema())}
+`;
 
 const generateUrtPassageFlow = ai.defineFlow(
   {
@@ -154,6 +147,10 @@ const generateUrtPassageFlow = ai.defineFlow(
     outputSchema: GenerateUrtPassageOutputSchema,
   },
   async (input): Promise<GenerateUrtPassageOutput> => {
+    if (!input.apiKey) {
+      throw new Error('API Key is required for AI generation.');
+    }
+
     try {
       const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
       const isScience = scienceSubjects.includes(input.topic);
@@ -161,27 +158,50 @@ const generateUrtPassageFlow = ai.defineFlow(
 
       const finalInput = { ...input, randomSeed: Math.random() };
 
-      let textOutput: any;
-      let usage;
-
+      let promptTemplate;
       if (shouldUseActStyle) {
-        const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' });
-        textOutput = aiOutput;
-        usage = actUsage;
-        
-        if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
-          try {
-            const parsedData = JSON.parse(textOutput.chartData.data);
-            // Mutate the object to match the final schema the app expects
-            textOutput.chartData.data = parsedData;
-          } catch (e) {
-            console.error("Failed to parse chartData JSON from AI", e);
-            textOutput.chartData = undefined; // Drop chartData if parsing fails
-          }
-        }
-
+        promptTemplate = actStyleSciencePromptTemplate;
       } else {
-        ({output: textOutput, usage} = await standardTextGenerationPrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' }));
+        promptTemplate = standardTextPromptTemplate;
+      }
+
+      const prompt = promptTemplate
+        .replace('{{topic}}', finalInput.topic)
+        .replace('{{difficulty}}', finalInput.difficulty)
+        .replace('{{wordLength}}', String(finalInput.wordLength))
+        .replace('{{numQuestions}}', String(finalInput.numQuestions))
+        .replace('{{randomSeed}}', String(finalInput.randomSeed));
+
+      const genAI = new GoogleGenerativeAI(input.apiKey);
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash-latest",
+        generationConfig: {
+            responseMimeType: "application/json",
+        },
+        safetySettings: [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        ]
+      });
+      
+      const generationResult = await model.generateContent(prompt);
+      const response = generationResult.response;
+      const responseText = response.text();
+      
+      let textOutput = JSON.parse(responseText);
+
+      const usage = await model.countTokens(prompt);
+      
+      if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
+        try {
+          const parsedData = JSON.parse(textOutput.chartData.data);
+          textOutput.chartData.data = parsedData;
+        } catch (e) {
+          console.error("Failed to parse chartData JSON from AI", e);
+          textOutput.chartData = undefined;
+        }
       }
 
       if (!textOutput) {
@@ -197,11 +217,14 @@ const generateUrtPassageFlow = ai.defineFlow(
           subject: input.topic,
       };
     } catch (e: any) {
-        if (e.message && e.message.includes('429')) {
-            throw new Error('You have exceeded the daily request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again tomorrow.');
+        if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
+            throw new Error('Your API Key is not valid. Please check it on the Billing page and try again.');
         }
-        // Re-throw other errors
-        throw e;
+        if (e.message && (e.message.includes('429') || e.message.includes('resource has been exhausted'))) {
+            throw new Error('You have exceeded the request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again later.');
+        }
+        console.error("Error in generateUrtPassageFlow:", e);
+        throw new Error('An unexpected error occurred while generating the passage.');
     }
   }
 );

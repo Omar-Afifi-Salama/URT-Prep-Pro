@@ -24,7 +24,7 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain } from "lucide-react";
+import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,6 +41,7 @@ import { biologyDemoSet, geologyDemoSet } from "@/lib/demo-data";
 
 type View = "setup" | "test";
 type TestView = "normal" | "compact";
+const API_KEY_STORAGE_KEY = 'google-ai-api-key';
 
 export default function PracticePage() {
   // Setup State
@@ -85,6 +86,22 @@ export default function PracticePage() {
   }
   
   const handleGenerateTest = async () => {
+    const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your Google AI API key on the Billing page before generating a test.",
+        variant: "destructive",
+        action: (
+          <Button variant="secondary" size="sm" onClick={() => router.push('/billing')}>
+            <KeyRound className="mr-2 h-4 w-4" />
+            Set Key
+          </Button>
+        ),
+      });
+      return;
+    }
+
     const generationTasks: Promise<UrtTest>[] = [];
     if (mode === 'single') {
         if (!selectedSingleSubject) {
@@ -96,6 +113,7 @@ export default function PracticePage() {
             difficulty,
             wordLength: parseInt(wordLength, 10),
             numQuestions: parseInt(numQuestions, 10),
+            apiKey,
         }));
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
@@ -109,6 +127,7 @@ export default function PracticePage() {
                       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
+                      apiKey,
                   }));
               }
             }
@@ -199,7 +218,7 @@ export default function PracticePage() {
       const overallScore = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
 
       const newHistoryItem: TestHistoryItem = {
-        id: new Date().toISOString() + Math.random(),
+        id: Date.now().toString(),
         date: new Date().toISOString(),
         subjects: testData.map(t => t.subject),
         type: mode,
@@ -315,7 +334,7 @@ export default function PracticePage() {
             <Card className="w-full">
                 <CardHeader>
                 <CardTitle className="font-headline text-2xl">New AI-Generated Practice</CardTitle>
-                <CardDescription>Configure your API key in the project's `.env` file to generate unlimited new practice sessions.</CardDescription>
+                <CardDescription>Configure your API key on the Billing page to generate unlimited new practice sessions.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">

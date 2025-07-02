@@ -1,4 +1,7 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { AppHeader } from '@/components/app-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +11,41 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { KeyRound, ExternalLink, FileTerminal } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { KeyRound, ExternalLink, Save } from 'lucide-react';
 import Link from 'next/link';
 
+const API_KEY_STORAGE_KEY = 'google-ai-api-key';
+
 export default function BillingPage() {
+  const [apiKey, setApiKey] = useState('');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (storedKey) {
+      setApiKey(storedKey);
+    }
+  }, []);
+
+  const handleSaveKey = () => {
+    if (apiKey.trim()) {
+      localStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
+      toast({
+        title: 'API Key Saved',
+        description: 'Your API key has been saved in your browser\'s local storage.',
+      });
+    } else {
+      localStorage.removeItem(API_KEY_STORAGE_KEY);
+      toast({
+        title: 'API Key Cleared',
+        description: 'Your API key has been removed from local storage.',
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col">
       <AppHeader />
@@ -35,7 +69,7 @@ export default function BillingPage() {
                     <div>
                         <h3 className="font-semibold text-lg mb-2">How It Works</h3>
                         <p className="text-muted-foreground">
-                            This application uses Google's powerful Gemini AI models. To generate new, unique practice tests, you must provide your own API key. The app reads this key from a special configuration file in your project called <code className="font-mono bg-muted px-1.5 py-1 rounded">.env</code>. This is a standard and secure practice that keeps your key safe.
+                            This application uses Google's powerful Gemini AI models. To generate new, unique practice tests, you must provide your own API key. Your key is stored securely in your browser's local storage and is never shared with anyone.
                         </p>
                         <p className="text-muted-foreground mt-2">
                            Google provides a generous free tier that is sufficient for most users' study needs.
@@ -49,24 +83,30 @@ export default function BillingPage() {
                                 Go to the <Link href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary underline font-medium">Google AI Studio</Link> to get your key. You may need to sign in.
                             </li>
                             <li>
-                                Click the <span className="font-semibold text-foreground">"Create API key"</span> button. You might be prompted to create a new Google Cloud project.
+                                Click the <span className="font-semibold text-foreground">"Create API key"</span> button.
                             </li>
                              <li>
                                 A new key will be generated. Copy this key to your clipboard.
                             </li>
                             <li>
-                                In the file list on the **left side of the editor**, find and open the file named <code className="font-semibold font-mono text-foreground bg-muted px-1.5 py-1 rounded-md">.env</code>.
-                            </li>
-                             <li>
-                                Paste your key into the file. It must be in this exact format:
-                                <div className="bg-muted p-3 rounded-md mt-2">
-                                  <code className="text-foreground font-mono">GOOGLE_AI_API_KEY=YourApiKeyHere</code>
-                                </div>
-                            </li>
-                            <li>
-                                The application will automatically restart and begin using your key. If it doesn't, you may need to manually stop and start the app.
+                                Paste your key into the input field below and click "Save Key".
                             </li>
                         </ol>
+
+                        <div className="space-y-2 pt-4">
+                            <Label htmlFor="api-key-input" className="font-semibold text-base">Your Google AI API Key</Label>
+                            <div className="flex gap-2">
+                                <Input 
+                                    id="api-key-input"
+                                    type="password" 
+                                    placeholder="Paste your API key here"
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                    className="flex-1"
+                                />
+                                <Button onClick={handleSaveKey}><Save className="mr-2 h-4 w-4" /> Save Key</Button>
+                            </div>
+                        </div>
                     </div>
                     
                     <Button asChild>
