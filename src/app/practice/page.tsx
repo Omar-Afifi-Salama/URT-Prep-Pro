@@ -20,11 +20,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound } from "lucide-react";
+import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound, ArrowLeft } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -60,6 +70,7 @@ export default function PracticePage() {
   const [testView, setTestView] = useState<TestView>('normal');
   const [elapsedTime, setElapsedTime] = useState(0);
   const [activeTab, setActiveTab] = useState("0");
+  const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
   
   // Hooks
   const { toast } = useToast();
@@ -218,7 +229,7 @@ export default function PracticePage() {
       const overallScore = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
 
       const newHistoryItem: TestHistoryItem = {
-        id: new Date().getTime().toString(),
+        id: new Date().toISOString() + '-' + Math.random(),
         date: new Date().toISOString(),
         subjects: testData.map(t => t.subject),
         type: mode,
@@ -248,7 +259,7 @@ export default function PracticePage() {
       history.unshift(newHistoryItem);
       localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
 
-      router.push(`/history/${newHistoryItem.id}`);
+      router.push(`/history/${encodeURIComponent(newHistoryItem.id)}`);
 
     } catch (error) {
       console.error("Failed to process test results:", error);
@@ -435,14 +446,19 @@ export default function PracticePage() {
         return (
             <div className="w-full relative">
                  <div className="flex justify-between items-start mb-4 gap-2">
-                    {totalRecommendedTime > 0 && (
-                       <div className="sticky top-20 z-10">
-                         <TestTimer 
-                            initialTime={totalRecommendedTime * 60} 
-                            onTimeUpdate={handleTimeUpdate}
-                          />
-                       </div>
-                    )}
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
+                        </Button>
+                        {totalRecommendedTime > 0 && (
+                        <div className="sticky top-20 z-10">
+                            <TestTimer 
+                                initialTime={totalRecommendedTime * 60} 
+                                onTimeUpdate={handleTimeUpdate}
+                            />
+                        </div>
+                        )}
+                    </div>
                     <div className="flex gap-2 ml-auto">
                         <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
                             <Rows className="mr-2 h-4 w-4"/>
@@ -455,7 +471,7 @@ export default function PracticePage() {
                     </div>
                 </div>
                 {testView === 'normal' && (
-                  <div className="w-full">
+                  <div className="w-full max-w-4xl mx-auto">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                       <TabsList className="mb-4">
                         {testData.map((data, index) => (
@@ -467,7 +483,7 @@ export default function PracticePage() {
                               <Card>
                                   <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
                                   <CardContent>
-                                      <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
+                                      <div className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
                                       {data.chartData && renderChart(data.chartData)}
                                   </CardContent>
                               </Card>
@@ -519,7 +535,7 @@ export default function PracticePage() {
                                       <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
                                       <CardContent>
                                         <ScrollArea className="h-[calc(100vh-20rem)]">
-                                          <div className={cn("prose dark:prose-invert max-w-none pr-4", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
+                                          <div className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
                                           {data.chartData && renderChart(data.chartData)}
                                         </ScrollArea>
                                       </CardContent>
@@ -577,6 +593,25 @@ export default function PracticePage() {
             {renderContent()}
         </div>
       </main>
+      <AlertDialog open={isBackAlertOpen} onOpenChange={setIsBackAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to go back?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your current test progress will be lost. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setView('setup');
+              setTestData(null);
+              setUserAnswers({});
+              setElapsedTime(0);
+            }}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

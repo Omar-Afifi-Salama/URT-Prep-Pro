@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useReactToPrint } from 'react-to-print';
 import { AppHeader } from '@/components/app-header';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -46,9 +46,12 @@ export default function HistoryDetailPage() {
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-    onBeforeGetContent: () => {
-      flushSync(() => {
-        setOpenAccordionItems(allItemValues);
+    onBeforeGetContent: async () => {
+      await new Promise<void>((resolve) => {
+        flushSync(() => {
+          setOpenAccordionItems(allItemValues);
+        });
+        resolve();
       });
     },
     onAfterPrint: () => {
@@ -188,7 +191,9 @@ export default function HistoryDetailPage() {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Dashboard
               </Button>
-               <Button onClick={handlePrint} variant="outline"><Printer className="mr-2"/>Export to PDF</Button>
+               <button onClick={handlePrint} className={cn(buttonVariants({ variant: "outline" }))}>
+                  <Printer className="mr-2 h-4 w-4"/>Export to PDF
+               </button>
             </div>
             <div ref={printRef} className="w-full printable-area">
               <Card className="mb-6">
@@ -225,7 +230,7 @@ export default function HistoryDetailPage() {
                     <Card className="mb-4">
                         <CardHeader><CardTitle className="font-headline text-2xl">{passageData.title}</CardTitle></CardHeader>
                         <CardContent>
-                            <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: passageData.passage }} />
+                            <div className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: passageData.passage }} />
                              {passageData.chartData && renderChart(passageData.chartData)}
                         </CardContent>
                     </Card>
