@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { KeyRound } from "lucide-react";
 
 export function UserNav() {
   return (
@@ -37,7 +38,12 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
+           <DropdownMenuItem asChild>
+              <Link href="/billing">
+                <KeyRound className="mr-2 h-4 w-4" />
+                <span>API Key</span>
+              </Link>
+            </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
