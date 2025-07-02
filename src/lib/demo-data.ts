@@ -54,7 +54,6 @@ export const biologyDemoSet: UrtTest[] = [
         explanationArabic: 'يذكر النص في الفقرة 2 أن الأجزاء القصيرة على الشريط المتأخر "يتم ربطها لاحقًا بواسطة ليغاز الحمض النووي".',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1532187863486-abf9db50d069?q=80&w=600',
     recommendedTime: 9,
     subject: 'Biology',
   },
@@ -142,7 +141,6 @@ This experiment was conducted with a constant high concentration of lactose (40 
         explanationArabic: 'تنص الفقرة الأولى صراحة على أن المثبطات غير التنافسية "ترتبط بموقع مختلف (موقع ألوستيري) ، وتغير شكل الإنزيم وتقلل من كفاءته".',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1579165466949-563993d562d0?q=80&w=600',
     recommendedTime: 10,
     subject: 'Biology',
     chartData: {
@@ -211,7 +209,6 @@ This experiment was conducted with a constant high concentration of lactose (40 
         explanationArabic: 'تحدد الفقرة 2 أن التفاعلات المعتمدة على الضوء تحدث في "أغشية الثايلاكويد" للبلاستيدات الخضراء.',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1533038590840-1cde6e668a91?q=80&w=600',
     recommendedTime: 10,
     subject: 'Biology',
   },
@@ -268,7 +265,6 @@ This experiment was conducted with a constant high concentration of lactose (40 
         explanationArabic: 'تذكر الفقرة 3 أن الشرايين تحمل "دمًا عالي الضغط" وأن جدرانها السميكة المرنة تسمح لها "بالتوسع والانكماش مع كل نبضة قلب".',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1621597401921-74d1544a8613?q=80&w=600',
     recommendedTime: 9,
     subject: 'Biology',
   },
@@ -328,7 +324,6 @@ export const geologyDemoSet: UrtTest[] = [
         explanationArabic: 'تعرّف الفقرة 3 التجوية بأنها "تكسير أي نوع من الصخور" والتعرية بأنها العملية التي "تنقل هذه القطع المكسورة".',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1566323456376-29649a3c3589?q=80&w=600',
     recommendedTime: 9,
     subject: 'Geology',
   },
@@ -413,7 +408,6 @@ Next, the permeability of each soil was tested. A 10cm deep sample of each soil 
         explanationArabic: 'يقول وصف الدراسة 1 إن الغرض منها هو تحديد "النسبة المئوية للرمل والطمي والطين في كل عينة" ، وهو التركيب المادي.',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1591782803427-0cf117770e1b?q=80&w=600',
     recommendedTime: 10,
     subject: 'Geology',
      chartData: {
@@ -482,7 +476,6 @@ Next, the permeability of each soil was tested. A 10cm deep sample of each soil 
         explanationArabic: 'تذكر الفقرة 1 أن الصفائح "تتحرك ببطء فوق الغلاف الموري شبه المنصهر بمعدلات بضعة سنتيمترات في السنة".',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1613637131333-57a2f5a6f477?q=80&w=600',
     recommendedTime: 10,
     subject: 'Geology',
   },
@@ -541,7 +534,6 @@ Next, the permeability of each soil was tested. A 10cm deep sample of each soil 
         explanationArabic: 'تعرّف الفقرة 4 الكسر بأنه "كسر ليس على طول مستوى الانقسام" ويمكن أن يكون غير منتظم.',
       }
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1550683118-A746810245a8?q=80&w=600',
     recommendedTime: 9,
     subject: 'Geology',
   },

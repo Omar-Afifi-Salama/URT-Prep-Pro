@@ -23,7 +23,6 @@ import { Loader2, ArrowLeft, Printer, CheckCircle, XCircle, Trophy } from 'lucid
 import type { TestHistoryItem, ChartData } from '@/lib/types';
 import { useFont } from '@/context/font-provider';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 
@@ -193,11 +192,6 @@ export default function HistoryDetailPage() {
                     <Card className="mb-4">
                         <CardHeader><CardTitle className="font-headline text-2xl">{passageData.title}</CardTitle></CardHeader>
                         <CardContent>
-                            {passageData.imageUrl &&
-                              <div className="mb-4 rounded-lg overflow-hidden">
-                                  <Image key={passageData.imageUrl} src={passageData.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${passageData.subject.toLowerCase()} illustration`} priority={passageIndex === 0}/>
-                              </div>
-                            }
                             <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: passageData.passage.replace(/\n\n/g, '<br/><br/>') }} />
                              {passageData.chartData && renderChart(passageData.chartData)}
                         </CardContent>

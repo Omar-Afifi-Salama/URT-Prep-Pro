@@ -19,7 +19,7 @@ export interface UrtTest {
   title: string;
   passage: string;
   questions: UrtQuestion[];
-  imageUrl: string;
+  imageUrl?: string;
   recommendedTime?: number;
   tokenUsage?: number;
   subject: string;
