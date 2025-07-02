@@ -64,7 +64,7 @@ const gradeAnswerAndExplainFlow = ai.defineFlow(
     outputSchema: GradeAnswerAndExplainOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input, { model: 'googleai/gemini-1.5-flash' });
+    const {output} = await prompt(input, { model: 'googleai/gemini-1.5-pro-latest' });
     return output!;
   }
 );

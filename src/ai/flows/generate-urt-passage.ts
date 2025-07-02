@@ -79,6 +79,8 @@ Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
 Approximate Word Count: {{{wordLength}}}
 Number of Questions: {{{numQuestions}}}
+
+IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object.
 `,
 });
 
@@ -90,7 +92,7 @@ const generateUrtPassageFlow = ai.defineFlow(
   },
   async input => {
     // Step 1: Generate passage and questions
-    const {output: textOutput, usage} = await textGenerationPrompt(input, { model: 'googleai/gemini-1.5-flash' });
+    const {output: textOutput, usage} = await textGenerationPrompt(input, { model: 'googleai/gemini-1.5-pro-latest' });
     if (!textOutput) {
         throw new Error('Failed to generate text content.');
     }
