@@ -146,7 +146,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
     try {
       const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
       const isScience = scienceSubjects.includes(validatedInput.topic);
-      const shouldUseActStyle = isScience && Math.random() < 0.5;
+      const shouldUseActStyle = isScience && Math.random() < 0.25;
 
       const finalInput = { ...validatedInput, randomSeed: Math.random() };
 
