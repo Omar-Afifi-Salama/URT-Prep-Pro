@@ -356,8 +356,8 @@ export default function PracticePage() {
                             <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
                             <CardContent>
                                 {data.imageUrl && (
-                                <div className="mb-4 rounded-lg overflow-hidden max-h-[400px]">
-                                    <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-full" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
+                                <div className="mb-4 rounded-lg overflow-hidden">
+                                    <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
                                 </div>
                                 )}
                                 <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />

@@ -68,6 +68,8 @@ const standardTextGenerationPrompt = ai.definePrompt({
   output: {schema: GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })},
   prompt: `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
+
 You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam. For "Hard" difficulty, the passage should involve multiple complex, interrelated concepts, require a high level of critical reading, and use advanced, domain-specific vocabulary.
 
 The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
@@ -110,6 +112,8 @@ const actStyleSciencePrompt = ai.definePrompt({
   input: {schema: GenerateUrtPassageInputSchema},
   output: {schema: ActStyleAiOutputSchema},
   prompt: `You are an expert curriculum designer specializing in creating ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The passage must be information-rich and at least 600 words long to provide sufficient depth.
+
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
 
 The passage MUST include data presented in a detailed HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). The table should contain multiple variables and trials. You must refer to the table in the text (e.g., "as shown in Table 1").
 

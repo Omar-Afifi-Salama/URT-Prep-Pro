@@ -45,12 +45,27 @@ export default function HistoryDetailPage() {
         const storedHistory = localStorage.getItem('testHistory');
         if (storedHistory) {
             try {
-                const parsedHistory: TestHistoryItem[] = JSON.parse(storedHistory);
+                const rawHistory = JSON.parse(storedHistory);
+                let parsedHistory: TestHistoryItem[] = [];
+                
+                // Defensively filter for valid history items to prevent crashes
+                if (Array.isArray(rawHistory)) {
+                    parsedHistory = rawHistory.filter(item => 
+                        item && 
+                        typeof item.id === 'string' &&
+                        Array.isArray(item.subjects) &&
+                        typeof item.overallScore === 'number' &&
+                        Array.isArray(item.scoresBySubject) &&
+                        Array.isArray(item.testData) &&
+                        Array.isArray(item.results)
+                    );
+                }
+
                 const foundTest = parsedHistory.find(item => item && item.id === id);
                 if (foundTest) {
                     setTest(foundTest);
                 } else {
-                    // This is a fallback, but the main fix is preventing bad data from being saved.
+                    console.error("Test with ID not found in parsed history, redirecting.", id);
                     router.push('/dashboard');
                 }
             } catch (error) {
