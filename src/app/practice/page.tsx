@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 import { useUsage } from "@/context/usage-provider";
-import { biologyDemoSet, geologyDemoSet } from "@/lib/demo-data";
+import { biologyDemoSet1, biologyDemoSet2, geologyDemoSet1, geologyDemoSet2 } from "@/lib/demo-data";
 
 type View = "setup" | "test";
 type TestView = "normal" | "compact";
@@ -330,13 +330,21 @@ export default function PracticePage() {
                     <CardDescription>Try the app without an API key using these pre-generated test sets.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid sm:grid-cols-2 gap-4">
-                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet)}>
+                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet1)}>
                         <FlaskConical className="mr-2 h-5 w-5"/>
-                        Biology Demo Set
+                        Biology Demo Set #1
                     </Button>
-                     <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet)}>
+                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet2)}>
+                        <FlaskConical className="mr-2 h-5 w-5"/>
+                        Biology Demo Set #2
+                    </Button>
+                     <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet1)}>
                         <Mountain className="mr-2 h-5 w-5"/>
-                        Geology Demo Set
+                        Geology Demo Set #1
+                    </Button>
+                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet2)}>
+                        <Mountain className="mr-2 h-5 w-5"/>
+                        Geology Demo Set #2
                     </Button>
                 </CardContent>
             </Card>
@@ -416,6 +424,14 @@ export default function PracticePage() {
         if (!testData) return null;
         const totalRecommendedTime = testData.reduce((sum, d) => sum + (d.recommendedTime || 0), 0);
 
+        const subjectCounts: Record<string, number> = {};
+        const tabLabels = testData.map(data => {
+            const count = subjectCounts[data.subject] || 0;
+            subjectCounts[data.subject] = count + 1;
+            const total = testData.filter(d => d.subject === data.subject).length;
+            return total > 1 ? `${data.subject} #${count + 1}` : data.subject;
+        });
+
         return (
             <div className="w-full relative">
                  <div className="flex justify-between items-start mb-4 gap-2">
@@ -443,7 +459,7 @@ export default function PracticePage() {
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                       <TabsList className="mb-4">
                         {testData.map((data, index) => (
-                           <TabsTrigger key={index} value={String(index)}>{data.subject}</TabsTrigger>
+                           <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
                         ))}
                       </TabsList>
                       {testData.map((data, passageIndex) => (
@@ -494,7 +510,7 @@ export default function PracticePage() {
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                           <TabsList className="mb-4">
                               {testData.map((data, index) => (
-                                <TabsTrigger key={index} value={String(index)}>{data.subject}</TabsTrigger>
+                                <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
                               ))}
                           </TabsList>
                           {testData.map((data, index) => (

@@ -1,15 +1,9 @@
 import type { UrtTest } from './types';
 
-export const biologyDemoSet: UrtTest[] = [
+export const biologyDemoSet1: UrtTest[] = [
   {
     title: 'The Intricacies of DNA: From Code to Function',
-    passage: `1. Deoxyribonucleic acid (DNA) serves as the fundamental blueprint for life, containing the complete genetic instructions for the development, functioning, growth, and reproduction of all known organisms and many viruses. The iconic double helix structure, first elucidated by Watson and Crick, consists of two polynucleotide chains that coil around each other. The backbone of each chain is composed of alternating deoxyribose sugar and phosphate groups. Attached to each sugar is one of four nitrogenous bases: adenine (A), guanine (G), cytosine (C), and thymine (T). The two strands are held together by hydrogen bonds between the bases, with adenine forming a specific pair with thymine (A-T), and cytosine with guanine (C-G). This principle of complementary base pairing is the cornerstone of DNA's ability to replicate and be transcribed with high fidelity.
-
-2. DNA replication is a semi-conservative process, meaning each new DNA molecule consists of one parental strand and one newly synthesized strand. The process begins when an enzyme called helicase unwinds the double helix, separating the two strands to create replication forks. Another enzyme, DNA polymerase, then reads the existing strands and adds new, complementary nucleotides. Because DNA polymerase can only synthesize DNA in the 5' to 3' direction, one strand (the leading strand) is synthesized continuously. The other strand (the lagging strand) is synthesized in short, discontinuous fragments known as Okazaki fragments, which are later joined together by DNA ligase. This intricate mechanism ensures that the entire genome is copied accurately before cell division.
-
-3. The genetic information stored in DNA is expressed through a two-step process: transcription and translation. During transcription, which occurs in the nucleus of eukaryotic cells, a segment of DNA is used as a template to create a complementary messenger RNA (mRNA) molecule. RNA polymerase is the key enzyme that reads the DNA and synthesizes the mRNA strand. Unlike DNA, RNA uses the sugar ribose instead of deoxyribose and the base uracil (U) instead of thymine.
-
-4. Once the mRNA molecule is processed, it travels out of the nucleus to a ribosome in the cytoplasm, where translation occurs. The ribosome reads the mRNA sequence in three-base segments called codons. Each codon specifies a particular amino acid. Transfer RNA (tRNA) molecules, each carrying a specific amino acid and having an anticodon that complements an mRNA codon, bring the correct amino acids to the ribosome. The ribosome then links these amino acids together in a chain, forming a polypeptide. This polypeptide chain folds into a specific three-dimensional structure to become a functional protein, which then carries out a specific task in the cell.`,
+    passage: `<p>1. Deoxyribonucleic acid (DNA) serves as the fundamental blueprint for life, containing the complete genetic instructions for the development, functioning, growth, and reproduction of all known organisms and many viruses. The iconic double helix structure, first elucidated by Watson and Crick, consists of two polynucleotide chains that coil around each other. The backbone of each chain is composed of alternating deoxyribose sugar and phosphate groups. Attached to each sugar is one of four nitrogenous bases: adenine (A), guanine (G), cytosine (C), and thymine (T). The two strands are held together by hydrogen bonds between the bases, with adenine forming a specific pair with thymine (A-T), and cytosine with guanine (C-G). This principle of complementary base pairing is the cornerstone of DNA's ability to replicate and be transcribed with high fidelity.</p><p>2. DNA replication is a semi-conservative process, meaning each new DNA molecule consists of one parental strand and one newly synthesized strand. The process begins when an enzyme called helicase unwinds the double helix, separating the two strands to create replication forks. Another enzyme, DNA polymerase, then reads the existing strands and adds new, complementary nucleotides. Because DNA polymerase can only synthesize DNA in the 5' to 3' direction, one strand (the leading strand) is synthesized continuously. The other strand (the lagging strand) is synthesized in short, discontinuous fragments known as Okazaki fragments, which are later joined together by DNA ligase. This intricate mechanism ensures that the entire genome is copied accurately before cell division.</p><p>3. The genetic information stored in DNA is expressed through a two-step process: transcription and translation. During transcription, which occurs in the nucleus of eukaryotic cells, a segment of DNA is used as a template to create a complementary messenger RNA (mRNA) molecule. RNA polymerase is the key enzyme that reads the DNA and synthesizes the mRNA strand. Unlike DNA, RNA uses the sugar ribose instead of deoxyribose and the base uracil (U) instead of thymine.</p><p>4. Once the mRNA molecule is processed, it travels out of the nucleus to a ribosome in the cytoplasm, where translation occurs. The ribosome reads the mRNA sequence in three-base segments called codons. Each codon specifies a particular amino acid. Transfer RNA (tRNA) molecules, each carrying a specific amino acid and having an anticodon that complements an mRNA codon, bring the correct amino acids to the ribosome. The ribosome then links these amino acids together in a chain, forming a polypeptide. This polypeptide chain folds into a specific three-dimensional structure to become a functional protein, which then carries out a specific task in the cell.</p>`,
     questions: [
       {
         question: 'According to the passage, the lagging strand is synthesized in fragments because:',
@@ -59,42 +53,30 @@ export const biologyDemoSet: UrtTest[] = [
   },
   {
     title: 'ACT Science: Investigating Enzyme Inhibition',
-    passage: `Enzyme inhibitors are molecules that bind to enzymes and decrease their activity. They are crucial for regulating metabolic pathways and are often used in pharmacology as drugs. Two common types of inhibition are competitive and non-competitive. Competitive inhibitors bind to the active site of the enzyme, preventing the substrate from binding. Non-competitive inhibitors bind to a different site (an allosteric site), changing the enzyme's shape and reducing its efficiency.
-
-Two studies were conducted to examine the effects of two inhibitors, Inhibitor A and Inhibitor B, on the activity of the enzyme lactase, which breaks down lactose into glucose and galactose. Enzyme activity was measured by the rate of glucose production in micromoles per minute (µmol/min).
-
-**Study 1**
-The experiment was conducted with a constant concentration of lactase (1 mg/mL) and a constant concentration of the inhibitor (0.5 mM). The concentration of the substrate, lactose, was varied. The initial rate of reaction was measured for the enzyme alone, with Inhibitor A, and with Inhibitor B. The results are shown in Table 1.
-
+    passage: `<p>1. Enzyme inhibitors are molecules that bind to enzymes and decrease their activity. They are crucial for regulating metabolic pathways and are often used in pharmacology as drugs. Two common types of inhibition are competitive and non-competitive. Competitive inhibitors bind to the active site of the enzyme, preventing the substrate from binding. Non-competitive inhibitors bind to a different site (an allosteric site), changing the enzyme's shape and reducing its efficiency.</p><p>2. Two studies were conducted to examine the effects of two inhibitors, Inhibitor A and Inhibitor B, on the activity of the enzyme lactase, which breaks down lactose into glucose and galactose. Enzyme activity was measured by the rate of glucose production in micromoles per minute (µmol/min).</p><p>3. **Study 1**<br>The experiment was conducted with a constant concentration of lactase (1 mg/mL) and a constant concentration of the inhibitor (0.5 mM). The concentration of the substrate, lactose, was varied. The initial rate of reaction was measured for the enzyme alone, with Inhibitor A, and with Inhibitor B. The results are shown in Table 1.</p>
 <table>
-  <caption>Table 1: Effect of Substrate Concentration on Reaction Rate (µmol/min)</caption>
   <thead>
-    <tr><th>Lactose Conc. (mM)</th><th>Rate (No Inhibitor)</th><th>Rate (Inhibitor A)</th><th>Rate (Inhibitor B)</th></tr>
+    <tr><th>Trial</th><th>Lactose Conc. (mM)</th><th>Rate (No Inhibitor)</th><th>Rate (Inhibitor A)</th><th>Rate (Inhibitor B)</th></tr>
   </thead>
   <tbody>
-    <tr><td>1</td><td>28</td><td>15</td><td>14</td></tr>
-    <tr><td>2</td><td>45</td><td>26</td><td>23</td></tr>
-    <tr><td>5</td><td>71</td><td>49</td><td>36</td></tr>
-    <tr><td>10</td><td>89</td><td>73</td><td>45</td></tr>
-    <tr><td>20</td><td>98</td><td>91</td><td>49</td></tr>
-    <tr><td>40</td><td>100</td><td>99</td><td>50</td></tr>
+    <tr><td>1</td><td>1</td><td>28</td><td>15</td><td>14</td></tr>
+    <tr><td>2</td><td>2</td><td>45</td><td>26</td><td>23</td></tr>
+    <tr><td>3</td><td>5</td><td>71</td><td>49</td><td>36</td></tr>
+    <tr><td>4</td><td>10</td><td>89</td><td>73</td><td>45</td></tr>
+    <tr><td>5</td><td>20</td><td>98</td><td>91</td><td>49</td></tr>
+    <tr><td>6</td><td>40</td><td>100</td><td>99</td><td>50</td></tr>
   </tbody>
-</table>
-
-**Study 2**
-This experiment was conducted with a constant high concentration of lactose (40 mM) and a constant concentration of lactase (1 mg/mL). The concentration of each inhibitor was varied to observe its effect on enzyme activity. The results are shown in Table 2.
-
+</table><p>4. **Study 2**<br>This experiment was conducted with a constant high concentration of lactose (40 mM) and a constant concentration of lactase (1 mg/mL). The concentration of each inhibitor was varied to observe its effect on enzyme activity. The results are shown in Table 2.</p>
 <table>
-  <caption>Table 2: Effect of Inhibitor Concentration on Reaction Rate (µmol/min)</caption>
   <thead>
-    <tr><th>Inhibitor Conc. (mM)</th><th>Rate (Inhibitor A)</th><th>Rate (Inhibitor B)</th></tr>
+    <tr><th>Trial</th><th>Inhibitor Conc. (mM)</th><th>Rate (Inhibitor A)</th><th>Rate (Inhibitor B)</th></tr>
   </thead>
   <tbody>
-    <tr><td>0.1</td><td>99</td><td>90</td></tr>
-    <tr><td>0.2</td><td>98</td><td>81</td></tr>
-    <tr><td>0.5</td><td>94</td><td>64</td></tr>
-    <tr><td>1.0</td><td>86</td><td>47</td></tr>
-    <tr><td>2.0</td><td>72</td><td>31</td></tr>
+    <tr><td>1</td><td>0.1</td><td>99</td><td>90</td></tr>
+    <tr><td>2</td><td>0.2</td><td>98</td><td>81</td></tr>
+    <tr><td>3</td><td>0.5</td><td>94</td><td>64</td></tr>
+    <tr><td>4</td><td>1.0</td><td>86</td><td>47</td></tr>
+    <tr><td>5</td><td>2.0</td><td>72</td><td>31</td></tr>
   </tbody>
 </table>`,
     questions: [
@@ -102,8 +84,8 @@ This experiment was conducted with a constant high concentration of lactose (40 
         question: 'Based on the results of Study 1, which inhibitor can have its effect overcome by a high concentration of substrate?',
         options: ['Inhibitor A', 'Inhibitor B', 'Both inhibitors', 'Neither inhibitor'],
         answer: 'Inhibitor A',
-        explanationEnglish: 'In Table 1, as the lactose concentration increases to 40 mM, the reaction rate with Inhibitor A (99 µmol/min) becomes nearly identical to the rate with no inhibitor (100 µmol/min). This suggests the inhibition is overcome. The rate with Inhibitor B remains significantly lower (50 µmol/min). This is characteristic of competitive inhibition.',
-        explanationArabic: 'في الجدول 1 ، مع زيادة تركيز اللاكتوز إلى 40 ملي مولار ، يصبح معدل التفاعل مع المثبط أ (99 ميكرومول / دقيقة) مطابقًا تقريبًا للمعدل بدون مثبط (100 ميكرومول / دقيقة). هذا يشير إلى التغلب على التثبيط. يظل المعدل مع المثبط ب أقل بكثير (50 ميكرومول / دقيقة). هذه سمة من سمات التثبيط التنافسي.',
+        explanationEnglish: 'In Table 1, as the lactose concentration increases to 40 mM (Trial 6), the reaction rate with Inhibitor A (99 µmol/min) becomes nearly identical to the rate with no inhibitor (100 µmol/min). This suggests the inhibition is overcome. The rate with Inhibitor B remains significantly lower (50 µmol/min). This is characteristic of competitive inhibition.',
+        explanationArabic: 'في الجدول 1 ، مع زيادة تركيز اللاكتوز إلى 40 ملي مولار (التجربة 6) ، يصبح معدل التفاعل مع المثبط أ (99 ميكرومول / دقيقة) مطابقًا تقريبًا للمعدل بدون مثبط (100 ميكرومول / دقيقة). هذا يشير إلى التغلب على التثبيط. يظل المعدل مع المثبط ب أقل بكثير (50 ميكرومول / دقيقة). هذه سمة من سمات التثبيط التنافسي.',
       },
       {
         question: 'According to the passage, Inhibitor A is most likely a:',
@@ -116,8 +98,8 @@ This experiment was conducted with a constant high concentration of lactose (40 
         question: 'In Study 1, if the lactose concentration was 8 mM, the reaction rate with Inhibitor B would most likely be:',
         options: ['less than 36 µmol/min', 'between 36 and 45 µmol/min', 'between 45 and 73 µmol/min', 'greater than 73 µmol/min'],
         answer: 'between 36 and 45 µmol/min',
-        explanationEnglish: 'In Table 1 for Inhibitor B, the rate at 5 mM lactose is 36, and the rate at 10 mM is 45. Therefore, the rate at 8 mM would be expected to fall between these two values.',
-        explanationArabic: 'في الجدول 1 للمثبط ب ، يكون المعدل عند 5 ملي مولار لاكتوز هو 36 ، والمعدل عند 10 ملي مولار هو 45. لذلك ، من المتوقع أن يقع المعدل عند 8 ملي مولار بين هاتين القيمتين.',
+        explanationEnglish: 'In Table 1 for Inhibitor B, the rate at 5 mM lactose (Trial 3) is 36, and the rate at 10 mM (Trial 4) is 45. Therefore, the rate at 8 mM would be expected to fall between these two values.',
+        explanationArabic: 'في الجدول 1 للمثبط ب ، يكون المعدل عند 5 ملي مولار لاكتوز (التجربة 3) هو 36 ، والمعدل عند 10 ملي مولار (التجربة 4) هو 45. لذلك ، من المتوقع أن يقع المعدل عند 8 ملي مولار بين هاتين القيمتين.',
       },
       {
         question: 'Which of the following statements is best supported by the results of Study 2?',
@@ -146,25 +128,24 @@ This experiment was conducted with a constant high concentration of lactose (40 
     chartData: {
         type: 'bar',
         data: [
-          { name: '1 mM', 'Inhibitor A': 15, 'Inhibitor B': 14 },
-          { name: '5 mM', 'Inhibitor A': 49, 'Inhibitor B': 36 },
-          { name: '10 mM', 'Inhibitor A': 73, 'Inhibitor B': 45 },
-          { name: '40 mM', 'Inhibitor A': 99, 'Inhibitor B': 50 },
+            {"Lactose Conc. (mM)": 1, "No Inhibitor": 28, "Inhibitor A": 15, "Inhibitor B": 14},
+            {"Lactose Conc. (mM)": 2, "No Inhibitor": 45, "Inhibitor A": 26, "Inhibitor B": 23},
+            {"Lactose Conc. (mM)": 5, "No Inhibitor": 71, "Inhibitor A": 49, "Inhibitor B": 36},
+            {"Lactose Conc. (mM)": 10, "No Inhibitor": 89, "Inhibitor A": 73, "Inhibitor B": 45},
+            {"Lactose Conc. (mM)": 20, "No Inhibitor": 98, "Inhibitor A": 91, "Inhibitor B": 49},
+            {"Lactose Conc. (mM)": 40, "No Inhibitor": 100, "Inhibitor A": 99, "Inhibitor B": 50}
         ],
-        xAxisKey: 'name',
-        yAxisKey: 'Inhibitor A',
-        yAxisLabel: 'Rate (µmol/min)',
+        xAxisKey: "Lactose Conc. (mM)",
+        yAxisKeys: ["No Inhibitor", "Inhibitor A", "Inhibitor B"],
+        yAxisLabel: "Rate (µmol/min)"
     }
   },
+];
+
+export const biologyDemoSet2: UrtTest[] = [
   {
     title: 'Cellular Energy: The Interplay of Respiration and Photosynthesis',
-    passage: `1. The flow of energy through biological systems is a process of transformation, governed by the fundamental laws of thermodynamics. At the cellular level, this flow is primarily managed through two complementary metabolic pathways: photosynthesis and cellular respiration. While seemingly opposite, these processes are intricately linked, forming a cycle that sustains the majority of life on Earth. Photosynthesis captures light energy and converts it into chemical energy, while cellular respiration releases this chemical energy to fuel life's activities.
-
-2. Photosynthesis occurs in the chloroplasts of plant cells, algae, and some bacteria. It uses light energy, water (H<sub>2</sub>O), and carbon dioxide (CO<sub>2</sub>) to synthesize glucose (C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>), a high-energy sugar molecule. The process is summarized by the equation: 6CO<sub>2</sub> + 6H<sub>2</sub>O + Light Energy → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub>. This process is divided into two main stages. The light-dependent reactions capture solar energy in the thylakoid membranes to produce ATP and NADPH. The light-independent reactions (Calvin cycle), which occur in the stroma, then use the energy from ATP and NADPH to convert CO<sub>2</sub> into glucose.
-
-3. Cellular respiration is the process by which organisms break down glucose to release its stored energy. This energy is captured in the form of adenosine triphosphate (ATP), the universal energy currency of the cell. The overall equation is C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub> → 6CO<sub>2</sub> + 6H<sub>2</sub>O + ATP. This process begins with glycolysis in the cytoplasm, where glucose is split into two pyruvate molecules, yielding a small amount of ATP.
-
-4. In eukaryotes, the pyruvate molecules then enter the mitochondria. Here, in the mitochondrial matrix, the Krebs cycle (or citric acid cycle) further breaks down the pyruvate, releasing CO<sub>2</sub> and generating more energy carriers like NADH and FADH<sub>2</sub>. The final and most productive stage is the electron transport chain, located on the inner mitochondrial membrane. Here, NADH and FADH<sub>2</sub> donate electrons, which are passed along a series of protein complexes, releasing energy that is used to pump protons and create a gradient. The flow of these protons back across the membrane powers ATP synthase, which produces the vast majority of the cell's ATP. Oxygen acts as the final electron acceptor in this chain, forming water.`,
+    passage: `<p>1. The flow of energy through biological systems is a process of transformation, governed by the fundamental laws of thermodynamics. At the cellular level, this flow is primarily managed through two complementary metabolic pathways: photosynthesis and cellular respiration. While seemingly opposite, these processes are intricately linked, forming a cycle that sustains the majority of life on Earth. Photosynthesis captures light energy and converts it into chemical energy, while cellular respiration releases this chemical energy to fuel life's activities.</p><p>2. Photosynthesis occurs in the chloroplasts of plant cells, algae, and some bacteria. It uses light energy, water (H<sub>2</sub>O), and carbon dioxide (CO<sub>2</sub>) to synthesize glucose (C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>), a high-energy sugar molecule. The process is summarized by the equation: 6CO<sub>2</sub> + 6H<sub>2</sub>O + Light Energy → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub>. This process is divided into two main stages. The light-dependent reactions capture solar energy in the thylakoid membranes to produce ATP and NADPH. The light-independent reactions (Calvin cycle), which occur in the stroma, then use the energy from ATP and NADPH to convert CO<sub>2</sub> into glucose.</p><p>3. Cellular respiration is the process by which organisms break down glucose to release its stored energy. This energy is captured in the form of adenosine triphosphate (ATP), the universal energy currency of the cell. The overall equation is C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub> → 6CO<sub>2</sub> + 6H<sub>2</sub>O + ATP. This process begins with glycolysis in the cytoplasm, where glucose is split into two pyruvate molecules, yielding a small amount of ATP.</p><p>4. In eukaryotes, the pyruvate molecules then enter the mitochondria. Here, in the mitochondrial matrix, the Krebs cycle (or citric acid cycle) further breaks down the pyruvate, releasing CO<sub>2</sub> and generating more energy carriers like NADH and FADH<sub>2</sub>. The final and most productive stage is the electron transport chain, located on the inner mitochondrial membrane. Here, NADH and FADH<sub>2</sub> donate electrons, which are passed along a series of protein complexes, releasing energy that is used to pump protons and create a gradient. The flow of these protons back across the membrane powers ATP synthase, which produces the vast majority of the cell's ATP. Oxygen acts as the final electron acceptor in this chain, forming water.</p>`,
     questions: [
       {
         question: 'What is the primary location of the Krebs cycle in eukaryotic cells?',
@@ -214,13 +195,7 @@ This experiment was conducted with a constant high concentration of lactose (40 
   },
   {
     title: 'The Human Circulatory System: A Network of Life',
-    passage: `1. The human circulatory system is a highly efficient, closed network responsible for the critical task of transportation. It delivers oxygen, nutrients, and hormones to trillions of cells and removes metabolic wastes like carbon dioxide. This system comprises the heart, blood vessels, and blood. The heart, a four-chambered muscular organ, acts as a powerful double pump, propelling blood through two distinct circuits: the pulmonary circuit and the systemic circuit.
-
-2. The pulmonary circuit manages gas exchange. Deoxygenated blood returns from the body and enters the right atrium, is pumped to the right ventricle, and then sent to the lungs via the pulmonary artery. In the lungs, carbon dioxide is released, and oxygen is absorbed. Oxygen-rich blood then returns to the heart's left atrium via the pulmonary vein. The systemic circuit begins as this oxygenated blood is pumped from the left atrium to the left ventricle, the heart's strongest chamber. The left ventricle then contracts forcefully, sending oxygenated blood through the aorta, the body's largest artery, to be distributed to all other tissues.
-
-3. Blood travels through three main types of vessels. Arteries carry high-pressure blood away from the heart. Their thick, muscular, and elastic walls allow them to expand and contract with each heartbeat. Arteries branch into smaller arterioles, which lead to capillaries. Capillaries are microscopic vessels, often only one cell thick, that form vast networks called capillary beds. It is here that the vital exchange of substances between the blood and tissue cells occurs.
-
-4. After passing through the capillaries, deoxygenated blood is collected into venules, which merge to form larger veins. Veins carry low-pressure blood back towards the heart. Their walls are thinner and less elastic than arteries. To counteract gravity and prevent the backflow of blood, especially in the limbs, many veins are equipped with one-way valves. The entire journey of blood through the body is a continuous, life-sustaining loop.`,
+    passage: `<p>1. The human circulatory system is a highly efficient, closed network responsible for the critical task of transportation. It delivers oxygen, nutrients, and hormones to trillions of cells and removes metabolic wastes like carbon dioxide. This system comprises the heart, blood vessels, and blood. The heart, a four-chambered muscular organ, acts as a powerful double pump, propelling blood through two distinct circuits: the pulmonary circuit and the systemic circuit.</p><p>2. The pulmonary circuit manages gas exchange. Deoxygenated blood returns from the body and enters the right atrium, is pumped to the right ventricle, and then sent to the lungs via the pulmonary artery. In the lungs, carbon dioxide is released, and oxygen is absorbed. Oxygen-rich blood then returns to the heart's left atrium via the pulmonary vein. The systemic circuit begins as this oxygenated blood is pumped from the left atrium to the left ventricle, the heart's strongest chamber. The left ventricle then contracts forcefully, sending oxygenated blood through the aorta, the body's largest artery, to be distributed to all other tissues.</p><p>3. Blood travels through three main types of vessels. Arteries carry high-pressure blood away from the heart. Their thick, muscular, and elastic walls allow them to expand and contract with each heartbeat. Arteries branch into smaller arterioles, which lead to capillaries. Capillaries are microscopic vessels, often only one cell thick, that form vast networks called capillary beds. It is here that the vital exchange of substances between the blood and tissue cells occurs.</p><p>4. After passing through the capillaries, deoxygenated blood is collected into venules, which merge to form larger veins. Veins carry low-pressure blood back towards the heart. Their walls are thinner and less elastic than arteries. To counteract gravity and prevent the backflow of blood, especially in the limbs, many veins are equipped with one-way valves. The entire journey of blood through the body is a continuous, life-sustaining loop.</p>`,
     questions: [
       {
         question: 'Which chamber of the heart is responsible for pumping oxygenated blood to the entire body?',
@@ -270,16 +245,10 @@ This experiment was conducted with a constant high concentration of lactose (40 
   },
 ];
 
-export const geologyDemoSet: UrtTest[] = [
+export const geologyDemoSet1: UrtTest[] = [
   {
     title: 'The Dynamic Rock Cycle',
-    passage: `1. The rock cycle is a core concept in geology that illustrates the transitions among the three main rock types: igneous, sedimentary, and metamorphic. This cycle is a continuous process of formation, alteration, and destruction of rock material, driven by Earth's internal heat and external processes like weathering and erosion. It reveals that rock is not a static substance but is constantly being recycled over geological time.
-
-2. Igneous rocks, born from fire, are formed from the cooling and solidification of molten rock. When this molten material, called magma, cools slowly deep within the Earth's crust, it forms intrusive (or plutonic) igneous rocks. The slow cooling allows large crystals to grow, resulting in coarse-grained textures, as seen in granite. Conversely, when magma erupts onto the surface as lava, it cools rapidly, forming extrusive (or volcanic) igneous rocks. This rapid cooling leaves little time for crystal growth, resulting in fine-grained textures, like basalt, or even glassy textures, like obsidian.
-
-3. Sedimentary rocks are the archives of Earth's history, formed from the accumulation of pre-existing materials. This process begins with weathering, the breakdown of any rock type at the surface. Erosion then transports these broken pieces, called sediments, via wind, water, or ice. Eventually, these sediments are deposited in layers. Over immense periods, the weight of overlying layers causes compaction, squeezing out water. Dissolved minerals precipitate within the pore spaces, cementing the grains together in a process called lithification. This forms clastic sedimentary rocks like sandstone and shale. Chemical and organic sedimentary rocks, such as limestone and coal, form from the precipitation of minerals or the accumulation of organic debris.
-
-4. Metamorphic rocks are rocks that have been changed by intense heat, pressure, or chemical alteration, a process called metamorphism. The original rock, or protolith, can be igneous, sedimentary, or even another metamorphic rock. Metamorphism occurs without melting the rock. The heat and pressure cause minerals to recrystallize, reorient, and sometimes form new minerals, changing the rock's texture and composition. This can result in foliated rocks, which have a layered or banded appearance (like slate, schist, and gneiss), or non-foliated rocks, which have a more uniform texture (like marble and quartzite).`,
+    passage: `<p>1. The rock cycle is a core concept in geology that illustrates the transitions among the three main rock types: igneous, sedimentary, and metamorphic. This cycle is a continuous process of formation, alteration, and destruction of rock material, driven by Earth's internal heat and external processes like weathering and erosion. It reveals that rock is not a static substance but is constantly being recycled over geological time.</p><p>2. Igneous rocks, born from fire, are formed from the cooling and solidification of molten rock. When this molten material, called magma, cools slowly deep within the Earth's crust, it forms intrusive (or plutonic) igneous rocks. The slow cooling allows large crystals to grow, resulting in coarse-grained textures, as seen in granite. Conversely, when magma erupts onto the surface as lava, it cools rapidly, forming extrusive (or volcanic) igneous rocks. This rapid cooling leaves little time for crystal growth, resulting in fine-grained textures, like basalt, or even glassy textures, like obsidian.</p><p>3. Sedimentary rocks are the archives of Earth's history, formed from the accumulation of pre-existing materials. This process begins with weathering, the breakdown of any rock type at the surface. Erosion then transports these broken pieces, called sediments, via wind, water, or ice. Eventually, these sediments are deposited in layers. Over immense periods, the weight of overlying layers causes compaction, squeezing out water. Dissolved minerals precipitate within the pore spaces, cementing the grains together in a process called lithification. This forms clastic sedimentary rocks like sandstone and shale. Chemical and organic sedimentary rocks, such as limestone and coal, form from the precipitation of minerals or the accumulation of organic debris.</p><p>4. Metamorphic rocks are rocks that have been changed by intense heat, pressure, or chemical alteration, a process called metamorphism. The original rock, or protolith, can be igneous, sedimentary, or even another metamorphic rock. Metamorphism occurs without melting the rock. The heat and pressure cause minerals to recrystallize, reorient, and sometimes form new minerals, changing the rock's texture and composition. This can result in foliated rocks, which have a layered or banded appearance (like slate, schist, and gneiss), or non-foliated rocks, which have a more uniform texture (like marble and quartzite).</p>`,
     questions: [
       {
         question: 'A geologist finds a rock with very large, interlocking crystals. This rock is most likely:',
@@ -329,39 +298,27 @@ export const geologyDemoSet: UrtTest[] = [
   },
   {
     title: 'ACT Science: Soil Permeability Study',
-    passage: `Soil permeability is a measure of the ability of soil to allow water to pass through it. It is an important characteristic for agriculture and civil engineering. Permeability is influenced by soil texture—the relative proportions of sand, silt, and clay particles. Sand particles are large and coarse, creating large pore spaces. Clay particles are very fine and flat, creating small pore spaces.
-
-A team of geologists conducted two studies to investigate the properties of soil samples from four different farm fields (Fields 1-4).
-
-**Study 1**
-First, the composition of each soil sample was determined. A 100g sample of dry soil from each field was passed through a series of sieves to separate the sand, silt, and clay. The mass of each component was measured, and the percentage was calculated. The results are presented in Table 1.
-
+    passage: `<p>1. Soil permeability is a measure of the ability of soil to allow water to pass through it. It is an important characteristic for agriculture and civil engineering. Permeability is influenced by soil texture—the relative proportions of sand, silt, and clay particles. Sand particles are large and coarse, creating large pore spaces. Clay particles are very fine and flat, creating small pore spaces.</p><p>2. A team of geologists conducted two studies to investigate the properties of soil samples from four different farm fields (Fields 1-4).</p><p>3. **Study 1**<br>First, the composition of each soil sample was determined. A 100g sample of dry soil from each field was passed through a series of sieves to separate the sand, silt, and clay. The mass of each component was measured, and the percentage was calculated. The results are presented in Table 1.</p>
 <table>
-  <caption>Table 1: Soil Composition by Percentage Mass</caption>
   <thead>
-    <tr><th>Field</th><th>Sand (%)</th><th>Silt (%)</th><th>Clay (%)</th></tr>
+    <tr><th>Trial</th><th>Field</th><th>Sand (%)</th><th>Silt (%)</th><th>Clay (%)</th></tr>
   </thead>
   <tbody>
-    <tr><td>1</td><td>80</td><td>10</td><td>10</td></tr>
-    <tr><td>2</td><td>50</td><td>30</td><td>20</td></tr>
-    <tr><td>3</td><td>30</td><td>50</td><td>20</td></tr>
-    <tr><td>4</td><td>10</td><td>40</td><td>50</td></tr>
+    <tr><td>1</td><td>1</td><td>80</td><td>10</td><td>10</td></tr>
+    <tr><td>2</td><td>2</td><td>50</td><td>30</td><td>20</td></tr>
+    <tr><td>3</td><td>3</td><td>30</td><td>50</td><td>20</td></tr>
+    <tr><td>4</td><td>4</td><td>10</td><td>40</td><td>50</td></tr>
   </tbody>
-</table>
-
-**Study 2**
-Next, the permeability of each soil was tested. A 10cm deep sample of each soil was placed in a 1000 mL graduated cylinder with a mesh bottom. 500 mL of water was poured onto the surface of the soil. The time it took for the first drop of water to pass through the soil column (breakthrough time) and the total volume of water collected after 10 minutes were recorded. The results are shown in Table 2.
-
+</table><p>4. **Study 2**<br>Next, the permeability of each soil was tested. A 10cm deep sample of each soil was placed in a 1000 mL graduated cylinder with a mesh bottom. 500 mL of water was poured onto the surface of the soil. The time it took for the first drop of water to pass through the soil column (breakthrough time) and the total volume of water collected after 10 minutes were recorded. The results are shown in Table 2.</p>
 <table>
-  <caption>Table 2: Soil Permeability Results</caption>
   <thead>
-    <tr><th>Field</th><th>Breakthrough Time (sec)</th><th>Volume Collected after 10 min (mL)</th></tr>
+    <tr><th>Trial</th><th>Field</th><th>Breakthrough Time (sec)</th><th>Volume Collected after 10 min (mL)</th></tr>
   </thead>
   <tbody>
-    <tr><td>1</td><td>15</td><td>485</td></tr>
-    <tr><td>2</td><td>55</td><td>410</td></tr>
-    <tr><td>3</td><td>120</td><td>250</td></tr>
-    <tr><td>4</td><td>450</td><td>95</td></tr>
+    <tr><td>1</td><td>1</td><td>15</td><td>485</td></tr>
+    <tr><td>2</td><td>2</td><td>55</td><td>410</td></tr>
+    <tr><td>3</td><td>3</td><td>120</td><td>250</td></tr>
+    <tr><td>4</td><td>4</td><td>450</td><td>95</td></tr>
   </tbody>
 </table>`,
     questions: [
@@ -413,25 +370,22 @@ Next, the permeability of each soil was tested. A 10cm deep sample of each soil 
      chartData: {
         type: 'bar',
         data: [
-          { name: 'Field 1', value: 485 },
-          { name: 'Field 2', value: 410 },
-          { name: 'Field 3', value: 250 },
-          { name: 'Field 4', value: 95 },
+          { name: 'Field 1', 'Volume Collected': 485 },
+          { name: 'Field 2', 'Volume Collected': 410 },
+          { name: 'Field 3', 'Volume Collected': 250 },
+          { name: 'Field 4', 'Volume Collected': 95 },
         ],
         xAxisKey: 'name',
-        yAxisKey: 'value',
+        yAxisKeys: ['Volume Collected'],
         yAxisLabel: 'Water Collected (mL)',
     }
   },
+];
+
+export const geologyDemoSet2: UrtTest[] = [
   {
     title: 'Plate Tectonics: The Unifying Theory',
-    passage: `1. The theory of plate tectonics revolutionized the field of geology by providing a comprehensive framework for understanding Earth's major geological processes. Proposed in the mid-20th century, it posits that the Earth's rigid outer layer, the lithosphere, is broken into a mosaic of large and small tectonic plates. These plates are not static; they move slowly over the underlying, semi-molten asthenosphere at rates of a few centimeters per year. Their interactions at the boundaries are responsible for shaping the planet's surface, driving everything from mountain formation to earthquakes and volcanic activity.
-
-2. Evidence for this theory is vast and comes from multiple scientific disciplines. Early observations by Alfred Wegener, part of his continental drift hypothesis, included the remarkable fit of the continents (e.g., South America and Africa), the distribution of identical fossils across separate continents, and the alignment of ancient mountain ranges. Later, post-WWII oceanographic mapping revealed mid-ocean ridges, enormous underwater mountain chains. Studies of these ridges showed that new oceanic crust is formed there and spreads outwards, a process confirmed by paleomagnetism, which records the periodic reversals of Earth's magnetic field in the rocks.
-
-3. Plate boundaries are classified into three main types based on the relative motion of the plates. At divergent boundaries, plates pull apart. Magma from the mantle upwells to fill the gap, creating new lithosphere. Mid-ocean ridges are the primary example. At convergent boundaries, plates collide. When an oceanic plate collides with a continental plate, the denser oceanic plate is forced to bend and slide beneath the continental plate in a process called subduction, forming a deep-sea trench and a volcanic mountain range on the continent. The collision of two continental plates results in intense compression and uplift, creating massive mountain ranges like the Himalayas.
-
-4. The third type, transform boundaries, occurs where plates slide horizontally past one another. The immense friction prevents a smooth motion, causing stress to accumulate over long periods. When the stress exceeds the rock's strength, the plates slip abruptly, releasing energy as a seismic wave, which we experience as an earthquake. The San Andreas Fault in California is a classic example of a transform boundary, marking the junction between the Pacific Plate and the North American Plate.`,
+    passage: `<p>1. The theory of plate tectonics revolutionized the field of geology by providing a comprehensive framework for understanding Earth's major geological processes. Proposed in the mid-20th century, it posits that the Earth's rigid outer layer, the lithosphere, is broken into a mosaic of large and small tectonic plates. These plates are not static; they move slowly over the underlying, semi-molten asthenosphere at rates of a few centimeters per year. Their interactions at the boundaries are responsible for shaping the planet's surface, driving everything from mountain formation to earthquakes and volcanic activity.</p><p>2. Evidence for this theory is vast and comes from multiple scientific disciplines. Early observations by Alfred Wegener, part of his continental drift hypothesis, included the remarkable fit of the continents (e.g., South America and Africa), the distribution of identical fossils across separate continents, and the alignment of ancient mountain ranges. Later, post-WWII oceanographic mapping revealed mid-ocean ridges, enormous underwater mountain chains. Studies of these ridges showed that new oceanic crust is formed there and spreads outwards, a process confirmed by paleomagnetism, which records the periodic reversals of Earth's magnetic field in the rocks.</p><p>3. Plate boundaries are classified into three main types based on the relative motion of the plates. At divergent boundaries, plates pull apart. Magma from the mantle upwells to fill the gap, creating new lithosphere. Mid-ocean ridges are the primary example. At convergent boundaries, plates collide. When an oceanic plate collides with a continental plate, the denser oceanic plate is forced to bend and slide beneath the continental plate in a process called subduction, forming a deep-sea trench and a volcanic mountain range on the continent. The collision of two continental plates results in intense compression and uplift, creating massive mountain ranges like the Himalayas.</p><p>4. The third type, transform boundaries, occurs where plates slide horizontally past one another. The immense friction prevents a smooth motion, causing stress to accumulate over long periods. When the stress exceeds the rock's strength, the plates slip abruptly, releasing energy as a seismic wave, which we experience as an earthquake. The San Andreas Fault in California is a classic example of a transform boundary, marking the junction between the Pacific Plate and the North American Plate.</p>`,
     questions: [
       {
         question: 'Which of the following pieces of evidence was NOT mentioned in the passage as supporting plate tectonics?',
@@ -481,15 +435,7 @@ Next, the permeability of each soil was tested. A 10cm deep sample of each soil 
   },
    {
     title: 'Mineral Identification and Properties',
-    passage: `1. Minerals are the fundamental building blocks of rocks. Geologists define a mineral as a naturally occurring, inorganic solid with a definite chemical composition and an ordered internal crystalline structure. Identifying minerals is a crucial skill for geologists, and it relies on observing a set of distinct physical properties, as a single property is often not enough for a definitive identification.
-
-2. **Hardness** is one of the most reliable properties for identifying minerals. It measures a mineral's resistance to being scratched. Geologists use the Mohs Hardness Scale, an ordinal scale from 1 (softest) to 10 (hardest). For example, Quartz, with a hardness of 7, can scratch Feldspar (hardness 6), but cannot scratch Topaz (hardness 8). A common field test involves using everyday objects of known hardness, like a fingernail (2.5), a copper penny (3.5), or a steel knife (5.5).
-
-3. **Luster** describes how a mineral's surface reflects light. The primary distinction is between metallic and non-metallic lusters. Minerals with a metallic luster, like pyrite and galena, look like polished metal. Non-metallic lusters are more varied and can be described as vitreous (glassy, like quartz), pearly (like talc), silky (like satin spar gypsum), or earthy (dull, like kaolinite).
-
-4. **Cleavage and Fracture** describe how a mineral breaks. Cleavage is the tendency of a mineral to break along flat, parallel surfaces, which are planes of weak bonding in the crystal structure. Mica, for instance, has perfect cleavage in one direction, causing it to peel into thin sheets. Fracture describes a break that is not along a cleavage plane. Fracture surfaces can be conchoidal (curved and smooth, like quartz), fibrous, or irregular.
-
-5. Other important properties include **color**, which can be misleading as many minerals come in various colors due to impurities; **streak**, the color of a mineral's powder when scraped against an unglazed porcelain plate, which is often more consistent than the mineral's color; and **specific gravity**, which is a measure of the mineral's density relative to water.`,
+    passage: `<p>1. Minerals are the fundamental building blocks of rocks. Geologists define a mineral as a naturally occurring, inorganic solid with a definite chemical composition and an ordered internal crystalline structure. Identifying minerals is a crucial skill for geologists, and it relies on observing a set of distinct physical properties, as a single property is often not enough for a definitive identification.</p><p>2. **Hardness** is one of the most reliable properties for identifying minerals. It measures a mineral's resistance to being scratched. Geologists use the Mohs Hardness Scale, an ordinal scale from 1 (softest) to 10 (hardest). For example, Quartz, with a hardness of 7, can scratch Feldspar (hardness 6), but cannot scratch Topaz (hardness 8). A common field test involves using everyday objects of known hardness, like a fingernail (2.5), a copper penny (3.5), or a steel knife (5.5).</p><p>3. **Luster** describes how a mineral's surface reflects light. The primary distinction is between metallic and non-metallic lusters. Minerals with a metallic luster, like pyrite and galena, look like polished metal. Non-metallic lusters are more varied and can be described as vitreous (glassy, like quartz), pearly (like talc), silky (like satin spar gypsum), or earthy (dull, like kaolinite).</p><p>4. **Cleavage and Fracture** describe how a mineral breaks. Cleavage is the tendency of a mineral to break along flat, parallel surfaces, which are planes of weak bonding in the crystal structure. Mica, for instance, has perfect cleavage in one direction, causing it to peel into thin sheets. Fracture describes a break that is not along a cleavage plane. Fracture surfaces can be conchoidal (curved and smooth, like quartz), fibrous, or irregular.</p><p>5. Other important properties include **color**, which can be misleading as many minerals come in various colors due to impurities; **streak**, the color of a mineral's powder when scraped against an unglazed porcelain plate, which is often more consistent than the mineral's color; and **specific gravity**, which is a measure of the mineral's density relative to water.</p>`,
     questions: [
       {
         question: 'A mineral sample is scratched by a steel knife (hardness 5.5) but not by a copper penny (hardness 3.5). What is the possible hardness range for this mineral on the Mohs scale?',
