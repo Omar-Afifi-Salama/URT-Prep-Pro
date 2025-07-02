@@ -16,6 +16,7 @@ const GenerateUrtPassageInputSchema = z.object({
   difficulty: z.string().describe('The desired difficulty of the passage and questions (e.g., "Easy", "Medium", "Hard").'),
   wordLength: z.number().describe('The approximate number of words for the passage.'),
   numQuestions: z.number().describe('The number of questions to generate.'),
+  randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -95,6 +96,7 @@ Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
 Approximate Word Count: {{{wordLength}}}
 Number of Questions: {{{numQuestions}}}
+Uniqueness Seed: {{{randomSeed}}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
 IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object.
 `,
@@ -131,6 +133,7 @@ Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
 Approximate Word Count: {{{wordLength}}}
 Number of Questions: {{{numQuestions}}}
+Uniqueness Seed: {{{randomSeed}}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
 IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object.
 `,
@@ -147,11 +150,13 @@ const generateUrtPassageFlow = ai.defineFlow(
     const isScience = scienceSubjects.includes(input.topic);
     const shouldUseActStyle = isScience && Math.random() < 0.3;
 
+    const finalInput = { ...input, randomSeed: Math.random() };
+
     let textOutput: any;
     let usage;
 
     if (shouldUseActStyle) {
-      const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(input, { model: 'googleai/gemini-1.5-flash-latest' });
+      const {output: aiOutput, usage: actUsage} = await actStyleSciencePrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' });
       textOutput = aiOutput;
       usage = actUsage;
       
@@ -167,7 +172,7 @@ const generateUrtPassageFlow = ai.defineFlow(
       }
 
     } else {
-      ({output: textOutput, usage} = await standardTextGenerationPrompt(input, { model: 'googleai/gemini-1.5-flash-latest' }));
+      ({output: textOutput, usage} = await standardTextGenerationPrompt(finalInput, { model: 'googleai/gemini-1.5-flash-latest' }));
     }
 
     if (!textOutput) {
@@ -182,7 +187,7 @@ const generateUrtPassageFlow = ai.defineFlow(
         "Geology": "geology rocks",
     };
     const keywords = imageKeywords[input.topic] || input.topic.toLowerCase();
-    const imageUrl = `https://source.unsplash.com/600x400/?${encodeURIComponent(keywords)}`;
+    const imageUrl = `https://placehold.co/600x400.png`;
 
     return {
         ...textOutput,

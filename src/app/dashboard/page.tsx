@@ -40,6 +40,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function formatTime(seconds: number) {
+    if (typeof seconds !== 'number' || isNaN(seconds)) return 'N/A';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
@@ -62,11 +63,20 @@ export default function DashboardPage() {
     if (storedHistory) {
       try {
         const rawHistory = JSON.parse(storedHistory);
+        // Defensively filter for valid history items to prevent crashes
         if (Array.isArray(rawHistory)) {
-          parsedHistory = rawHistory.filter(item => item && item.id && item.subjects && Array.isArray(item.subjects));
+          parsedHistory = rawHistory.filter(item => 
+            item && 
+            typeof item.id === 'string' &&
+            Array.isArray(item.subjects) &&
+            typeof item.overallScore === 'number' &&
+            Array.isArray(item.scoresBySubject) &&
+            Array.isArray(item.testData) &&
+            Array.isArray(item.results)
+          );
         }
       } catch (error) {
-        console.error("Failed to parse test history:", error);
+        console.error("Failed to parse test history, clearing corrupted data:", error);
         localStorage.removeItem('testHistory');
       }
     }
@@ -78,23 +88,26 @@ export default function DashboardPage() {
         const statsMap = new Map<string, { totalScore: number, count: number }>();
         parsedHistory.forEach(item => {
             item.scoresBySubject.forEach(subjectScore => {
-                const stat = statsMap.get(subjectScore.subject) || { totalScore: 0, count: 0 };
-                stat.totalScore += subjectScore.score;
-                stat.count += 1;
-                statsMap.set(subjectScore.subject, stat);
+                if (subjectScore && typeof subjectScore.subject === 'string' && typeof subjectScore.score === 'number') {
+                    const stat = statsMap.get(subjectScore.subject) || { totalScore: 0, count: 0 };
+                    stat.totalScore += subjectScore.score;
+                    stat.count += 1;
+                    statsMap.set(subjectScore.subject, stat);
+                }
             });
         });
 
         const calculatedSubjectStats = Array.from(statsMap.entries()).map(([subject, data]) => ({
             subject,
-            averageScore: data.totalScore / data.count,
+            averageScore: data.count > 0 ? data.totalScore / data.count : 0,
             testsTaken: data.count,
         }));
         setSubjectStats(calculatedSubjectStats);
 
         // Calculate Global Stats
         const totalTests = parsedHistory.length;
-        const averageScore = parsedHistory.reduce((sum, item) => sum + item.overallScore, 0) / totalTests;
+        const totalScoreSum = parsedHistory.reduce((sum, item) => sum + (item.overallScore || 0), 0);
+        const averageScore = totalTests > 0 ? totalScoreSum / totalTests : 0;
         const totalTime = parsedHistory.reduce((sum, item) => sum + (item.timeTaken || 0), 0);
         setGlobalStats({ totalTests, averageScore, totalTime });
     }
@@ -247,7 +260,7 @@ export default function DashboardPage() {
                                             : 'Invalid Date'}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        {typeof item.timeTaken === 'number' ? formatTime(item.timeTaken) : 'N/A'}
+                                        {formatTime(item.timeTaken)}
                                     </TableCell>
                                     <TableCell className="text-right font-semibold text-primary">
                                       {typeof item.overallScore === 'number' ? `${item.overallScore.toFixed(1)}%` : 'N/A'}

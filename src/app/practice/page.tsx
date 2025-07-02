@@ -120,7 +120,7 @@ export default function PracticePage() {
         if (totalTokens > 0) {
             toast({
                 title: "Test Generated Successfully",
-                description: `This generation used approximately ${totalTokens} tokens.`,
+                description: `This generation used approximately ${totalTokens.toLocaleString()} tokens.`,
             });
         }
     } catch (error) {
@@ -160,7 +160,6 @@ export default function PracticePage() {
         
         const gradedResults = await Promise.all(gradingTasks);
         
-        // --- Save to history ---
         let totalCorrect = 0;
         let totalQuestions = 0;
         const scoresBySubject: SubjectScore[] = gradedResults.map((subjectResults, index) => {
@@ -194,7 +193,6 @@ export default function PracticePage() {
         history.unshift(newHistoryItem);
         localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
 
-        // Redirect to the new history page
         router.push(`/history/${newHistoryItem.id}`);
 
     } catch (error) {
@@ -345,9 +343,11 @@ export default function PracticePage() {
                         <Card>
                             <CardHeader><CardTitle className="font-headline text-2xl">{data.title}</CardTitle></CardHeader>
                             <CardContent>
+                                {data.imageUrl && (
                                 <div className="mb-4 rounded-lg overflow-hidden">
                                     <Image key={data.imageUrl} src={data.imageUrl} alt="Passage illustration" width={600} height={400} className="object-cover w-full h-auto" data-ai-hint={`${data.subject.toLowerCase()} illustration`} priority={index === 0}/>
                                 </div>
+                                )}
                                 <div className={cn("prose dark:prose-invert max-w-none", font)} dangerouslySetInnerHTML={{ __html: data.passage.replace(/\n\n/g, '<br/><br/>') }} />
                                 {data.chartData && renderChart(data.chartData)}
                             </CardContent>

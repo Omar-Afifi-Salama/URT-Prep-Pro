@@ -50,10 +50,11 @@ export default function HistoryDetailPage() {
                 if (foundTest) {
                     setTest(foundTest);
                 } else {
+                    // This is a fallback, but the main fix is preventing bad data from being saved.
                     router.push('/dashboard');
                 }
             } catch (error) {
-                console.error("Failed to parse history", error);
+                console.error("Failed to parse history, redirecting to dashboard", error);
                 router.push('/dashboard');
             }
         } else {
@@ -188,7 +189,7 @@ export default function HistoryDetailPage() {
                     </Card>
 
                     <Accordion type="single" collapsible className="w-full">
-                        {results[passageIndex].map((result, questionIndex) => (
+                        {results[passageIndex] && results[passageIndex].map((result, questionIndex) => (
                             <Card key={questionIndex} className="mb-2">
                                 <AccordionItem value={`p${passageIndex}-q${questionIndex}`} className="border-b-0">
                                     <AccordionTrigger className="p-4 hover:no-underline">
