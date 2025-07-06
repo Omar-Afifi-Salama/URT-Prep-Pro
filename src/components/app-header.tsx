@@ -42,7 +42,7 @@ export function AppHeader() {
               href="/billing"
               className={cn("transition-colors hover:text-foreground/80", pathname === "/billing" ? "text-foreground font-semibold" : "text-foreground/60")}
             >
-              Billing
+              API Key
             </Link>
           </nav>
         </div>

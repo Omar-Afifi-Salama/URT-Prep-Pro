@@ -58,9 +58,9 @@ export default function BillingPage() {
                             <KeyRound className="h-8 w-8 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="font-headline text-2xl">Set Your Google AI API Key</CardTitle>
+                            <CardTitle className="font-headline text-2xl">Manage Your API Key</CardTitle>
                             <CardDescription>
-                                Use a free personal API key to power the AI features.
+                                Provide your API key to generate new practice content.
                             </CardDescription>
                         </div>
                     </div>

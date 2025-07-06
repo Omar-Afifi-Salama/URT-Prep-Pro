@@ -290,7 +290,7 @@ export default function PracticePage() {
       history.unshift(newHistoryItem);
       localStorage.setItem('testHistory', JSON.stringify(history.slice(0, 50)));
 
-      router.push(`/history/${encodeURIComponent(newHistoryItem.id)}`);
+      router.push(`/history/${newHistoryItem.id}`);
 
     } catch (error) {
       console.error("Failed to process test results:", error);
@@ -605,10 +605,10 @@ export default function PracticePage() {
                 )}
                 {testView === 'compact' && (
                   <div>
-                    <div className="grid lg:grid-cols-2 gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <div className="w-full">
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="mb-4 sticky top-20">
+                            <TabsList className="mb-4 sticky top-20 z-20">
                                 {testData.map((data, index) => (
                                     <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
                                 ))}
@@ -644,23 +644,25 @@ export default function PracticePage() {
                                     <CardTitle className="font-headline">Questions</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="pr-4">
-                                        {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
-                                            <div key={questionIndex} className="mb-6">
-                                                <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                                <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
-                                                    <div className="space-y-2">
-                                                    {q.options.map((option, optIndex) => (
-                                                        <div key={optIndex} className="flex items-center space-x-2">
-                                                            <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
-                                                            <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                    <ScrollArea className="h-[calc(100vh-12rem)]">
+                                        <div className="pr-4">
+                                            {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
+                                                <div key={questionIndex} className="mb-6">
+                                                    <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                                    <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
+                                                        <div className="space-y-2">
+                                                        {q.options.map((option, optIndex) => (
+                                                            <div key={optIndex} className="flex items-center space-x-2">
+                                                                <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
+                                                                <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                            </div>
+                                                        ))}
                                                         </div>
-                                                    ))}
-                                                    </div>
-                                                </RadioGroup>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                    </RadioGroup>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
                                 </CardContent>
                             </Card>
                         </div>

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { TestHistoryItem, SubjectScore } from '@/lib/types';
-import { Loader2, Trophy, ArrowRight, BarChart, Clock, Percent } from 'lucide-react';
+import { Loader2, Trophy, ArrowRight, BarChart, Clock, Percent, RotateCcw } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
@@ -38,6 +38,8 @@ const chartConfig = {
     color: "hsl(var(--primary))",
   },
 } satisfies ChartConfig;
+
+const RETAKE_STORAGE_KEY = 'urt-retake-test';
 
 function formatTime(seconds: number) {
     if (typeof seconds !== 'number' || isNaN(seconds)) return 'N/A';
@@ -120,6 +122,12 @@ export default function DashboardPage() {
     setIsLoading(false);
   }, []);
 
+  const handleRetakeTest = (item: TestHistoryItem) => {
+    if (!item) return;
+    localStorage.setItem(RETAKE_STORAGE_KEY, JSON.stringify(item.testData));
+    router.push('/practice');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen w-full flex flex-col">
@@ -189,7 +197,7 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
             <Card className="lg:col-span-4">
                 <CardHeader>
                     <CardTitle>Subject Performance</CardTitle>
@@ -224,9 +232,14 @@ export default function DashboardPage() {
                                         {formatDistanceToNowStrict(new Date(item.date))} ago
                                     </p>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => router.push(`/history/${item.id}`)}>
-                                    Review
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => handleRetakeTest(item)}>
+                                      <RotateCcw className="h-3 w-3" />
+                                  </Button>
+                                  <Button variant="outline" size="sm" onClick={() => router.push(`/history/${item.id}`)}>
+                                      Review
+                                  </Button>
+                                </div>
                             </div>
                         ))}
                     </div>
