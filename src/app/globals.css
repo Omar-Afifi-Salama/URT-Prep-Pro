@@ -331,4 +331,20 @@
   .printable-area p[dir="rtl"] {
     font-family: 'Times New Roman', serif; /* A common serif font for printing */
   }
+  
+  .printable-area::after {
+    content: "URT Prep Pro";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 6rem;
+    color: rgba(128, 128, 128, 0.15);
+    font-weight: 600;
+    z-index: -1000;
+    font-family: "Space Grotesk", sans-serif;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5rem;
+  }
 }

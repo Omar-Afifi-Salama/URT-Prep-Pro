@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound, ArrowLeft } from "lucide-react";
+import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound, ArrowLeft, Highlighter, Underline } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,6 +52,7 @@ import { biologyDemoSet1, biologyDemoSet2, geologyDemoSet1, geologyDemoSet2 } fr
 type View = "setup" | "test";
 type TestView = "normal" | "compact";
 const API_KEY_STORAGE_KEY = 'google-ai-api-key';
+const RETAKE_STORAGE_KEY = 'urt-retake-test';
 
 export default function PracticePage() {
   // Setup State
@@ -77,6 +78,36 @@ export default function PracticePage() {
   const { font } = useFont();
   const { addUsage } = useUsage();
   const router = useRouter();
+
+  useEffect(() => {
+    const retakeDataString = localStorage.getItem(RETAKE_STORAGE_KEY);
+    if (retakeDataString) {
+      localStorage.removeItem(RETAKE_STORAGE_KEY);
+      try {
+        const parsedData = JSON.parse(retakeDataString);
+        if (Array.isArray(parsedData)) {
+            setIsLoading(true);
+            setTestData(null);
+            setUserAnswers({});
+            setElapsedTime(0);
+            setActiveTab("0");
+
+            setTimeout(() => { 
+                setTestData(parsedData);
+                setView("test");
+                setIsLoading(false);
+                toast({
+                    title: "Retaking Test",
+                    description: "Your previous answers have been cleared. Good luck!",
+                });
+            }, 100);
+        }
+      } catch (e) {
+        console.error("Failed to parse retake data", e);
+        toast({ title: "Error", description: "Could not load test for retake.", variant: "destructive" });
+      }
+    }
+  }, [toast]);
 
   const handleStartDemo = (demoSet: UrtTest[]) => {
     setIsLoading(true);
@@ -272,6 +303,43 @@ export default function PracticePage() {
   const handleTimeUpdate = useCallback((time: number) => {
     setElapsedTime(time);
   }, []);
+
+  const applyMark = (styleClass: string) => {
+    if (!testData) return;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+    
+    const passageContainer = document.getElementById(`passage-content-${activeTab}`);
+    if (!passageContainer || !passageContainer.contains(selection.anchorNode)) {
+        toast({ title: 'Invalid Selection', description: 'Please select text within the passage to apply formatting.', variant: 'destructive' });
+        return;
+    }
+
+    try {
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.className = styleClass;
+        range.surroundContents(span);
+        selection.removeAllRanges();
+
+        // Update state
+        const newHtml = passageContainer.innerHTML;
+        const newTestData = [...testData];
+        newTestData[parseInt(activeTab)].passage = newHtml;
+        setTestData(newTestData);
+
+    } catch (e) {
+        toast({
+            title: 'Formatting Error',
+            description: 'Could not apply formatting. Please try selecting text contained within a single paragraph.',
+            variant: 'destructive',
+        });
+        console.error(e);
+    }
+  };
+
+  const handleHighlight = () => applyMark('bg-yellow-400/50');
+  const handleUnderline = () => applyMark('underline decoration-yellow-500 decoration-2');
 
   const renderChart = (chartData: ChartData) => {
     const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
@@ -481,9 +549,20 @@ export default function PracticePage() {
                       {testData.map((data, passageIndex) => (
                           <TabsContent key={passageIndex} value={String(passageIndex)}>
                               <Card>
-                                  <CardHeader><CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} /></CardHeader>
+                                  <CardHeader className="flex flex-row justify-between items-center">
+                                      <CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                      <div className="flex items-center gap-2">
+                                          <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                          <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                      </div>
+                                  </CardHeader>
                                   <CardContent>
-                                      <div className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
+                                      <div
+                                        id={`passage-content-${passageIndex}`}
+                                        key={`passage-${passageIndex}-${data.passage.length}`}
+                                        className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
+                                        dangerouslySetInnerHTML={{ __html: data.passage }} 
+                                      />
                                       {data.chartData && renderChart(data.chartData)}
                                   </CardContent>
                               </Card>
@@ -533,9 +612,20 @@ export default function PracticePage() {
                             {testData.map((data, index) => (
                                 <TabsContent key={index} value={String(index)}>
                                     <Card>
-                                        <CardHeader><CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} /></CardHeader>
+                                        <CardHeader className="flex flex-row justify-between items-center">
+                                            <CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                            <div className="flex items-center gap-2">
+                                                <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                                <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                            </div>
+                                        </CardHeader>
                                         <CardContent>
-                                            <div className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: data.passage }} />
+                                            <div
+                                              id={`passage-content-${index}`}
+                                              key={`passage-${index}-${data.passage.length}`}
+                                              className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
+                                              dangerouslySetInnerHTML={{ __html: data.passage }}
+                                            />
                                             {data.chartData && renderChart(data.chartData)}
                                         </CardContent>
                                     </Card>

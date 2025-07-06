@@ -20,7 +20,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, Printer, CheckCircle, XCircle, Trophy } from 'lucide-react';
+import { Loader2, ArrowLeft, Printer, CheckCircle, XCircle, Trophy, RotateCcw } from 'lucide-react';
 import type { TestHistoryItem, ChartData } from '@/lib/types';
 import { useFont } from '@/context/font-provider';
 import { cn } from '@/lib/utils';
@@ -58,6 +58,12 @@ export default function HistoryDetailPage() {
       setOpenAccordionItems([]);
     },
   });
+
+  const handleRetakeTest = () => {
+    if (!test) return;
+    localStorage.setItem('urt-retake-test', JSON.stringify(test.testData));
+    router.push('/practice');
+  };
   
   useEffect(() => {
     setIsLoading(true);
@@ -191,9 +197,14 @@ export default function HistoryDetailPage() {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Dashboard
               </Button>
-               <button onClick={handlePrint} className={cn(buttonVariants({ variant: "outline" }))}>
-                  <Printer className="mr-2 h-4 w-4"/>Export to PDF
-               </button>
+               <div className="flex items-center gap-2">
+                 <Button variant="outline" onClick={handleRetakeTest}>
+                   <RotateCcw className="mr-2 h-4 w-4"/>Retake Test
+                 </Button>
+                 <button onClick={handlePrint} className={cn(buttonVariants({ variant: "outline" }))}>
+                    <Printer className="mr-2 h-4 w-4"/>Export to PDF
+                 </button>
+               </div>
             </div>
             <div ref={printRef} className="w-full printable-area">
               <Card className="mb-6">
