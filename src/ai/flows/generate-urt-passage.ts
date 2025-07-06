@@ -61,7 +61,7 @@ const ActStyleAiOutputSchema = GenerateUrtPassageOutputSchema
 
 const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
 
 You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam. For "Hard" difficulty, the passage should involve multiple complex, interrelated concepts, require a high level of critical reading, and use advanced, domain-specific vocabulary.
 
@@ -95,21 +95,19 @@ Topic: {{topic}}
 Difficulty: {{difficulty}}
 Approximate Word Count: {{wordLength}}
 Number of Questions: {{numQuestions}}
-Uniqueness Seed: {{randomSeed}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
-IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object. Your entire response should be only the JSON.
-The required JSON schema is: ${JSON.stringify(zodToJsonSchema(GenerateUrtPassageOutputSchema.omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })))}
+IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
 `;
 
 const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The scientific concepts should be complex, interrelated, and require careful reading to distinguish between different experiments or viewpoints. The data presented in tables should be non-linear and may require interpolation, extrapolation, or ratio analysis to answer some questions.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. Use the uniqueness seed to ensure variety. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
 
 The passage MUST include data presented in a detailed HTML table. The first column of the table MUST be 'Trial', 'Sample', or a similar identifier for the row (e.g., 1, 2, 3...). The table must contain multiple variables and trials. You must refer to the table in the text (e.g., "as shown in Table 1").
 
 Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart, potentially with multiple data series.
 - 'type' must be 'bar'.
-- 'data' must be a JSON-formatted string representing the array of objects from the table. For example: '[{"trial":1,"resultA":15,"resultB":18},{"trial":2,"resultA":25,"resultB":29}]'.
+- 'data' must be a JSON-formatted string representing an array of data objects for the chart. For example: '[{"trial":1,"resultA":15,"resultB":18},{"trial":2,"resultA":25,"resultB":29}]'.
 - 'xAxisKey' must be the name of the property to use for the X-axis (e.g., 'substance' or 'trialNumber').
 - 'yAxisKeys' must be an array of strings, where each string is a property name from the data objects to be plotted on the Y-axis (e.g., ['Result A', 'Result B']).
 - 'yAxisLabel' must be a short string describing the Y-axis unit (e.g., 'pH Level' or 'Temperature (°C)').
@@ -131,10 +129,8 @@ Topic: {{topic}}
 Difficulty: {{difficulty}}
 Approximate Word Count: {{wordLength}}
 Number of Questions: {{numQuestions}}
-Uniqueness Seed: {{randomSeed}} (A random number to ensure the generated content is unique. Do not mention this in your output.)
 
-IMPORTANT: You must format your response as a single, valid JSON object that adheres to the requested output schema. Do not include any text or markdown formatting before or after the JSON object. Your entire response should be only the JSON.
-The required JSON schema is: ${JSON.stringify(zodToJsonSchema(ActStyleAiOutputSchema))}
+IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
 `;
 
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {

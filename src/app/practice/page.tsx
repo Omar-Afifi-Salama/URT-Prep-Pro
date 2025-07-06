@@ -324,8 +324,12 @@ export default function PracticePage() {
 
         // Update state
         const newHtml = passageContainer.innerHTML;
-        const newTestData = [...testData];
-        newTestData[parseInt(activeTab)].passage = newHtml;
+        const newTestData = testData.map((passage, index) => {
+            if (index === parseInt(activeTab)) {
+                return { ...passage, passage: newHtml };
+            }
+            return passage;
+        });
         setTestData(newTestData);
 
     } catch (e) {
