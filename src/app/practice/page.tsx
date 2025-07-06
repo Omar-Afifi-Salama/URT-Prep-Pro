@@ -639,12 +639,12 @@ export default function PracticePage() {
                         </div>
                         
                         <div>
-                            <Card className="lg:sticky top-20">
+                            <Card>
                                 <CardHeader>
                                     <CardTitle className="font-headline">Questions</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <ScrollArea className="h-[calc(100vh-12rem)]">
+                                    <ScrollArea>
                                         <div className="pr-4">
                                             {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
                                                 <div key={questionIndex} className="mb-6">

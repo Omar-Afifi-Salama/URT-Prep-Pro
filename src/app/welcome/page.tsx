@@ -13,7 +13,7 @@ export default function WelcomePage() {
 
           <div className="text-center">
             <Rocket className="h-16 w-16 mx-auto text-primary mb-4" />
-            <h1 className="text-4xl md:text-5xl font-bold font-headline">Welcome to URT Prep Pro</h1>
+            <h1 className="text-4xl md:text-5xl font-bold font-headline">Welcome to Catalyst URT Prep</h1>
             <p className="text-lg md:text-xl text-muted-foreground mt-2">
               Your AI-powered partner for university entrance test success.
             </p>
@@ -25,7 +25,7 @@ export default function WelcomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-base text-muted-foreground">
-                URT Prep Pro uses Google's powerful Gemini AI to generate an endless supply of realistic, high-quality practice passages and questions. Stop reusing old practice tests and start preparing with unique content tailored to the subjects and formats you need to master.
+                Catalyst URT Prep uses Google's powerful Gemini AI to generate an endless supply of realistic, high-quality practice passages and questions. Stop reusing old practice tests and start preparing with unique content tailored to the subjects and formats you need to master.
               </p>
             </CardContent>
           </Card>
@@ -67,7 +67,7 @@ export default function WelcomePage() {
                 <CardContent>
                     <ol className="list-decimal list-inside space-y-4">
                         <li>
-                            <strong className="font-semibold">Get your API Key:</strong> Navigate to the <Link href="/billing" className="text-primary underline">Billing page</Link> and follow the instructions to get and save your free Google AI API key.
+                            <strong className="font-semibold">Get your API Key:</strong> Navigate to the <Link href="/billing" className="text-primary underline">API Key page</Link> and follow the instructions to get and save your free Google AI API key.
                         </li>
                         <li>
                             <strong className="font-semibold">Start Practicing:</strong> Go to the <Link href="/practice" className="text-primary underline">Practice page</Link>, choose your subjects and settings, and generate a new test.

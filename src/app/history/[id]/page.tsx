@@ -192,7 +192,7 @@ export default function HistoryDetailPage() {
       <AppHeader />
       <main className="flex-1 p-4 md:p-8">
         <div className="container mx-auto max-w-4xl">
-            <div className="no-print mb-4 flex justify-between items-center">
+            <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2">
               <Button variant="ghost" onClick={() => router.push('/dashboard')}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Dashboard

@@ -38,8 +38,8 @@ const fontNotoSansArabic = Noto_Sans_Arabic({
 
 
 export const metadata: Metadata = {
-  title: 'URT Prep Pro',
-  description: 'AI-powered practice for URT success',
+  title: 'Catalyst URT Prep',
+  description: 'AI-powered practice for university entrance test success.',
 };
 
 export default function RootLayout({

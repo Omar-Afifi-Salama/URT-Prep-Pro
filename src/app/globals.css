@@ -333,7 +333,7 @@
   }
   
   .printable-area::after {
-    content: "URT Prep Pro";
+    content: "Catalyst URT Prep";
     position: fixed;
     top: 50%;
     left: 50%;
