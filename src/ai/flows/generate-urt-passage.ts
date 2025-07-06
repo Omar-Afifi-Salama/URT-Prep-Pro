@@ -81,6 +81,7 @@ SUBJECT-SPECIFIC INSTRUCTIONS:
 - If the topic is Physics or Chemistry, you MUST include relevant equations in the passage. You must also ask at least one question that specifically requires understanding or using an equation from the passage. These equations must use the specified HTML formatting.
 
 QUESTION AND EXPLANATION FORMATTING:
+- The multiple-choice questions should test deep comprehension, not just surface-level recall. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
 - For EACH question, you MUST provide a detailed explanation in both English and Arabic. The explanation should clarify why the correct answer is correct and why the other options are incorrect. Store these in the 'explanationEnglish' and 'explanationArabic' fields respectively. This is a mandatory part of the output for every question.
@@ -117,7 +118,7 @@ EQUATION FORMATTING:
 - When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
 
 QUESTION AND EXPLANATION FORMATTING:
-- Generate questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information from different parts of the passage.
+- Generate questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information from different parts of the passage. The incorrect answer options (distractors) must be plausible and target subtle misinterpretations of the data or text.
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
 - For EACH question, you MUST provide a detailed explanation in both English and Arabic. The explanation should clarify why the correct answer is correct and why the other options are incorrect, referencing the passage, tables, or charts as needed. Store these in the 'explanationEnglish' and 'explanationArabic' fields respectively. This is a mandatory part of the output for every question.
