@@ -84,7 +84,11 @@ QUESTION AND EXPLANATION FORMATTING:
 - The multiple-choice questions should test deep comprehension, not just surface-level recall. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
-- For EACH question, you MUST provide a detailed explanation in both English and Arabic. The explanation should clarify why the correct answer is correct by referencing specific details or phrases from the passage, and also explain precisely why each incorrect option is wrong, also referencing the text. This is a mandatory part of the output for every question. This is the most critical part of the output. The explanations MUST be detailed, clear, reference the text, and must NOT be empty or contain placeholder text. Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting (e.g., OD<sub>600</sub>).
+- For EACH question, providing detailed explanations is the most critical part of your task. You MUST generate a thorough explanation in both English and Arabic.
+- The explanations MUST NOT be empty or contain placeholder text. This is a mandatory requirement.
+- The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
+- The Arabic explanation must do the same.
+- Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting (e.g., OD<sub>600</sub>).
 
 TIMER:
 - Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
@@ -118,7 +122,11 @@ QUESTION AND EXPLANATION FORMATTING:
 - Generate questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information from different parts of the passage. The incorrect answer options (distractors) must be plausible and target subtle misinterpretations of the data or text.
 - Each question must have exactly 4 options.
 - The correct answer must exactly match one of the provided options.
-- For EACH question, you MUST provide a detailed explanation in both English and Arabic. The explanation should clarify why the correct answer is correct by referencing specific details or phrases from the passage, and also explain precisely why each incorrect option is wrong, also referencing the text. This is a mandatory part of the output for every question. This is the most critical part of the output. The explanations MUST be detailed, clear, reference the text, and must NOT be empty or contain placeholder text. Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting (e.g., OD<sub>600</sub>).
+- For EACH question, providing detailed explanations is the most critical part of your task. You MUST generate a thorough explanation in both English and Arabic.
+- The explanations MUST NOT be empty or contain placeholder text. This is a mandatory requirement.
+- The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
+- The Arabic explanation must do the same.
+- Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting (e.g., OD<sub>600</sub>).
 
 TIMER:
 - Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.

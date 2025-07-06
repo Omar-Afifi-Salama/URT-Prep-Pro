@@ -516,7 +516,7 @@ export default function PracticePage() {
         });
 
         return (
-            <div className="w-full relative">
+            <div className="w-full max-w-6xl mx-auto">
                  <div className="flex justify-between items-start mb-4 gap-2">
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
@@ -597,10 +597,6 @@ export default function PracticePage() {
                           </TabsContent>
                       ))}
                     </Tabs>
-                    <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
-                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      Submit All Answers
-                    </Button>
                   </div>
                 )}
                 {testView === 'compact' && (
@@ -644,35 +640,33 @@ export default function PracticePage() {
                                     <CardTitle className="font-headline">Questions</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <ScrollArea>
-                                        <div className="pr-4">
-                                            {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
-                                                <div key={questionIndex} className="mb-6">
-                                                    <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                                    <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
-                                                        <div className="space-y-2">
-                                                        {q.options.map((option, optIndex) => (
-                                                            <div key={optIndex} className="flex items-center space-x-2">
-                                                                <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
-                                                                <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                            </div>
-                                                        ))}
+                                    <div className="pr-4 space-y-6">
+                                        {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
+                                            <div key={questionIndex}>
+                                                <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                                <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
+                                                    <div className="space-y-2">
+                                                    {q.options.map((option, optIndex) => (
+                                                        <div key={optIndex} className="flex items-center space-x-2">
+                                                            <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
+                                                            <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
                                                         </div>
-                                                    </RadioGroup>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </ScrollArea>
+                                                    ))}
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
                     </div>
-                     <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
-                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      Submit All Answers
-                    </Button>
                   </div>
                 )}
+                <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Submit All Answers
+                </Button>
             </div>
         );
       default:
