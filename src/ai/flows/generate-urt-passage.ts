@@ -71,19 +71,23 @@ Provide only the topic title as plain text, nothing else.`;
 
 const biologyContentGenerationPromptTemplate = `You are an expert content generator for a university entrance exam preparation platform (URT prep). Your task is to create a rigorous, textbook-level reading comprehension passage and a set of multiple-choice questions on the following specific academic topic: "{{topic}}".
 
-Aim for the style and complexity of established college-level introductory textbooks such as *Campbell Biology* or similar advanced science texts. The passage must be suitable for high-achieving Grade 12 or college freshman-level students preparing for a demanding standardized entrance exam.
+Aim for the style and complexity of established college-level introductory textbooks such as *Campbell Biology*. The passage must be suitable for high-achieving Grade 12 or college freshman-level students preparing for a demanding standardized entrance exam.
 
 **PASSAGE REQUIREMENTS:**
-*   **Content Depth & Style:** The passage must delve into the topic with significant detail, explaining complex concepts thoroughly and providing accurate factual information. To achieve a textbook-like quality, go beyond simply listing facts. Use illustrative language and, where appropriate, a brief analogy to clarify a complex mechanism (e.g., comparing the 'histone code' to a set of switches that turn genes on or off). The goal is to build deep understanding, not just present a list of terms. Maintain a formal, objective, and analytical tone.
-*   **Inferential Reasoning Potential:** The passage must contain information that requires the reader to make inferences, not just recall explicit facts.
+*   **Content Depth & Style:** The passage must delve into the topic with significant detail, explaining complex concepts thoroughly and providing accurate factual information. To achieve a textbook-like quality, go beyond simply listing facts. Use illustrative language, concrete examples, or a brief, relevant analogy to clarify a complex mechanism (e.g., comparing ATP synthase to a revolving door). The goal is to build deep understanding, not just present a list of terms. Maintain a formal, objective, and analytical tone.
+*   **Inferential Reasoning Potential:** The passage must contain information that allows a student to make logical inferences. The relationships between concepts should be multi-layered, not just simple cause-and-effect.
 *   **Length:** The passage must be approximately **450-550 words** long.
 *   **Paragraphs:** Structure the content into **4-6 distinct paragraphs**.
 *   **Formatting:** All paragraphs must be wrapped in <p> tags and numbered (e.g., "<p>1. ...</p>"). Use HTML tags like <sub> and <sup> for formulas.
 
 **QUESTION REQUIREMENTS (CRITICAL):**
-1.  **Generate High-Quality Questions:** Generate EXACTLY {{numQuestions}} multiple-choice questions based *only* on the passage.
-2.  **Test Deep Comprehension:** Questions MUST test deep comprehension and inferential reasoning. A good question is one where all options seem plausible to a student who has only skimmed the passage, but the correct answer is unambiguously supported by a careful reading. Avoid questions that can be answered by simple keyword matching or common sense elimination.
-3.  **Plausible Distractors:** The incorrect options (distractors) must be plausible and target common misconceptions. Every part of every question and answer option must be derived solely from the provided passage.
+Your questions must be sophisticated and test true comprehension, not simple recall.
+*   **Plausible Distractors:** The incorrect options (distractors) MUST be plausible and target common misconceptions. All options should seem credible to a student who has only skimmed the passage, but the correct answer must be unambiguously supported by a careful reading.
+*   **Question Style - AVOID simple recall.** Instead of "What is X?", ask about the function, implication, or relationship of X.
+*   **Question Style - FAVOR complex reasoning.** At least half of the questions should require one of the following:
+    *   **Inference:** Combining information from different parts of the passage to draw a conclusion.
+    *   **Application:** Applying a concept from the passage to a new, hypothetical scenario.
+    *   **Purpose:** Asking about the primary purpose of a specific paragraph or the author's reason for including a particular detail.
 
 **EXPLANATION REQUIREMENTS (MANDATORY CHECKLIST):**
 For EACH of the {{numQuestions}} questions, you MUST provide a thorough explanation in both English and Arabic that follows these rules:
