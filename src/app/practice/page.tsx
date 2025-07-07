@@ -57,6 +57,7 @@ const RETAKE_STORAGE_KEY = 'urt-retake-test';
 const TOPIC_HISTORY_KEY = 'urt-topic-history';
 const TOPIC_HISTORY_LIMIT = 30;
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default function PracticePage() {
   // Setup State
@@ -173,12 +174,14 @@ export default function PracticePage() {
                   const difficulties = ["Easy", "Medium", "Hard"];
                   const wordLengths = [400, 600, 800, 1000, 1200];
                   const numQuestionsOpts = [6, 10, 15];
+                  const subjectInfo = SUBJECTS.find(s => s.name === subjectName);
                   generationParams.push({
                       topic: subjectName,
                       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
                       apiKey,
+                      passageFormat: subjectInfo?.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
                       topicHistory,
                   });
               }
@@ -203,6 +206,9 @@ export default function PracticePage() {
             const passageData = await generateUrtPassage(params);
             data.push(passageData);
             setTestData([...data]); // Update UI incrementally
+            if (generationParams.length > 1) {
+              await delay(1500); // Wait 1.5 seconds to avoid rate-limiting
+            }
         }
         
         setView("test");
@@ -437,11 +443,11 @@ export default function PracticePage() {
                 </CardHeader>
                 <CardContent className="grid sm:grid-cols-2 gap-4">
                     <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet1)}>
-                        <FlaskConical className="mr-2 h-5 w-5"/>
+                        <Dna className="mr-2 h-5 w-5"/>
                         Biology Demo Set #1
                     </Button>
                     <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet2)}>
-                        <FlaskConical className="mr-2 h-5 w-5"/>
+                        <Dna className="mr-2 h-5 w-5"/>
                         Biology Demo Set #2
                     </Button>
                      <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet1)}>
@@ -582,9 +588,9 @@ export default function PracticePage() {
 
         return (
           <div className="w-full max-w-6xl mx-auto">
-            <div className="w-full">
-                 <div className="flex justify-between items-start mb-4 gap-2">
-                    <div className="flex gap-2">
+            <div className="w-full relative">
+                 <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+                    <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
                             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
                         </Button>
@@ -597,7 +603,7 @@ export default function PracticePage() {
                         </div>
                         )}
                     </div>
-                    <div className="flex gap-2 ml-auto">
+                    <div className="flex items-center gap-2">
                         <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
                             <Rows className="mr-2 h-4 w-4"/>
                             Normal
@@ -608,132 +614,133 @@ export default function PracticePage() {
                         </Button>
                     </div>
                 </div>
-                {testView === 'normal' && (
-                  <div className="w-full max-w-4xl mx-auto">
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                      <TabsList className="mb-4">
-                        {testData.map((data, index) => (
-                           <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
-                        ))}
-                      </TabsList>
-                      {testData.map((data, passageIndex) => (
-                          <TabsContent key={passageIndex} value={String(passageIndex)}>
-                              <Card>
-                                  <CardHeader>
-                                      <CardTitle className="font-headline text-3xl" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                      <div className="flex items-center gap-2 pt-2">
-                                          <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
-                                          <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
-                                      </div>
-                                  </CardHeader>
-                                  <CardContent>
-                                      <div
-                                        id={`passage-content-${passageIndex}`}
-                                        key={`passage-${passageIndex}-${data.passage?.length}`}
-                                        className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
-                                        dangerouslySetInnerHTML={{ __html: data.passage }} 
-                                      />
-                                      {data.chartData && renderChart(data.chartData)}
-                                  </CardContent>
-                              </Card>
-                              <Card className="mt-6">
-                                <CardHeader>
-                                  <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="flex flex-col gap-6">
-                                    {data.questions.map((q, questionIndex) => (
-                                      <div key={questionIndex}>
-                                          <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                          <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)} value={userAnswers[passageIndex]?.[questionIndex]}>
-                                              <div className="space-y-2">
-                                              {q.options.map((option, optIndex) => (
-                                                  <div key={optIndex} className="flex items-center space-x-2">
-                                                      <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
-                                                      <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                  </div>
-                                              ))}
-                                              </div>
-                                          </RadioGroup>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                          </TabsContent>
-                      ))}
-                    </Tabs>
-                  </div>
-                )}
-                {testView === 'compact' && (
-                  <div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                        <div className="w-full">
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="mb-4 sticky top-20 z-20">
-                                {testData.map((data, index) => (
-                                    <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
-                                ))}
-                            </TabsList>
+                <div className="w-full bg-card p-4 rounded-lg border">
+                    {testView === 'normal' && (
+                    <div className="w-full max-w-4xl mx-auto">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="mb-4">
                             {testData.map((data, index) => (
-                                <TabsContent key={index} value={String(index)}>
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="font-headline text-3xl" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                            <div className="flex items-center gap-2 pt-2">
-                                                <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
-                                                <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div
-                                              id={`passage-content-${index}`}
-                                              key={`passage-${index}-${data.passage?.length}`}
-                                              className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
-                                              dangerouslySetInnerHTML={{ __html: data.passage }}
-                                            />
-                                            {data.chartData && renderChart(data.chartData)}
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
+                            <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
                             ))}
-                            </Tabs>
-                        </div>
-                        
-                        <div className="w-full">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="font-headline">Questions</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="pr-4 space-y-6">
-                                        {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
-                                            <div key={questionIndex}>
-                                                <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                                <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
-                                                    <div className="space-y-2">
-                                                    {q.options.map((option, optIndex) => (
-                                                        <div key={optIndex} className="flex items-center space-x-2">
-                                                            <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
-                                                            <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                        </div>
-                                                    ))}
+                        </TabsList>
+                        {testData.map((data, passageIndex) => (
+                            <TabsContent key={passageIndex} value={String(passageIndex)}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                        <div className="flex items-center gap-2 pt-2 border-t">
+                                            <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                            <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div
+                                            id={`passage-content-${passageIndex}`}
+                                            key={`passage-${passageIndex}-${data.passage?.length}`}
+                                            className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
+                                            dangerouslySetInnerHTML={{ __html: data.passage }} 
+                                        />
+                                        {data.chartData && renderChart(data.chartData)}
+                                    </CardContent>
+                                </Card>
+                                <Card className="mt-6">
+                                    <CardHeader>
+                                    <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
+                                    </CardHeader>
+                                    <CardContent>
+                                    <div className="flex flex-col gap-6">
+                                        {data.questions.map((q, questionIndex) => (
+                                        <div key={questionIndex}>
+                                            <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                            <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)} value={userAnswers[passageIndex]?.[questionIndex]}>
+                                                <div className="space-y-2">
+                                                {q.options.map((option, optIndex) => (
+                                                    <div key={optIndex} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
+                                                        <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
                                                     </div>
-                                                </RadioGroup>
-                                            </div>
+                                                ))}
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
                                         ))}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        ))}
+                        </Tabs>
+                    </div>
+                    )}
+                    {testView === 'compact' && (
+                    <div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                            <div className="w-full lg:sticky lg:top-20">
+                                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                                <TabsList className="mb-4">
+                                    {testData.map((data, index) => (
+                                        <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
+                                    ))}
+                                </TabsList>
+                                {testData.map((data, index) => (
+                                    <TabsContent key={index} value={String(index)}>
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                                <div className="flex items-center gap-2 pt-2 border-t">
+                                                    <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                                    <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div
+                                                id={`passage-content-${index}`}
+                                                key={`passage-${index}-${data.passage?.length}`}
+                                                className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
+                                                dangerouslySetInnerHTML={{ __html: data.passage }}
+                                                />
+                                                {data.chartData && renderChart(data.chartData)}
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+                                ))}
+                                </Tabs>
+                            </div>
+                            
+                            <div className="w-full">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="font-headline">Questions</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="pr-4 space-y-6">
+                                            {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
+                                                <div key={questionIndex}>
+                                                    <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                                    <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
+                                                        <div className="space-y-2">
+                                                        {q.options.map((option, optIndex) => (
+                                                            <div key={optIndex} className="flex items-center space-x-2">
+                                                                <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
+                                                                <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                            </div>
+                                                        ))}
+                                                        </div>
+                                                    </RadioGroup>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </div>
                     </div>
-                  </div>
-                )}
-                <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Submit All Answers
-                </Button>
-            </div>
+                    )}
+                    <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Submit All Answers
+                    </Button>
+                </div>
           </div>
         );
       default:
@@ -771,3 +778,5 @@ export default function PracticePage() {
     </div>
   );
 }
+
+    
