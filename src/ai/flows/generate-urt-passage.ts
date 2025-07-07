@@ -199,6 +199,21 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error("The AI model returned an invalid format. The raw response has been logged to the console. Please try again.");
       }
       
+      // Data normalization before validation. This prevents crashes if the AI returns an object instead of a string for certain fields.
+      if (aiOutput && Array.isArray(aiOutput.questions)) {
+          aiOutput.questions.forEach((q: any) => {
+              if (q.explanationEnglish && typeof q.explanationEnglish === 'object') {
+                  q.explanationEnglish = String(q.explanationEnglish.text || JSON.stringify(q.explanationEnglish));
+              }
+              if (q.explanationArabic && typeof q.explanationArabic === 'object') {
+                  q.explanationArabic = String(q.explanationArabic.text || JSON.stringify(q.explanationArabic));
+              }
+              if (q.passageContext && typeof q.passageContext === 'object') {
+                  q.passageContext = String(q.passageContext.text || JSON.stringify(q.passageContext));
+              }
+          });
+      }
+
       const usage = await model.countTokens(prompt);
       
       if (aiOutput && aiOutput.chartData && typeof aiOutput.chartData.data === 'string') {
