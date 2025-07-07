@@ -132,7 +132,7 @@ export default function PracticePage() {
     if (!apiKey) {
       toast({
         title: "API Key Required",
-        description: "Please set your Google AI API key on the Billing page before generating a test.",
+        description: "Please set your Google AI API key on the API Key page before generating a test.",
         variant: "destructive",
         action: (
           <Button variant="secondary" size="sm" onClick={() => router.push('/billing')}>
@@ -435,7 +435,7 @@ export default function PracticePage() {
             <Card className="w-full">
                 <CardHeader>
                 <CardTitle className="font-headline text-2xl">New AI-Generated Practice</CardTitle>
-                <CardDescription>Configure your API key on the Billing page to generate unlimited new practice sessions.</CardDescription>
+                <CardDescription>Configure your API key on the API Key page to generate unlimited new practice sessions.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
@@ -553,9 +553,9 @@ export default function PracticePage() {
                       {testData.map((data, passageIndex) => (
                           <TabsContent key={passageIndex} value={String(passageIndex)}>
                               <Card>
-                                  <CardHeader className="flex flex-row justify-between items-center">
-                                      <CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                      <div className="flex items-center gap-2">
+                                  <CardHeader className="flex flex-row justify-between items-start">
+                                      <CardTitle className="font-headline text-2xl pr-4" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                      <div className="flex items-center gap-2 flex-shrink-0">
                                           <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
                                           <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
                                       </div>
@@ -612,9 +612,9 @@ export default function PracticePage() {
                             {testData.map((data, index) => (
                                 <TabsContent key={index} value={String(index)}>
                                     <Card>
-                                        <CardHeader className="flex flex-row justify-between items-center">
-                                            <CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                            <div className="flex items-center gap-2">
+                                        <CardHeader className="flex flex-row justify-between items-start">
+                                            <CardTitle className="font-headline text-2xl pr-4" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                            <div className="flex items-center gap-2 flex-shrink-0">
                                                 <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
                                                 <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
                                             </div>

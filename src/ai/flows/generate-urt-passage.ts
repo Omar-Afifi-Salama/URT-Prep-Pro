@@ -59,83 +59,60 @@ const ActStyleAiOutputSchema = GenerateUrtPassageOutputSchema
       })),
   });
 
-const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
+const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam, similar to the SAT or URT. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook (like 'Campbell Biology' for Biology, or 'Essential Geology') or a scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
 
-You will generate a URT passage with a title, and associated multiple-choice questions based on the provided parameters. The passage should be engaging, informative, and well-structured to the standards of a university entrance exam. For "Hard" difficulty, the passage should involve multiple complex, interrelated concepts, require a high level of critical reading, and use advanced, domain-specific vocabulary.
-
-The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
+YOUR TASK - FOLLOW THESE RULES EXACTLY:
+1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words.
+2.  Generate EXACTLY {{numQuestions}} multiple-choice questions based on the passage.
+3.  The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
+4.  For EACH of the {{numQuestions}} questions, you MUST generate a thorough explanation in both English and Arabic. THIS IS THE MOST CRITICAL PART OF YOUR TASK. Explanations CANNOT be empty or contain placeholder text. This is a mandatory requirement.
+5.  The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
+6.  The Arabic explanation must do the same.
+7.  The multiple-choice questions should test deep comprehension, not just surface-level recall. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
 
 PASSAGE FORMATTING:
 - All paragraphs must be wrapped in <p> tags.
 - Number each paragraph, starting with 1. (e.g., "<p>1. The first paragraph text...</p>")
-- When appropriate, include data in a well-structured HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>).
-- When a table is included, refer to it in the text (e.g., "as shown in Table 1").
+- When appropriate, include data in a well-structured HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). When a table is included, refer to it in the text (e.g., "as shown in Table 1").
 
 EQUATION FORMATTING:
 - When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
-
-SUBJECT-SPECIFIC INSTRUCTIONS:
-- For science topics (Physics, Chemistry, Biology, Geology), adopt an academic and authoritative tone, similar to a reference textbook, while ensuring the content remains engaging and accessible.
-- If the topic is Physics or Chemistry, you MUST include relevant equations in the passage. You must also ask at least one question that specifically requires understanding or using an equation from the passage. These equations must use the specified HTML formatting.
-
-QUESTION AND EXPLANATION FORMATTING:
-- The multiple-choice questions should test deep comprehension, not just surface-level recall. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
-- Each question must have exactly 4 options.
-- The correct answer must exactly match one of the provided options.
-- For EACH question, providing detailed explanations is the most critical part of your task. You MUST generate a thorough explanation in both English and Arabic.
-- The explanations MUST NOT be empty or contain placeholder text. This is a mandatory requirement.
-- The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
-- The Arabic explanation must do the same.
-- Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting (e.g., OD<sub>600</sub>).
+- If the topic is Physics or Chemistry, you MUST include relevant equations in the passage and ask at least one question that requires using an equation.
 
 TIMER:
-- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
+- Calculate a recommended time limit in minutes. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 800-word passage with 10 questions, this should be around 14 minutes.
 - Include this in the 'recommendedTime' field.
 
 Topic: {{topic}}
 Difficulty: {{difficulty}}
-Approximate Word Count: {{wordLength}}
-Number of Questions: {{numQuestions}}
 
 IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
 `;
 
-const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The scientific concepts should be complex, interrelated, and require careful reading to distinguish between different experiments or viewpoints. The data presented in tables should be non-linear and may require interpolation, extrapolation, or ratio analysis to answer some questions.
+const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The scientific concepts should be complex, interrelated, and require careful reading. The data presented in tables should be non-linear and may require interpolation or extrapolation to answer some questions.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing" or "The Effects of Ocean Acidification on Coral Reefs").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing").
 
-The passage MUST include data presented in a detailed HTML table. The first column of the table MUST be 'Trial', 'Sample', or a similar identifier for the row (e.g., 1, 2, 3...). The table must contain multiple variables and trials. You must refer to the table in the text (e.g., "as shown in Table 1").
+YOUR TASK - FOLLOW THESE RULES EXACTLY:
+1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words and MUST include data presented in a detailed HTML table.
+2.  Generate EXACTLY {{numQuestions}} multiple-choice questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information. The incorrect answer options (distractors) must be plausible and target subtle misinterpretations.
+3.  Provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart. 'data' must be a JSON-formatted string.
+4.  For EACH of the {{numQuestions}} questions, you MUST generate a thorough explanation in both English and Arabic. THIS IS THE MOST CRITICAL PART OF YOUR TASK. Explanations CANNOT be empty or contain placeholder text. This is a mandatory requirement.
+5.  The English explanation must detail why the correct answer is right by citing the passage/table, and also explain why each of the other three options is wrong.
+6.  The Arabic explanation must do the same.
 
-Crucially, you MUST also provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart, potentially with multiple data series.
-- 'type' must be 'bar'.
-- 'data' must be a JSON-formatted string representing an array of data objects for the chart. For example: '[{"trial":1,"resultA":15,"resultB":18},{"trial":2,"resultA":25,"resultB":29}]'.
-- 'xAxisKey' must be the name of the property to use for the X-axis (e.g., 'substance' or 'trialNumber').
-- 'yAxisKeys' must be an array of strings, where each string is a property name from the data objects to be plotted on the Y-axis (e.g., ['Result A', 'Result B']).
-- 'yAxisLabel' must be a short string describing the Y-axis unit (e.g., 'pH Level' or 'Temperature (°C)').
-
-EQUATION FORMATTING:
-- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
-
-QUESTION AND EXPLANATION FORMATTING:
-- Generate questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information from different parts of the passage. The incorrect answer options (distractors) must be plausible and target subtle misinterpretations of the data or text.
-- Each question must have exactly 4 options.
-- The correct answer must exactly match one of the provided options.
-- For EACH question, providing detailed explanations is the most critical part of your task. You MUST generate a thorough explanation in both English and Arabic.
-- The explanations MUST NOT be empty or contain placeholder text. This is a mandatory requirement.
-- The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
-- The Arabic explanation must do the same.
-- Any equations or formulas in the questions, options, or explanations MUST use the specified HTML formatting (e.g., OD<sub>600</sub>).
+FORMATTING:
+- The HTML table must be well-structured. The first column of the table MUST be 'Trial', 'Sample', or a similar identifier for the row. Refer to the table in the text (e.g., "as shown in Table 1").
+- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, questions, options, and explanations.
 
 TIMER:
-- Calculate a recommended time limit in minutes for this test. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 600-word passage with 10 questions, this should be around 10 minutes.
+- Calculate a recommended time limit in minutes. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 800-word passage with 10 questions, this should be around 14 minutes.
 - Include this in the 'recommendedTime' field.
 
 Topic: {{topic}}
 Difficulty: {{difficulty}}
-Approximate Word Count: {{wordLength}}
-Number of Questions: {{numQuestions}}
 
 IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
 `;
@@ -164,8 +141,8 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       const prompt = promptTemplate
         .replace('{{topic}}', finalInput.topic)
         .replace('{{difficulty}}', finalInput.difficulty)
-        .replace('{{wordLength}}', String(finalInput.wordLength))
-        .replace('{{numQuestions}}', String(finalInput.numQuestions))
+        .replace(new RegExp('{{wordLength}}', 'g'), String(finalInput.wordLength))
+        .replace(new RegExp('{{numQuestions}}', 'g'), String(finalInput.numQuestions))
         .replace('{{randomSeed}}', String(finalInput.randomSeed));
 
       const genAI = new GoogleGenerativeAI(validatedInput.apiKey);
@@ -185,13 +162,13 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       const generationResult = await model.generateContent(prompt);
       const response = generationResult.response;
 
-      if (!response || !response.candidates || response.candidates.length === 0) {
-        console.error("AI Generation Error: No response or candidates returned.", response?.promptFeedback);
+      if (!response || !response.candidates || response.candidates.length === 0 || !response.text()) {
+        console.error("AI Generation Error: No response, candidates, or text returned.", response?.promptFeedback);
         const blockReason = response?.promptFeedback?.blockReason;
         if (blockReason) {
             throw new Error(`Generation blocked by safety settings: ${blockReason}. Please adjust the prompt or topic.`);
         }
-        throw new Error('The AI model returned an empty response. Please try again.');
+        throw new Error('The AI model returned an empty or incomplete response. Please try again.');
       }
       
       const responseText = response.text();
@@ -201,7 +178,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       } catch (jsonError: any) {
         console.error("Failed to parse JSON response from AI:", jsonError);
         console.error("Raw AI response:", responseText);
-        throw new Error("The AI model returned an invalid format. Please try again.");
+        throw new Error("The AI model returned an invalid format. The raw response has been logged to the console. Please try again.");
       }
       
       const usage = await model.countTokens(prompt);
@@ -230,7 +207,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       };
     } catch (e: any) {
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
-            throw new Error('Your API Key is not valid. Please check it on the Billing page and try again.');
+            throw new Error('Your API Key is not valid. Please check it on the API Key page and try again.');
         }
         if (e.message && (e.message.includes('429') || e.message.includes('resource has been exhausted'))) {
             throw new Error('You have exceeded the request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again later.');
