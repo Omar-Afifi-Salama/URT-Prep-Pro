@@ -199,19 +199,45 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error("The AI model returned an invalid format. The raw response has been logged to the console. Please try again.");
       }
       
-      // Data normalization before validation. This prevents crashes if the AI returns an object instead of a string for certain fields.
-      if (aiOutput && Array.isArray(aiOutput.questions)) {
+      // Comprehensive data normalization to handle cases where the AI returns an object instead of a string.
+      if (aiOutput) {
+        // Normalize top-level string fields
+        if (aiOutput.title && typeof aiOutput.title === 'object') {
+          aiOutput.title = String(aiOutput.title.text || JSON.stringify(aiOutput.title));
+        }
+        if (aiOutput.passage && typeof aiOutput.passage === 'object') {
+          aiOutput.passage = String(aiOutput.passage.text || JSON.stringify(aiOutput.passage));
+        }
+        
+        // Normalize fields within the questions array
+        if (Array.isArray(aiOutput.questions)) {
           aiOutput.questions.forEach((q: any) => {
-              if (q.explanationEnglish && typeof q.explanationEnglish === 'object') {
-                  q.explanationEnglish = String(q.explanationEnglish.text || JSON.stringify(q.explanationEnglish));
-              }
-              if (q.explanationArabic && typeof q.explanationArabic === 'object') {
-                  q.explanationArabic = String(q.explanationArabic.text || JSON.stringify(q.explanationArabic));
-              }
-              if (q.passageContext && typeof q.passageContext === 'object') {
-                  q.passageContext = String(q.passageContext.text || JSON.stringify(q.passageContext));
-              }
+            if (q.question && typeof q.question === 'object') {
+              q.question = String(q.question.text || JSON.stringify(q.question));
+            }
+            if (q.answer && typeof q.answer === 'object') {
+              q.answer = String(q.answer.text || JSON.stringify(q.answer));
+            }
+            if (q.explanationEnglish && typeof q.explanationEnglish === 'object') {
+              q.explanationEnglish = String(q.explanationEnglish.text || JSON.stringify(q.explanationEnglish));
+            }
+            if (q.explanationArabic && typeof q.explanationArabic === 'object') {
+              q.explanationArabic = String(q.explanationArabic.text || JSON.stringify(q.explanationArabic));
+            }
+            if (q.passageContext && typeof q.passageContext === 'object') {
+              q.passageContext = String(q.passageContext.text || JSON.stringify(q.passageContext));
+            }
+            // Normalize the options array
+            if (Array.isArray(q.options)) {
+              q.options = q.options.map((opt: any) => {
+                if (opt && typeof opt === 'object') {
+                  return String(opt.text || JSON.stringify(opt));
+                }
+                return String(opt); // Ensure it's a string
+              });
+            }
           });
+        }
       }
 
       const usage = await model.countTokens(prompt);
