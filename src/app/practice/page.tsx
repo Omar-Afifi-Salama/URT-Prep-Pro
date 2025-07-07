@@ -54,6 +54,9 @@ type View = "setup" | "test";
 type TestView = "normal" | "compact";
 const API_KEY_STORAGE_KEY = 'google-ai-api-key';
 const RETAKE_STORAGE_KEY = 'urt-retake-test';
+const TOPIC_HISTORY_KEY = 'urt-topic-history';
+const TOPIC_HISTORY_LIMIT = 30;
+
 
 export default function PracticePage() {
   // Setup State
@@ -146,6 +149,8 @@ export default function PracticePage() {
       return;
     }
 
+    const topicHistory = JSON.parse(localStorage.getItem(TOPIC_HISTORY_KEY) || '[]') as string[];
+
     const generationTasks: Promise<UrtTest>[] = [];
     if (mode === 'single') {
         if (!selectedSingleSubject) {
@@ -159,6 +164,7 @@ export default function PracticePage() {
             numQuestions: numQuestions[0],
             apiKey,
             passageFormat: selectedSingleSubject.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
+            topicHistory,
         }));
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
@@ -173,6 +179,7 @@ export default function PracticePage() {
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
                       apiKey,
+                      topicHistory,
                   }));
               }
             }
@@ -201,6 +208,13 @@ export default function PracticePage() {
 
         if (totalRequests > 0) {
           addUsage({ requests: totalRequests, tokens: totalTokens });
+        }
+
+        if (data.length > 0) {
+          const newTopics = data.map(d => d.title);
+          const updatedHistory = [...newTopics, ...topicHistory];
+          const limitedHistory = updatedHistory.slice(0, TOPIC_HISTORY_LIMIT);
+          localStorage.setItem(TOPIC_HISTORY_KEY, JSON.stringify(limitedHistory));
         }
 
         if (totalTokens > 0) {

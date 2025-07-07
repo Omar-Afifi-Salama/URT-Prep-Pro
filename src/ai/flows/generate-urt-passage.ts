@@ -19,6 +19,7 @@ const GenerateUrtPassageInputSchema = z.object({
   apiKey: z.string().describe('The user-provided Google AI API key.'),
   randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
   passageFormat: z.enum(['auto', 'reference', 'act']).optional().describe('The desired passage format for science topics.'),
+  topicHistory: z.array(z.string()).optional().describe('A list of recently generated topics to avoid repetition.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -104,7 +105,7 @@ IMPORTANT: You must format your response as a single, valid JSON object. Do not 
 
 const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam, similar to the SAT or URT. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook (like 'Campbell Biology' for Biology, or 'Essential Geology') or a scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
 
 YOUR TASK - FOLLOW THESE RULES EXACTLY:
 1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words.
@@ -136,7 +137,7 @@ IMPORTANT: You must format your response as a single, valid JSON object. Do not 
 
 const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The scientific concepts should be complex, interrelated, and require careful reading. The data presented in tables should be non-linear and may require interpolation or extrapolation to answer some questions.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing").
 
 YOUR TASK - FOLLOW THESE RULES EXACTLY:
 1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words and MUST include data presented in a detailed HTML table.
@@ -189,11 +190,17 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
 
       // New 2-step logic for high-quality Biology passages
       if (validatedInput.topic === 'Biology' && !shouldUseActStyle) {
+          let dynamicSelectPrompt = selectBiologyTopicPrompt;
+          if (validatedInput.topicHistory && validatedInput.topicHistory.length > 0) {
+              const historyString = validatedInput.topicHistory.join(', ');
+              dynamicSelectPrompt += `\n\nCRITICAL: You MUST NOT select a topic that is the same as or semantically very similar to any of the following recently used topics: ${historyString}. Strive for novelty.`;
+          }
+
           const topicModel = genAI.getGenerativeModel({
               model: "gemini-1.5-flash-latest",
               generationConfig: { temperature: 0.7, maxOutputTokens: 50 }
           });
-          const topicResult = await topicModel.generateContent(selectBiologyTopicPrompt);
+          const topicResult = await topicModel.generateContent(dynamicSelectPrompt);
           const specificTopic = topicResult.response.text().trim();
           
           if (!specificTopic) {
@@ -224,7 +231,14 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           } else {
               promptTemplate = standardTextPromptTemplate;
           }
+
+          let topicHistoryInstruction = "";
+          if (finalInput.topicHistory && finalInput.topicHistory.length > 0) {
+              topicHistoryInstruction = `To ensure variety, you MUST NOT generate a passage on a topic that is the same as or semantically very similar to any of the following recently used topics: ${finalInput.topicHistory.join('; ')}.`;
+          }
+
           prompt = promptTemplate
+              .replace('{{topicHistoryInstruction}}', topicHistoryInstruction)
               .replace('{{topic}}', finalInput.topic)
               .replace('{{difficulty}}', finalInput.difficulty)
               .replace(new RegExp('{{wordLength}}', 'g'), String(finalInput.wordLength))
