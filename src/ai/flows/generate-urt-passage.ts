@@ -27,8 +27,8 @@ const QuestionSchema = z.object({
   question: z.string().describe('The question text.'),
   options: z.array(z.string()).length(4).describe('An array of 4 multiple choice options.'),
   answer: z.string().describe('The correct answer, which must be one of the provided options.'),
-  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
-  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct and why EACH of the other options is incorrect. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct and why EACH of the other options is incorrect. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
 });
 
 const ChartDataSchema = z.object({
@@ -114,7 +114,7 @@ YOUR TASK - FOLLOW THESE RULES EXACTLY:
 4.  For EACH of the {{numQuestions}} questions, you MUST generate a thorough explanation in both English and Arabic. THIS IS THE MOST CRITICAL PART OF YOUR TASK. Explanations CANNOT be empty or contain placeholder text. This is a mandatory requirement.
 5.  The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
 6.  The Arabic explanation must do the same.
-7.  The multiple-choice questions should test deep comprehension, not just surface-level recall. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
+7.  The multiple-choice questions should test deep comprehension, not just surface-level recall. At least half the questions should require inference or application. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
 
 PASSAGE FORMATTING:
 - All paragraphs must be wrapped in <p> tags.
