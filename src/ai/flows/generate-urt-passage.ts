@@ -52,81 +52,37 @@ const GenerateUrtPassageOutputSchema = z.object({
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
-const selectBiologyTopicPrompt = `You are an expert in university entrance exam (URT) biology curriculum. Your role is to suggest a single, specific, and challenging topic for a biology reading comprehension passage, suitable for a rigorous exam for high-achieving high school students.
-
-The topic must be complex enough to sustain a 450-550 word textbook-level explanation, requiring detailed scientific vocabulary and concepts. Focus on core areas of biology and ensure a diverse range of topics spanning molecular biology, cell biology, genetics, ecology, evolution, human physiology, and plant biology. Prioritize topics that allow for the exploration of processes, mechanisms, and interactions, not just static definitions.
-
-Examples of suitable topics (to guide the model on specificity and complexity):
-- "The intricate processes of cellular respiration in eukaryotes, including glycolysis, the Krebs cycle, and oxidative phosphorylation."
-- "The molecular mechanisms of DNA replication and repair, detailing enzymes involved and error correction."
-- "The role of gene expression and regulation in cellular differentiation and development."
-- "Evolutionary adaptations of extremophiles to harsh environments (e.g., thermophiles, halophiles)."
-- "The human immune system's adaptive response to viral infections, distinguishing between humoral and cell-mediated immunity."
-- "Principles of Mendelian genetics and the complexities of non-Mendelian inheritance patterns (e.g., incomplete dominance, codominance, polygenic inheritance)."
-- "Photosynthesis: light-dependent reactions, Calvin cycle, and adaptations in C4/CAM plants."
-- "Neurotransmission: synaptic signaling, excitatory and inhibitory postsynaptic potentials, and neurotransmitter types."
-- "Hormonal regulation of human physiological processes (e.g., blood glucose, stress response)."
-
-Avoid overly broad or simplistic topics like 'Plants,' 'Animals,' or 'Cells.' Be precise and academic.
-
-Provide only the topic title as plain text, nothing else.`;
-
-const biologyContentGenerationPromptTemplate = `You are a senior editor for a university-level biology textbook (e.g., *Campbell Biology*). Your task is to create a rigorous reading comprehension passage and a set of multiple-choice questions on the following specific academic topic: "{{topic}}". Maintain a formal, objective, and analytical tone. Avoid colloquialisms and generic filler phrases.
-
-**PASSAGE REQUIREMENTS:**
-*   **Content Depth & Mechanism Focus:** The passage must delve into the topic with significant detail, prioritizing the explanation of *how* processes work, not just *what* they are. Explain complex molecular mechanisms and signaling pathways thoroughly.
-*   **Specificity and Elucidation:** To add depth, you must name specific key proteins, enzymes, or molecules where appropriate (e.g., mentioning "CaMKII" when discussing LTP-related kinases). If you introduce a related high-level concept (like "epigenetic modifications"), you must briefly explain its specific, direct role in the context of the main topic.
-*   **Illustrative Quality:** To achieve a textbook-like quality, go beyond simply listing facts. Use clear, illustrative language and concrete examples to build deep understanding.
-*   **Inferential Potential:** The passage must contain information that allows a student to make logical inferences. The relationships between concepts should be multi-layered.
-*   **Technical Details:** The passage must be **450-550 words** long, structured into **4-6 distinct, numbered paragraphs** wrapped in \`<p>\` tags. Use HTML tags like \`<sub>\` and \`<sup>\` for all formulas.
-
-**QUESTION REQUIREMENTS (CRITICAL):**
-Your questions must be sophisticated and test true comprehension, not simple recall. **All questions, options, and answers MUST be derived *directly* from the provided passage.** Do not introduce external information.
-*   **Question Mix:** At least half of the questions should require complex reasoning (Inference, Application to a new scenario, or analyzing the Purpose of a detail).
-*   **Sophisticated Distractors:** Incorrect options (distractors) MUST be plausible. They should target common misconceptions or be statements that are true but not supported by the passage, requiring careful reading to eliminate.
-*   **No Hallucinations:** Do not create questions based on concepts or analogies not explicitly present in the text you've written.
-
-**EXPLANATION REQUIREMENTS (MANDATORY CHECKLIST):**
-For EACH of the {{numQuestions}} questions, you MUST provide the following:
-*   A thorough explanation in both English and Arabic. The explanation MUST be complete and not contain placeholder text.
-*   The explanation MUST focus only on why the correct answer is right, quoting or referencing the passage. **DO NOT** explain why the other options are wrong.
-*   In the 'passageContext' field, provide the **exact, verbatim quote** from the passage that directly supports the correct answer. This should be a short snippet.
-
-**ADDITIONAL TASKS:**
-1.  **Title:** Create a suitable title for the passage.
-2.  **Timer:** Calculate a recommended time in minutes. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number.
-
-**OUTPUT FORMAT:**
-IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.`;
-
 const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam, similar to the SAT or URT. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or a scientific journal. Avoid any conversational language or simplification.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided.
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic of '{{topic}}'.
 
-YOUR TASK - FOLLOW THESE RULES EXACTLY:
-1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words.
-2.  Generate EXACTLY {{numQuestions}} multiple-choice questions based on the passage.
-3.  The multiple-choice questions should test deep comprehension, not just surface-level recall. At least half the questions should require inference or application. The incorrect options (distractors) must be plausible and based on information within the text.
-4.  For EACH question, you MUST generate the following:
-    a.  An English explanation detailing only why the correct answer is right by citing the passage.
-    b.  An Arabic explanation doing the same.
-    c.  In the 'passageContext' field, the exact, verbatim quote from the passage that supports the correct answer.
+**PASSAGE REQUIREMENTS:**
+1.  **Title:** Generate a suitable title for the passage.
+2.  **Length:** The passage MUST be approximately {{wordLength}} words.
+3.  **Depth & Quality:** The passage must explain *how* processes work, not just *what* they are. Use illustrative language and concrete examples to clarify complex mechanisms and achieve a textbook-like quality.
+4.  **Formatting:**
+    - All paragraphs must be wrapped in <p> tags.
+    - Number each paragraph, starting with 1. (e.g., "<p>1. The first paragraph text...</p>")
+    - When appropriate for the topic (e.g., Physics, Chemistry), include relevant equations or data in a well-structured HTML table. Use <sub> and <sup> tags for formulas.
 
-PASSAGE FORMATTING:
-- All paragraphs must be wrapped in <p> tags.
-- Number each paragraph, starting with 1. (e.g., "<p>1. The first paragraph text...</p>")
-- When appropriate, include data in a well-structured HTML table.
+**QUESTION REQUIREMENTS:**
+1.  **Count:** Generate EXACTLY {{numQuestions}} multiple-choice questions.
+2.  **Quality & Validity:** All questions, options, and answers MUST be derived *directly* from the provided passage. Do not introduce external information. At least half the questions should require complex reasoning (Inference, Application, etc.), not just simple recall.
+3.  **Sophisticated Distractors:** Incorrect options (distractors) MUST be plausible. They should target common misconceptions or be statements that are true but not supported by the passage, requiring careful reading to eliminate.
 
-EQUATION FORMATTING:
-- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> and <sup>.
-- If the topic is Physics or Chemistry, you MUST include relevant equations in the passage.
+**EXPLANATION REQUIREMENTS (MANDATORY):**
+For EACH of the {{numQuestions}} questions, you MUST provide the following:
+1.  **English Explanation:** A thorough explanation detailing only why the correct answer is right by citing the passage.
+2.  **Arabic Explanation:** A thorough explanation in Arabic doing the same.
+3.  **Passage Context:** The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet.
 
-TIMER:
+**TIMER:**
 - Calculate a recommended time limit in minutes using this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number.
 
 Topic: {{topic}}
 Difficulty: {{difficulty}}
 
+**OUTPUT FORMAT:**
 IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON object.
 `;
 
@@ -181,75 +137,36 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       }
       
       let prompt;
-      let modelConfig;
-      let finalTopic = validatedInput.topic;
+      let promptTemplate;
 
-      // New 2-step logic for high-quality Biology passages
-      if (validatedInput.topic === 'Biology' && !shouldUseActStyle) {
-          let dynamicSelectPrompt = selectBiologyTopicPrompt;
-          if (validatedInput.topicHistory && validatedInput.topicHistory.length > 0) {
-              const historyString = validatedInput.topicHistory.join(', ');
-              dynamicSelectPrompt += `\n\nCRITICAL: You MUST NOT select a topic that is the same as or semantically very similar to any of the following recently used topics: ${historyString}. Strive for novelty.`;
-          }
-
-          const topicModel = genAI.getGenerativeModel({
-              model: "gemini-1.5-flash-latest",
-              generationConfig: { temperature: 0.7, maxOutputTokens: 50 }
-          });
-          const topicResult = await topicModel.generateContent(dynamicSelectPrompt);
-          const specificTopic = topicResult.response.text().trim();
-          
-          if (!specificTopic) {
-              console.error("Failed to generate a specific biology topic, falling back to general 'Biology'.");
-              finalTopic = "Biology"; // Fallback to a general topic
-          } else {
-              finalTopic = specificTopic;
-          }
-          await delay(1500); // Wait 1.5s to avoid hitting per-minute rate limits
-
-          prompt = biologyContentGenerationPromptTemplate
-              .replace('{{topic}}', finalTopic)
-              .replace('{{numQuestions}}', String(validatedInput.numQuestions));
-          
-          modelConfig = {
-              model: "gemini-1.5-flash-latest",
-              generationConfig: {
-                  responseMimeType: "application/json",
-                  temperature: 0.5,
-              },
-          };
-
+      if (shouldUseActStyle) {
+          promptTemplate = actStyleSciencePromptTemplate;
       } else {
-          // Existing logic for other subjects and ACT-style passages
-          const finalInput = { ...validatedInput, randomSeed: Math.random() };
-          let promptTemplate;
-          if (shouldUseActStyle) {
-              promptTemplate = actStyleSciencePromptTemplate;
-          } else {
-              promptTemplate = standardTextPromptTemplate;
-          }
-
-          let topicHistoryInstruction = "";
-          if (finalInput.topicHistory && finalInput.topicHistory.length > 0) {
-              topicHistoryInstruction = `To ensure variety, you MUST NOT generate a passage on a topic that is the same as or semantically very similar to any of the following recently used topics: ${finalInput.topicHistory.join('; ')}.`;
-          }
-
-          prompt = promptTemplate
-              .replace('{{topicHistoryInstruction}}', topicHistoryInstruction)
-              .replace('{{topic}}', finalInput.topic)
-              .replace('{{difficulty}}', finalInput.difficulty)
-              .replace(new RegExp('{{wordLength}}', 'g'), String(finalInput.wordLength))
-              .replace(new RegExp('{{numQuestions}}', 'g'), String(finalInput.numQuestions))
-              .replace('{{randomSeed}}', String(finalInput.randomSeed));
-          
-          modelConfig = {
-              model: "gemini-1.5-flash-latest",
-              generationConfig: {
-                  responseMimeType: "application/json",
-              },
-          };
+          promptTemplate = standardTextPromptTemplate;
+      }
+      
+      const finalInput = { ...validatedInput, randomSeed: Math.random() };
+      
+      let topicHistoryInstruction = "";
+      if (finalInput.topicHistory && finalInput.topicHistory.length > 0) {
+          topicHistoryInstruction = `To ensure variety, you MUST NOT generate a passage on a topic that is the same as or semantically very similar to any of the following recently used topics: ${finalInput.topicHistory.join('; ')}.`;
       }
 
+      prompt = promptTemplate
+          .replace('{{topicHistoryInstruction}}', topicHistoryInstruction)
+          .replace('{{topic}}', finalInput.topic)
+          .replace('{{difficulty}}', finalInput.difficulty)
+          .replace(new RegExp('{{wordLength}}', 'g'), String(finalInput.wordLength))
+          .replace(new RegExp('{{numQuestions}}', 'g'), String(finalInput.numQuestions))
+          .replace('{{randomSeed}}', String(finalInput.randomSeed));
+      
+      const modelConfig = {
+          model: "gemini-1.5-flash-latest",
+          generationConfig: {
+              responseMimeType: "application/json",
+          },
+      };
+      
       const model = genAI.getGenerativeModel({
           ...modelConfig,
           safetySettings: [
