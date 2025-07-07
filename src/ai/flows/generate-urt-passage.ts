@@ -19,6 +19,7 @@ const GenerateUrtPassageInputSchema = z.object({
   numQuestions: z.number().describe('The number of questions to generate.'),
   apiKey: z.string().describe('The user-provided Google AI API key.'),
   randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
+  passageFormat: z.enum(['auto', 'reference', 'act']).optional().describe('The desired passage format for science topics.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -127,7 +128,17 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
     try {
       const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
       const isScience = scienceSubjects.includes(validatedInput.topic);
-      const shouldUseActStyle = isScience && Math.random() < 0.25;
+      
+      let shouldUseActStyle = false;
+      if (isScience) {
+        if (validatedInput.passageFormat === 'act') {
+          shouldUseActStyle = true;
+        } else if (validatedInput.passageFormat === 'reference') {
+          shouldUseActStyle = false;
+        } else { // 'auto' or undefined
+          shouldUseActStyle = Math.random() < 0.25;
+        }
+      }
 
       const finalInput = { ...validatedInput, randomSeed: Math.random() };
 

@@ -34,7 +34,7 @@ import { SUBJECTS } from "@/lib/constants";
 import type { Subject } from "@/lib/constants";
 import type { UrtTest, GradedResult, TestHistoryItem, SubjectScore, ChartData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound, ArrowLeft, Highlighter, Underline } from "lucide-react";
+import { Loader2, BookOpen, FileText, Rows, Columns3, FlaskConical, Mountain, KeyRound, ArrowLeft, Highlighter, Underline, Atom, Dna } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -48,6 +48,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 import { useUsage } from "@/context/usage-provider";
 import { biologyDemoSet1, biologyDemoSet2, geologyDemoSet1, geologyDemoSet2 } from "@/lib/demo-data";
+import { Slider } from "@/components/ui/slider";
 
 type View = "setup" | "test";
 type TestView = "normal" | "compact";
@@ -60,8 +61,9 @@ export default function PracticePage() {
   const [selectedSingleSubject, setSelectedSingleSubject] = useState<Subject | null>(null);
   const [fullTestSettings, setFullTestSettings] = useState<Record<string, number>>({});
   const [difficulty, setDifficulty] = useState("Medium");
-  const [wordLength, setWordLength] = useState("600");
-  const [numQuestions, setNumQuestions] = useState("6");
+  const [wordLength, setWordLength] = useState([800]);
+  const [numQuestions, setNumQuestions] = useState([10]);
+  const [passageFormat, setPassageFormat] = useState('auto');
   
   // App State
   const [isLoading, setIsLoading] = useState(false);
@@ -153,9 +155,10 @@ export default function PracticePage() {
         generationTasks.push(generateUrtPassage({
             topic: selectedSingleSubject.name,
             difficulty,
-            wordLength: parseInt(wordLength, 10),
-            numQuestions: parseInt(numQuestions, 10),
+            wordLength: wordLength[0],
+            numQuestions: numQuestions[0],
             apiKey,
+            passageFormat: selectedSingleSubject.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
         }));
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
@@ -444,20 +447,62 @@ export default function PracticePage() {
                     <TabsTrigger value="full" className="gap-2"><FileText className="h-4 w-4"/>Full Test</TabsTrigger>
                     </TabsList>
                     <TabsContent value="single" className="mt-6">
-                    <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Subject</Label>
-                                <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
-                                    <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
-                                    <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="space-y-2"><Label htmlFor="difficulty">Difficulty</Label><Select onValueChange={setDifficulty} defaultValue={difficulty}><SelectTrigger id="difficulty"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Hard">Hard</SelectItem></SelectContent></Select></div>
-                                <div className="space-y-2"><Label htmlFor="wordLength">Passage Length</Label><Select onValueChange={setWordLength} defaultValue={wordLength}><SelectTrigger id="wordLength"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="400">~400 words</SelectItem><SelectItem value="600">~600 words</SelectItem><SelectItem value="800">~800 words</SelectItem><SelectItem value="1000">~1000 words</SelectItem><SelectItem value="1200">~1200 words</SelectItem></SelectContent></Select></div>
-                                <div className="space-y-2"><Label htmlFor="numQuestions">Questions</Label><Select onValueChange={setNumQuestions} defaultValue={numQuestions}><SelectTrigger id="numQuestions"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="6">6 Questions</SelectItem><SelectItem value="10">10 Questions</SelectItem><SelectItem value="15">15 Questions</SelectItem></SelectContent></Select></div>
-                            </div>
-                    </div>
+                        <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label>Subject</Label>
+                                    <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
+                                        <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
+                                        <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
+                                    </Select>
+                                </div>
+
+                                {mode === 'single' && selectedSingleSubject?.isScience && (
+                                    <div className="space-y-3">
+                                        <Label>Passage Format</Label>
+                                        <RadioGroup value={passageFormat} onValueChange={setPassageFormat} className="flex space-x-4">
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="auto" id="auto" />
+                                                <Label htmlFor="auto">Auto</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="reference" id="reference" />
+                                                <Label htmlFor="reference">Reference Style</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="act" id="act" />
+                                                <Label htmlFor="act">ACT Style</Label>
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    <Label htmlFor="difficulty">Difficulty</Label>
+                                    <Select onValueChange={setDifficulty} defaultValue={difficulty}>
+                                      <SelectTrigger id="difficulty"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Easy">Easy</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="Hard">Hard</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="flex justify-between items-center">
+                                    <Label htmlFor="wordLength">Passage Length</Label>
+                                    <span className="text-sm text-muted-foreground font-medium">{wordLength[0]} words</span>
+                                  </div>
+                                  <Slider id="wordLength" min={400} max={1200} step={200} value={wordLength} onValueChange={setWordLength} />
+                                </div>
+
+                                <div className="space-y-3">
+                                   <div className="flex justify-between items-center">
+                                    <Label htmlFor="numQuestions">Number of Questions</Label>
+                                     <span className="text-sm text-muted-foreground font-medium">{numQuestions[0]} questions</span>
+                                  </div>
+                                  <Slider id="numQuestions" min={5} max={15} step={1} value={numQuestions} onValueChange={setNumQuestions} />
+                                </div>
+                        </div>
                     </TabsContent>
                     <TabsContent value="full" className="mt-6">
                     <div className="space-y-4">
@@ -553,9 +598,9 @@ export default function PracticePage() {
                       {testData.map((data, passageIndex) => (
                           <TabsContent key={passageIndex} value={String(passageIndex)}>
                               <Card>
-                                  <CardHeader className="flex flex-row justify-between items-start">
-                                      <CardTitle className="font-headline text-2xl pr-4" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                  <CardHeader>
+                                      <CardTitle className="font-headline text-3xl" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                      <div className="flex items-center gap-2 pt-2">
                                           <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
                                           <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
                                       </div>
@@ -563,7 +608,7 @@ export default function PracticePage() {
                                   <CardContent>
                                       <div
                                         id={`passage-content-${passageIndex}`}
-                                        key={`passage-${passageIndex}-${data.passage.length}`}
+                                        key={`passage-${passageIndex}-${data.passage?.length}`}
                                         className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
                                         dangerouslySetInnerHTML={{ __html: data.passage }} 
                                       />
@@ -612,9 +657,9 @@ export default function PracticePage() {
                             {testData.map((data, index) => (
                                 <TabsContent key={index} value={String(index)}>
                                     <Card>
-                                        <CardHeader className="flex flex-row justify-between items-start">
-                                            <CardTitle className="font-headline text-2xl pr-4" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                        <CardHeader>
+                                            <CardTitle className="font-headline text-3xl" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                            <div className="flex items-center gap-2 pt-2">
                                                 <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
                                                 <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
                                             </div>
@@ -622,7 +667,7 @@ export default function PracticePage() {
                                         <CardContent>
                                             <div
                                               id={`passage-content-${index}`}
-                                              key={`passage-${index}-${data.passage.length}`}
+                                              key={`passage-${index}-${data.passage?.length}`}
                                               className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
                                               dangerouslySetInnerHTML={{ __html: data.passage }}
                                             />
@@ -634,7 +679,7 @@ export default function PracticePage() {
                             </Tabs>
                         </div>
                         
-                        <div>
+                        <div className="w-full">
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="font-headline">Questions</CardTitle>
