@@ -189,7 +189,14 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error('The AI model returned an empty or incomplete response. Please try again.');
       }
       
-      const responseText = response.text();
+      let responseText = response.text();
+      
+      // Clean the response to remove markdown wrappers if they exist
+      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
+      if (jsonMatch && jsonMatch[1]) {
+        responseText = jsonMatch[1];
+      }
+
       let aiOutput;
       try {
         aiOutput = JSON.parse(responseText);
