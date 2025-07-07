@@ -10,7 +10,6 @@
 
 import { z } from 'zod';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const GenerateUrtPassageInputSchema = z.object({
   topic: z.string().describe('The topic to generate the URT passage and questions about (English, Physics, Chemistry, Biology, Geology).'),
@@ -51,14 +50,48 @@ const GenerateUrtPassageOutputSchema = z.object({
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
-// AI-specific output schema where chartData.data is a string
-const ActStyleAiOutputSchema = GenerateUrtPassageOutputSchema
-  .omit({ imageUrl: true, tokenUsage: true, subject: true, chartData: true })
-  .extend({
-      chartData: z.optional(ChartDataSchema.omit({ data: true }).extend({
-          data: z.string().describe('A JSON string representing an array of data objects for the chart. This MUST be a valid, minified JSON array string.'),
-      })),
-  });
+const selectBiologyTopicPrompt = `You are an expert in university entrance exam (URT) biology curriculum. Your role is to suggest a single, specific, and challenging topic for a biology reading comprehension passage, suitable for a rigorous exam for high-achieving high school students.
+
+The topic must be complex enough to sustain a 450-550 word textbook-level explanation, requiring detailed scientific vocabulary and concepts. Focus on core areas of biology often tested in advanced high school or introductory college courses.
+
+Examples of suitable topics (to guide the model on specificity and complexity):
+- "The intricate processes of cellular respiration in eukaryotes, including glycolysis, the Krebs cycle, and oxidative phosphorylation."
+- "The molecular mechanisms of DNA replication and repair, detailing enzymes involved and error correction."
+- "The role of gene expression and regulation in cellular differentiation and development."
+- "Evolutionary adaptations of extremophiles to harsh environments (e.g., thermophiles, halophiles)."
+- "The human immune system's adaptive response to viral infections, distinguishing between humoral and cell-mediated immunity."
+- "Principles of Mendelian genetics and the complexities of non-Mendelian inheritance patterns (e.g., incomplete dominance, codominance, polygenic inheritance)."
+- "Photosynthesis: light-dependent reactions, Calvin cycle, and adaptations in C4/CAM plants."
+- "Neurotransmission: synaptic signaling, excitatory and inhibitory postsynaptic potentials, and neurotransmitter types."
+- "Hormonal regulation of human physiological processes (e.g., blood glucose, stress response)."
+
+Avoid overly broad or simplistic topics like 'Plants,' 'Animals,' or 'Cells.' Be precise and academic.
+
+Provide only the topic title as plain text, nothing else.`;
+
+const biologyContentGenerationPromptTemplate = `You are an expert content generator for a university entrance exam preparation platform (URT prep). Your task is to create a rigorous, textbook-level reading comprehension passage and a set of multiple-choice questions on the following specific academic topic: "{{topic}}".
+
+Aim for the style and complexity of established college-level introductory textbooks such as *Campbell Biology* or similar advanced science texts. The passage must be suitable for high-achieving Grade 12 or college freshman-level students preparing for a demanding standardized entrance exam.
+
+**PASSAGE REQUIREMENTS:**
+*   **Content Depth:** The passage must delve into the topic with significant detail, explaining complex concepts thoroughly and providing accurate factual information. Avoid oversimplification.
+*   **Academic Tone:** Maintain a formal, objective, and analytical tone characteristic of scientific writing.
+*   **Vocabulary:** Incorporate advanced, discipline-specific vocabulary naturally within the text.
+*   **Sentence Structure:** Employ varied and complex sentence structures.
+*   **Logical Flow:** Ensure a clear introduction, well-developed body paragraphs, and a concise conclusion. Use strong transition words (e.g., "furthermore," "consequently," "in contrast").
+*   **Inferential Reasoning Potential:** The passage must contain information that requires the reader to make inferences, not just recall explicit facts.
+*   **Length:** The passage must be approximately **450-550 words** long.
+*   **Paragraphs:** Structure the content into **4-6 distinct paragraphs**.
+*   **Formatting:** All paragraphs must be wrapped in <p> tags and numbered (e.g., "<p>1. ...</p>"). Use HTML tags like <sub> and <sup> for formulas.
+
+**ADDITIONAL TASKS:**
+1.  **Title:** Create a suitable title for the passage.
+2.  **Questions:** Generate EXACTLY {{numQuestions}} multiple-choice questions based on the passage. They must test deep comprehension and inferential reasoning. The incorrect options (distractors) must be plausible and target common misconceptions.
+3.  **Explanations:** For EACH question, you MUST provide a thorough explanation in both English and Arabic. THIS IS A CRITICAL REQUIREMENT. Explain why the correct answer is right by citing the passage, and also explain why each of the other options is wrong.
+4.  **Timer:** Calculate a recommended time in minutes. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number.
+
+**OUTPUT FORMAT:**
+IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.`;
 
 const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam, similar to the SAT or URT. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook (like 'Campbell Biology' for Biology, or 'Essential Geology') or a scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
 
@@ -126,6 +159,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
     }
 
     try {
+      const genAI = new GoogleGenerativeAI(validatedInput.apiKey);
       const scienceSubjects = ["Physics", "Chemistry", "Biology", "Geology"];
       const isScience = scienceSubjects.includes(validatedInput.topic);
       
@@ -139,35 +173,71 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           shouldUseActStyle = Math.random() < 0.25;
         }
       }
+      
+      let prompt;
+      let modelConfig;
+      let finalTopic = validatedInput.topic;
 
-      const finalInput = { ...validatedInput, randomSeed: Math.random() };
+      // New 2-step logic for high-quality Biology passages
+      if (validatedInput.topic === 'Biology' && !shouldUseActStyle) {
+          const topicModel = genAI.getGenerativeModel({
+              model: "gemini-1.5-flash-latest",
+              generationConfig: { temperature: 0.7, maxOutputTokens: 50 }
+          });
+          const topicResult = await topicModel.generateContent(selectBiologyTopicPrompt);
+          const specificTopic = topicResult.response.text().trim();
+          
+          if (!specificTopic) {
+              console.error("Failed to generate a specific biology topic, falling back to general 'Biology'.");
+              finalTopic = "Biology"; // Fallback to a general topic
+          } else {
+              finalTopic = specificTopic;
+          }
 
-      let promptTemplate;
-      if (shouldUseActStyle) {
-        promptTemplate = actStyleSciencePromptTemplate;
+          prompt = biologyContentGenerationPromptTemplate
+              .replace('{{topic}}', finalTopic)
+              .replace('{{numQuestions}}', String(validatedInput.numQuestions));
+          
+          modelConfig = {
+              model: "gemini-1.5-flash-latest",
+              generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.5,
+              },
+          };
+
       } else {
-        promptTemplate = standardTextPromptTemplate;
+          // Existing logic for other subjects and ACT-style passages
+          const finalInput = { ...validatedInput, randomSeed: Math.random() };
+          let promptTemplate;
+          if (shouldUseActStyle) {
+              promptTemplate = actStyleSciencePromptTemplate;
+          } else {
+              promptTemplate = standardTextPromptTemplate;
+          }
+          prompt = promptTemplate
+              .replace('{{topic}}', finalInput.topic)
+              .replace('{{difficulty}}', finalInput.difficulty)
+              .replace(new RegExp('{{wordLength}}', 'g'), String(finalInput.wordLength))
+              .replace(new RegExp('{{numQuestions}}', 'g'), String(finalInput.numQuestions))
+              .replace('{{randomSeed}}', String(finalInput.randomSeed));
+          
+          modelConfig = {
+              model: "gemini-1.5-flash-latest",
+              generationConfig: {
+                  responseMimeType: "application/json",
+              },
+          };
       }
 
-      const prompt = promptTemplate
-        .replace('{{topic}}', finalInput.topic)
-        .replace('{{difficulty}}', finalInput.difficulty)
-        .replace(new RegExp('{{wordLength}}', 'g'), String(finalInput.wordLength))
-        .replace(new RegExp('{{numQuestions}}', 'g'), String(finalInput.numQuestions))
-        .replace('{{randomSeed}}', String(finalInput.randomSeed));
-
-      const genAI = new GoogleGenerativeAI(validatedInput.apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash-latest",
-        generationConfig: {
-            responseMimeType: "application/json",
-        },
-        safetySettings: [
-            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        ]
+      const model = genAI.getGenerativeModel({
+          ...modelConfig,
+          safetySettings: [
+              { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+              { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+              { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+              { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+          ]
       });
       
       const generationResult = await model.generateContent(prompt);
@@ -214,7 +284,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           ...textOutput,
           imageUrl,
           tokenUsage: usage?.totalTokens,
-          subject: validatedInput.topic,
+          subject: validatedInput.topic, // Always return the original subject for categorization
       };
     } catch (e: any) {
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
@@ -231,3 +301,5 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error('An unexpected error occurred while generating the passage.');
     }
 }
+
+    
