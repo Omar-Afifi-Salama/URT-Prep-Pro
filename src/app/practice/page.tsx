@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { generateUrtPassage } from "@/ai/flows/generate-urt-passage.ts";
+import { generateUrtPassage, type GenerateUrtPassageInput } from "@/ai/flows/generate-urt-passage.ts";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,14 +150,14 @@ export default function PracticePage() {
     }
 
     const topicHistory = JSON.parse(localStorage.getItem(TOPIC_HISTORY_KEY) || '[]') as string[];
+    const generationParams: GenerateUrtPassageInput[] = [];
 
-    const generationTasks: Promise<UrtTest>[] = [];
     if (mode === 'single') {
         if (!selectedSingleSubject) {
             toast({ title: "No Subject Selected", description: "Please choose a subject.", variant: "destructive" });
             return;
         }
-        generationTasks.push(generateUrtPassage({
+        generationParams.push({
             topic: selectedSingleSubject.name,
             difficulty,
             wordLength: wordLength[0],
@@ -165,7 +165,7 @@ export default function PracticePage() {
             apiKey,
             passageFormat: selectedSingleSubject.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
             topicHistory,
-        }));
+        });
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
             if (count > 0) {
@@ -173,19 +173,19 @@ export default function PracticePage() {
                   const difficulties = ["Easy", "Medium", "Hard"];
                   const wordLengths = [400, 600, 800, 1000, 1200];
                   const numQuestionsOpts = [6, 10, 15];
-                  generationTasks.push(generateUrtPassage({
+                  generationParams.push({
                       topic: subjectName,
                       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
                       apiKey,
                       topicHistory,
-                  }));
+                  });
               }
             }
         });
 
-        if (generationTasks.length === 0) {
+        if (generationParams.length === 0) {
             toast({ title: "No Subjects Selected", description: "Please choose at least one passage for the test.", variant: "destructive" });
             return;
         }
@@ -198,8 +198,13 @@ export default function PracticePage() {
     setActiveTab("0");
 
     try {
-        const data = await Promise.all(generationTasks);
-        setTestData(data);
+        const data: UrtTest[] = [];
+        for (const params of generationParams) {
+            const passageData = await generateUrtPassage(params);
+            data.push(passageData);
+            setTestData([...data]); // Update UI incrementally
+        }
+        
         setView("test");
         setTestView('normal');
         
@@ -226,6 +231,7 @@ export default function PracticePage() {
     } catch (error: any) {
         console.error("Failed to generate test:", error);
         toast({ title: "Generation Failed", description: error.message || "Could not generate the test. Check your API key and try again.", variant: "destructive" });
+        setView('setup');
     } finally {
         setIsLoading(false);
     }
@@ -575,7 +581,8 @@ export default function PracticePage() {
         });
 
         return (
-            <div className="w-full max-w-6xl mx-auto">
+          <div className="w-full max-w-6xl mx-auto">
+            <div className="w-full">
                  <div className="flex justify-between items-start mb-4 gap-2">
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
@@ -727,6 +734,7 @@ export default function PracticePage() {
                     Submit All Answers
                 </Button>
             </div>
+          </div>
         );
       default:
         return null;

@@ -313,8 +313,11 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
             throw new Error('Your API Key is not valid. Please check it on the API Key page and try again.');
         }
-        if (e.message && (e.message.includes('429') || e.message.includes('resource has been exhausted'))) {
-            throw new Error('You have exceeded the request limit for the Google AI free tier. Please enable billing on your Google Cloud project or try again later.');
+        if (e.message && e.message.includes('429')) {
+            throw new Error('API rate limit exceeded (requests per minute). Please wait a moment before generating more passages.');
+        }
+        if (e.message && e.message.includes('resource has been exhausted')) {
+            throw new Error('You have likely exceeded the daily quota for the Google AI free tier. Please check your account status or try again tomorrow.');
         }
         // Re-throw specific errors from the try block
         if (e.message.startsWith('Generation blocked') || e.message.startsWith('The AI model')) {
