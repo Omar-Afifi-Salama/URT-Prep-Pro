@@ -82,7 +82,7 @@ Aim for the style and complexity of established college-level introductory textb
 *   **Formatting:** All paragraphs must be wrapped in <p> tags and numbered (e.g., "<p>1. ...</p>"). Use HTML tags like <sub> and <sup> for formulas.
 
 **QUESTION REQUIREMENTS (CRITICAL):**
-Your questions must be sophisticated and test true comprehension, not simple recall.
+Your questions must be sophisticated and test true comprehension, not simple recall. All questions, options, and answers MUST be derived *directly* from the provided passage. Do not introduce external information or concepts not mentioned in the text.
 *   **Plausible Distractors:** The incorrect options (distractors) MUST be plausible and target common misconceptions. All options should seem credible to a student who has only skimmed the passage, but the correct answer must be unambiguously supported by a careful reading.
 *   **Question Style - AVOID simple recall.** Instead of "What is X?", ask about the function, implication, or relationship of X.
 *   **Question Style - FAVOR complex reasoning.** At least half of the questions should require one of the following:
