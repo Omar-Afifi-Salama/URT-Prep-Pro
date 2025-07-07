@@ -202,12 +202,12 @@ export default function PracticePage() {
 
     try {
         const data: UrtTest[] = [];
-        for (const params of generationParams) {
+        for (const [index, params] of generationParams.entries()) {
             const passageData = await generateUrtPassage(params);
             data.push(passageData);
             setTestData([...data]); // Update UI incrementally
-            if (generationParams.length > 1) {
-              await delay(1500); // Wait 1.5 seconds to avoid rate-limiting
+            if (index < generationParams.length - 1) {
+              await delay(2000); 
             }
         }
         
@@ -440,19 +440,211 @@ export default function PracticePage() {
     return Object.values(fullTestSettings).reduce((sum, count) => sum + count, 0);
   }, [fullTestSettings]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col">
+        <AppHeader />
+        <main className="flex-1 flex items-center justify-center p-4 md:p-8">
+          <div className="flex flex-col items-center justify-center text-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg font-headline">Loading your test...</p>
+            <p className="text-muted-foreground">This may take a few moments.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (view === "test" && testData) {
+    return (
+      <div className="min-h-screen w-full flex flex-col">
+        <AppHeader />
+        <main className="flex-1 flex items-start justify-center p-4 md:p-8">
+          <div className="w-full max-w-6xl mx-auto">
+            <div className="w-full relative">
+              <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
+                    </Button>
+                    {testViewData.totalRecommendedTime > 0 && (
+                    <div className="sticky top-20 z-10">
+                        <TestTimer 
+                            initialTime={testViewData.totalRecommendedTime * 60} 
+                            onTimeUpdate={handleTimeUpdate}
+                        />
+                    </div>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
+                        <Rows className="mr-2 h-4 w-4"/>
+                        Normal
+                    </Button>
+                    <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
+                        <Columns3 className="mr-2 h-4 w-4"/>
+                        Compact
+                    </Button>
+                </div>
+              </div>
+              <div className="w-full bg-card p-4 rounded-lg border">
+                {testView === 'normal' && (
+                <div className="w-full max-w-4xl mx-auto">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="mb-4">
+                        {testData.map((data, index) => (
+                        <TabsTrigger key={index} value={String(index)}>{testViewData.tabLabels[index]}</TabsTrigger>
+                        ))}
+                    </TabsList>
+                    {testData.map((data, passageIndex) => (
+                        <TabsContent key={passageIndex} value={String(passageIndex)}>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                    <div className="flex items-center gap-2 pt-2 border-t">
+                                        <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                        <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div
+                                        id={`passage-content-${passageIndex}`}
+                                        key={`passage-${passageIndex}-${data.passage?.length}`}
+                                        className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
+                                        dangerouslySetInnerHTML={{ __html: data.passage }} 
+                                    />
+                                    {data.chartData && renderChart(data.chartData)}
+                                </CardContent>
+                            </Card>
+                            <Card className="mt-6">
+                                <CardHeader>
+                                <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
+                                </CardHeader>
+                                <CardContent>
+                                <div className="flex flex-col gap-6">
+                                    {data.questions.map((q, questionIndex) => (
+                                    <div key={questionIndex}>
+                                        <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                        <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)} value={userAnswers[passageIndex]?.[questionIndex]}>
+                                            <div className="space-y-2">
+                                            {q.options.map((option, optIndex) => (
+                                                <div key={optIndex} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
+                                                    <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                </div>
+                                            ))}
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                    ))}
+                                </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    ))}
+                    </Tabs>
+                </div>
+                )}
+                {testView === 'compact' && (
+                <div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div className="w-full lg:sticky lg:top-20">
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <TabsList className="mb-4">
+                                {testData.map((data, index) => (
+                                    <TabsTrigger key={index} value={String(index)}>{testViewData.tabLabels[index]}</TabsTrigger>
+                                ))}
+                            </TabsList>
+                            {testData.map((data, index) => (
+                                <TabsContent key={index} value={String(index)}>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                            <div className="flex items-center gap-2 pt-2 border-t">
+                                                <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                                <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div
+                                            id={`passage-content-${index}`}
+                                            key={`passage-${index}-${data.passage?.length}`}
+                                            className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
+                                            dangerouslySetInnerHTML={{ __html: data.passage }}
+                                            />
+                                            {data.chartData && renderChart(data.chartData)}
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            ))}
+                            </Tabs>
+                        </div>
+                        
+                        <div className="w-full">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline">Questions</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="pr-4 space-y-6">
+                                        {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
+                                            <div key={questionIndex}>
+                                                <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                                <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
+                                                    <div className="space-y-2">
+                                                    {q.options.map((option, optIndex) => (
+                                                        <div key={optIndex} className="flex items-center space-x-2">
+                                                            <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
+                                                            <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                        </div>
+                                                    ))}
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+                )}
+                <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Submit All Answers
+                </Button>
+              </div>
+            </div>
+          </div>
+        </main>
+        <AlertDialog open={isBackAlertOpen} onOpenChange={setIsBackAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to go back?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your current test progress will be lost. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                setView('setup');
+                setTestData(null);
+                setUserAnswers({});
+                setElapsedTime(0);
+              }}>Confirm</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col">
       <AppHeader />
       <main className="flex-1 flex items-start justify-center p-4 md:p-8">
         <div className="container mx-auto flex justify-center">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-lg font-headline">Loading your test...</p>
-              <p className="text-muted-foreground">This may take a few moments.</p>
-            </div>
-          ) : view === "setup" ? (
             <div className="w-full max-w-2xl space-y-8">
                 <Card>
                     <CardHeader>
@@ -591,185 +783,8 @@ export default function PracticePage() {
                     </CardFooter>
                 </Card>
             </div>
-          ) : view === "test" && testData ? (
-             <div className="w-full max-w-6xl mx-auto">
-                <div className="w-full relative">
-                     <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
-                            </Button>
-                            {testViewData.totalRecommendedTime > 0 && (
-                            <div className="sticky top-20 z-10">
-                                <TestTimer 
-                                    initialTime={testViewData.totalRecommendedTime * 60} 
-                                    onTimeUpdate={handleTimeUpdate}
-                                />
-                            </div>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
-                                <Rows className="mr-2 h-4 w-4"/>
-                                Normal
-                            </Button>
-                            <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
-                                <Columns3 className="mr-2 h-4 w-4"/>
-                                Compact
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="w-full bg-card p-4 rounded-lg border">
-                        {testView === 'normal' && (
-                        <div className="w-full max-w-4xl mx-auto">
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="mb-4">
-                                {testData.map((data, index) => (
-                                <TabsTrigger key={index} value={String(index)}>{testViewData.tabLabels[index]}</TabsTrigger>
-                                ))}
-                            </TabsList>
-                            {testData.map((data, passageIndex) => (
-                                <TabsContent key={passageIndex} value={String(passageIndex)}>
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                            <div className="flex items-center gap-2 pt-2 border-t">
-                                                <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
-                                                <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div
-                                                id={`passage-content-${passageIndex}`}
-                                                key={`passage-${passageIndex}-${data.passage?.length}`}
-                                                className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
-                                                dangerouslySetInnerHTML={{ __html: data.passage }} 
-                                            />
-                                            {data.chartData && renderChart(data.chartData)}
-                                        </CardContent>
-                                    </Card>
-                                    <Card className="mt-6">
-                                        <CardHeader>
-                                        <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
-                                        </CardHeader>
-                                        <CardContent>
-                                        <div className="flex flex-col gap-6">
-                                            {data.questions.map((q, questionIndex) => (
-                                            <div key={questionIndex}>
-                                                <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                                <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)} value={userAnswers[passageIndex]?.[questionIndex]}>
-                                                    <div className="space-y-2">
-                                                    {q.options.map((option, optIndex) => (
-                                                        <div key={optIndex} className="flex items-center space-x-2">
-                                                            <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
-                                                            <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                        </div>
-                                                    ))}
-                                                    </div>
-                                                </RadioGroup>
-                                            </div>
-                                            ))}
-                                        </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                            ))}
-                            </Tabs>
-                        </div>
-                        )}
-                        {testView === 'compact' && (
-                        <div>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                                <div className="w-full lg:sticky lg:top-20">
-                                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                    <TabsList className="mb-4">
-                                        {testData.map((data, index) => (
-                                            <TabsTrigger key={index} value={String(index)}>{testViewData.tabLabels[index]}</TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                    {testData.map((data, index) => (
-                                        <TabsContent key={index} value={String(index)}>
-                                            <Card>
-                                                <CardHeader>
-                                                    <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                                    <div className="flex items-center gap-2 pt-2 border-t">
-                                                        <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
-                                                        <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <div
-                                                    id={`passage-content-${index}`}
-                                                    key={`passage-${index}-${data.passage?.length}`}
-                                                    className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
-                                                    dangerouslySetInnerHTML={{ __html: data.passage }}
-                                                    />
-                                                    {data.chartData && renderChart(data.chartData)}
-                                                </CardContent>
-                                            </Card>
-                                        </TabsContent>
-                                    ))}
-                                    </Tabs>
-                                </div>
-                                
-                                <div className="w-full">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="font-headline">Questions</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="pr-4 space-y-6">
-                                                {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
-                                                    <div key={questionIndex}>
-                                                        <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                                        <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
-                                                            <div className="space-y-2">
-                                                            {q.options.map((option, optIndex) => (
-                                                                <div key={optIndex} className="flex items-center space-x-2">
-                                                                    <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
-                                                                    <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                                </div>
-                                                            ))}
-                                                            </div>
-                                                        </RadioGroup>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </div>
-                        </div>
-                        )}
-                        <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Submit All Answers
-                        </Button>
-                    </div>
-                </div>
-            </div>
-          ) : null}
         </div>
       </main>
-      <AlertDialog open={isBackAlertOpen} onOpenChange={setIsBackAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to go back?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your current test progress will be lost. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setView('setup');
-              setTestData(null);
-              setUserAnswers({});
-              setElapsedTime(0);
-            }}>Confirm</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
