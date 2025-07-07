@@ -215,7 +215,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
               .replace('{{numQuestions}}', String(validatedInput.numQuestions));
           
           modelConfig = {
-              model: "gemini-1.5-pro-latest",
+              model: "gemini-1.5-flash-latest",
               generationConfig: {
                   responseMimeType: "application/json",
                   temperature: 0.5,
@@ -246,7 +246,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
               .replace('{{randomSeed}}', String(finalInput.randomSeed));
           
           modelConfig = {
-              model: "gemini-1.5-pro-latest",
+              model: "gemini-1.5-flash-latest",
               generationConfig: {
                   responseMimeType: "application/json",
               },
