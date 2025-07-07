@@ -52,7 +52,7 @@ export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSc
 
 const selectBiologyTopicPrompt = `You are an expert in university entrance exam (URT) biology curriculum. Your role is to suggest a single, specific, and challenging topic for a biology reading comprehension passage, suitable for a rigorous exam for high-achieving high school students.
 
-The topic must be complex enough to sustain a 450-550 word textbook-level explanation, requiring detailed scientific vocabulary and concepts. Focus on core areas of biology often tested in advanced high school or introductory college courses.
+The topic must be complex enough to sustain a 450-550 word textbook-level explanation, requiring detailed scientific vocabulary and concepts. Focus on core areas of biology often tested in advanced high school or introductory college courses. Ensure a diverse range of topics spanning molecular biology, cell biology, genetics, ecology, evolution, human physiology, and plant biology. Prioritize topics that allow for the exploration of processes, mechanisms, and interactions, not just static definitions.
 
 Examples of suitable topics (to guide the model on specificity and complexity):
 - "The intricate processes of cellular respiration in eukaryotes, including glycolysis, the Krebs cycle, and oxidative phosphorylation."
@@ -208,7 +208,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
               .replace('{{numQuestions}}', String(validatedInput.numQuestions));
           
           modelConfig = {
-              model: "gemini-1.5-flash-latest",
+              model: "gemini-1.5-pro-latest",
               generationConfig: {
                   responseMimeType: "application/json",
                   temperature: 0.5,
@@ -232,7 +232,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
               .replace('{{randomSeed}}', String(finalInput.randomSeed));
           
           modelConfig = {
-              model: "gemini-1.5-flash-latest",
+              model: "gemini-1.5-pro-latest",
               generationConfig: {
                   responseMimeType: "application/json",
               },
