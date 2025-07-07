@@ -310,5 +310,3 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error('An unexpected error occurred while generating the passage.');
     }
 }
-
-    
