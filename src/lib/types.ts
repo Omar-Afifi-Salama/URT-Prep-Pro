@@ -5,6 +5,7 @@ export interface UrtQuestion {
   answer: string;
   explanationEnglish: string;
   explanationArabic: string;
+  passageContext?: string;
 }
 
 export interface ChartData {
@@ -33,6 +34,7 @@ export interface GradedResult {
   userAnswer: string;
   correctAnswer: string;
   question: string;
+  passageContext?: string;
 }
 
 export interface SubjectScore {

@@ -268,6 +268,7 @@ export default function PracticePage() {
             question: q.question,
             explanationEnglish: q.explanationEnglish,
             explanationArabic: q.explanationArabic,
+            passageContext: q.passageContext,
           };
         })
       );

@@ -257,17 +257,51 @@ export default function HistoryDetailPage() {
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 pt-0">
-                                        <div className="space-y-4">
-                                            <p><strong>Your Answer:</strong> <span className={result.isCorrect ? 'text-green-600' : 'text-red-600'} dangerouslySetInnerHTML={{__html: result.userAnswer}}/> </p>
-                                            <p><strong>Correct Answer:</strong> <span dangerouslySetInnerHTML={{__html: result.correctAnswer}} /></p>
-                                            <Separator />
-                                            <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
-                                                <h4 className="font-bold">Explanation (English)</h4>
-                                                <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
-                                                <h4 className="font-bold">Explanation (Arabic)</h4>
-                                                <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
-                                            </div>
+                                      <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            {passageData.questions[questionIndex].options.map((option, optionIndex) => {
+                                                const isCorrect = option === result.correctAnswer;
+                                                const isUserChoice = option === result.userAnswer;
+                                                const isUnselectedIncorrect = !isCorrect && !isUserChoice;
+                                                
+                                                return (
+                                                    <div
+                                                        key={optionIndex}
+                                                        className={cn(
+                                                            'flex items-start gap-3 rounded-md border p-3',
+                                                            isCorrect && 'border-green-500 bg-green-500/10 text-green-900 dark:text-green-200',
+                                                            isUserChoice && !isCorrect && 'border-red-500 bg-red-500/10 text-red-900 dark:text-red-200',
+                                                            isUnselectedIncorrect && 'border-border text-muted-foreground'
+                                                        )}
+                                                    >
+                                                        <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                                                            {isCorrect && <CheckCircle className="h-5 w-5 text-green-500" />}
+                                                            {isUserChoice && !isCorrect && <XCircle className="h-5 w-5 text-red-500" />}
+                                                        </div>
+                                                        <span className="flex-1" dangerouslySetInnerHTML={{ __html: option }} />
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
+
+                                        {result.passageContext && (
+                                            <div className="mt-4 rounded-md border-l-4 border-accent-foreground bg-accent p-4">
+                                                <p className="font-semibold text-accent-foreground">Evidence from Passage</p>
+                                                <blockquote
+                                                    className="mt-2 border-l-2 border-accent-foreground/50 pl-3 text-sm italic"
+                                                    dangerouslySetInnerHTML={{ __html: `"${result.passageContext}"` }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        <Separator />
+                                        <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
+                                            <h4 className="font-bold">Explanation (English)</h4>
+                                            <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
+                                            <h4 className="font-bold">Explanation (Arabic)</h4>
+                                            <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
+                                        </div>
+                                      </div>
                                     </AccordionContent>
                                 </AccordionItem>
                             </Card>

@@ -27,8 +27,9 @@ const QuestionSchema = z.object({
   question: z.string().describe('The question text.'),
   options: z.array(z.string()).length(4).describe('An array of 4 multiple choice options.'),
   answer: z.string().describe('The correct answer, which must be one of the provided options.'),
-  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct and why EACH of the other options is incorrect. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
-  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct and why EACH of the other options is incorrect. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  passageContext: z.string().describe('The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet. Use HTML tags for formatting if they were present in the original passage.')
 });
 
 const ChartDataSchema = z.object({
@@ -86,10 +87,10 @@ Your questions must be sophisticated and test true comprehension, not simple rec
 *   **No Hallucinations:** Do not create questions based on concepts or analogies not explicitly present in the text you've written.
 
 **EXPLANATION REQUIREMENTS (MANDATORY CHECKLIST):**
-For EACH of the {{numQuestions}} questions, you MUST provide a thorough explanation in both English and Arabic that follows these rules:
-*   The explanation MUST be complete and not contain placeholder text.
-*   It MUST clearly state why the correct answer is right, quoting or referencing the specific part of the passage that supports it.
-*   It MUST explicitly explain why EACH of the three incorrect options is wrong, again referencing the passage. For example, 'Option A is incorrect because the passage states X, which contradicts this idea.'
+For EACH of the {{numQuestions}} questions, you MUST provide the following:
+*   A thorough explanation in both English and Arabic. The explanation MUST be complete and not contain placeholder text.
+*   The explanation MUST focus only on why the correct answer is right, quoting or referencing the passage. **DO NOT** explain why the other options are wrong.
+*   In the 'passageContext' field, provide the **exact, verbatim quote** from the passage that directly supports the correct answer. This should be a short snippet.
 
 **ADDITIONAL TASKS:**
 1.  **Title:** Create a suitable title for the passage.
@@ -98,62 +99,60 @@ For EACH of the {{numQuestions}} questions, you MUST provide a thorough explanat
 **OUTPUT FORMAT:**
 IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.`;
 
-const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam, similar to the SAT or URT. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook (like 'Campbell Biology' for Biology, or 'Essential Geology') or a scientific journal. Avoid any conversational language or simplification. All facts, data, and theories must be presented with utmost precision and complexity appropriate for the difficulty level.
+const standardTextPromptTemplate = `You are a master curriculum designer and subject matter expert for a highly competitive university entrance exam, similar to the SAT or URT. Your task is to create passages that are designed to challenge top-tier students. The tone must be formal, academic, objective, and information-dense, similar to a university-level textbook or a scientific journal. Avoid any conversational language or simplification.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Physics", a good sub-topic would be "The Thermodynamics of Black Holes" or "Quantum Entanglement").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided.
 
 YOUR TASK - FOLLOW THESE RULES EXACTLY:
 1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words.
 2.  Generate EXACTLY {{numQuestions}} multiple-choice questions based on the passage.
-3.  The passage itself should not contain the title, as it is handled by a separate 'title' field in the output.
-4.  For EACH of the {{numQuestions}} questions, you MUST generate a thorough explanation in both English and Arabic. THIS IS THE MOST CRITICAL PART OF YOUR TASK. Explanations CANNOT be empty or contain placeholder text. This is a mandatory requirement.
-5.  The English explanation must detail why the correct answer is right by citing the passage, and also explain why each of the other three options is wrong.
-6.  The Arabic explanation must do the same.
-7.  The multiple-choice questions should test deep comprehension, not just surface-level recall. At least half the questions should require inference or application. The incorrect options (distractors) must be plausible and based on information within the text, targeting common misconceptions or subtle misinterpretations.
+3.  The multiple-choice questions should test deep comprehension, not just surface-level recall. At least half the questions should require inference or application. The incorrect options (distractors) must be plausible and based on information within the text.
+4.  For EACH question, you MUST generate the following:
+    a.  An English explanation detailing only why the correct answer is right by citing the passage.
+    b.  An Arabic explanation doing the same.
+    c.  In the 'passageContext' field, the exact, verbatim quote from the passage that supports the correct answer.
 
 PASSAGE FORMATTING:
 - All paragraphs must be wrapped in <p> tags.
 - Number each paragraph, starting with 1. (e.g., "<p>1. The first paragraph text...</p>")
-- When appropriate, include data in a well-structured HTML table (e.g., <table>, <thead>, <tbody>, <tr>, <th>, <td>). When a table is included, refer to it in the text (e.g., "as shown in Table 1").
+- When appropriate, include data in a well-structured HTML table.
 
 EQUATION FORMATTING:
-- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, the questions, and the multiple-choice options.
-- If the topic is Physics or Chemistry, you MUST include relevant equations in the passage and ask at least one question that requires using an equation.
+- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> and <sup>.
+- If the topic is Physics or Chemistry, you MUST include relevant equations in the passage.
 
 TIMER:
-- Calculate a recommended time limit in minutes. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 800-word passage with 10 questions, this should be around 14 minutes.
-- Include this in the 'recommendedTime' field.
+- Calculate a recommended time limit in minutes using this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number.
 
 Topic: {{topic}}
 Difficulty: {{difficulty}}
 
-IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
+IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON object.
 `;
 
-const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" (describing 2-3 complex experiments) or "Conflicting Viewpoints" (presenting nuanced hypotheses from Scientist 1 and Scientist 2). The tone should be objective, dense, and data-focused. The scientific concepts should be complex, interrelated, and require careful reading. The data presented in tables should be non-linear and may require interpolation or extrapolation to answer some questions.
+const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages. Your task is to generate a passage in one of two formats: "Research Summaries" or "Conflicting Viewpoints". The tone should be objective, dense, and data-focused.
 
-You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided (e.g., if topic is "Biology", a good sub-topic would be "The Role of CRISPR-Cas9 in Gene Editing").
+You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided.
 
 YOUR TASK - FOLLOW THESE RULES EXACTLY:
 1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words and MUST include data presented in a detailed HTML table.
-2.  Generate EXACTLY {{numQuestions}} multiple-choice questions that require deep interpretation of the text, tables, and the relationship between hypotheses and data. Avoid simple fact recall. Questions should test analytical skills like interpolation, extrapolation, and synthesis of information. The incorrect answer options (distractors) must be plausible and target subtle misinterpretations.
-3.  Provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart. 'data' must be a JSON-formatted string.
-4.  For EACH of the {{numQuestions}} questions, you MUST generate a thorough explanation in both English and Arabic. THIS IS THE MOST CRITICAL PART OF YOUR TASK. Explanations CANNOT be empty or contain placeholder text. This is a mandatory requirement.
-5.  The English explanation must detail why the correct answer is right by citing the passage/table, and also explain why each of the other three options is wrong.
-6.  The Arabic explanation must do the same.
+2.  Generate EXACTLY {{numQuestions}} multiple-choice questions that require deep interpretation of the text and tables. Avoid simple fact recall. Distractors must be plausible.
+3.  Provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart.
+4.  For EACH question, you MUST generate the following:
+    a.  An English explanation detailing only why the correct answer is right by citing the passage/table.
+    b.  An Arabic explanation doing the same.
+    c.  In the 'passageContext' field, the exact, verbatim quote from the passage or table that supports the correct answer.
 
 FORMATTING:
-- The HTML table must be well-structured. The first column of the table MUST be 'Trial', 'Sample', or a similar identifier for the row. Refer to the table in the text (e.g., "as shown in Table 1").
-- When formatting equations or chemical formulas, you MUST use HTML tags like <sub> for subscripts (e.g., H<sub>2</sub>O) and <sup> for superscripts (e.g., E=mc<sup>2</sup>). This applies to the passage, questions, options, and explanations.
+- Use standard HTML tags for tables and text formatting (<sub>, <sup>).
 
 TIMER:
-- Calculate a recommended time limit in minutes. Use this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number. For a 800-word passage with 10 questions, this should be around 14 minutes.
-- Include this in the 'recommendedTime' field.
+- Calculate a recommended time limit in minutes using this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number.
 
 Topic: {{topic}}
 Difficulty: {{difficulty}}
 
-IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
+IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON object.
 `;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
