@@ -418,342 +418,337 @@ export default function PracticePage() {
         </CardContent>
       </Card>
     );
-  }
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-headline">Loading your test...</p>
-          <p className="text-muted-foreground">This may take a few moments.</p>
-        </div>
-      );
-    }
-
-    switch (view) {
-      case "setup":
-        const totalFullTestPassages = Object.values(fullTestSettings).reduce((sum, count) => sum + count, 0);
-        return (
-          <div className="w-full max-w-2xl space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl">Demo Area</CardTitle>
-                    <CardDescription>Try the app without an API key using these pre-generated test sets.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid sm:grid-cols-2 gap-4">
-                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet1)}>
-                        <Dna className="mr-2 h-5 w-5"/>
-                        Biology Demo Set #1
-                    </Button>
-                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet2)}>
-                        <Dna className="mr-2 h-5 w-5"/>
-                        Biology Demo Set #2
-                    </Button>
-                     <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet1)}>
-                        <Mountain className="mr-2 h-5 w-5"/>
-                        Geology Demo Set #1
-                    </Button>
-                    <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet2)}>
-                        <Mountain className="mr-2 h-5 w-5"/>
-                        Geology Demo Set #2
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card className="w-full">
-                <CardHeader>
-                <CardTitle className="font-headline text-2xl">New AI-Generated Practice</CardTitle>
-                <CardDescription>Configure your API key on the API Key page to generate unlimited new practice sessions.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="single" className="gap-2"><BookOpen className="h-4 w-4"/>Single Passage</TabsTrigger>
-                    <TabsTrigger value="full" className="gap-2"><FileText className="h-4 w-4"/>Full Test</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="single" className="mt-6">
-                        <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label>Subject</Label>
-                                    <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
-                                        <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
-                                        <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
-                                    </Select>
-                                </div>
-
-                                {mode === 'single' && selectedSingleSubject?.isScience && (
-                                    <div className="space-y-3">
-                                        <Label>Passage Format</Label>
-                                        <RadioGroup value={passageFormat} onValueChange={setPassageFormat} className="flex space-x-4">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="auto" id="auto" />
-                                                <Label htmlFor="auto">Auto</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="reference" id="reference" />
-                                                <Label htmlFor="reference">Reference Style</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="act" id="act" />
-                                                <Label htmlFor="act">ACT Style</Label>
-                                            </div>
-                                        </RadioGroup>
-                                    </div>
-                                )}
-
-                                <div className="space-y-3">
-                                    <Label htmlFor="difficulty">Difficulty</Label>
-                                    <Select onValueChange={setDifficulty} defaultValue={difficulty}>
-                                      <SelectTrigger id="difficulty"><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="Easy">Easy</SelectItem>
-                                        <SelectItem value="Medium">Medium</SelectItem>
-                                        <SelectItem value="Hard">Hard</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-3">
-                                  <div className="flex justify-between items-center">
-                                    <Label htmlFor="wordLength">Passage Length</Label>
-                                    <span className="text-sm text-muted-foreground font-medium">{wordLength[0]} words</span>
-                                  </div>
-                                  <Slider id="wordLength" min={400} max={1200} step={200} value={wordLength} onValueChange={setWordLength} />
-                                </div>
-
-                                <div className="space-y-3">
-                                   <div className="flex justify-between items-center">
-                                    <Label htmlFor="numQuestions">Number of Questions</Label>
-                                     <span className="text-sm text-muted-foreground font-medium">{numQuestions[0]} questions</span>
-                                  </div>
-                                  <Slider id="numQuestions" min={5} max={15} step={1} value={numQuestions} onValueChange={setNumQuestions} />
-                                </div>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="full" className="mt-6">
-                    <div className="space-y-4">
-                        <div>
-                        <Label>Select Subjects</Label>
-                        <CardDescription>Choose the number of passages for each subject. Passages will have random difficulty and length.</CardDescription>
-                        </div>
-                        <div className="space-y-3">
-                        {SUBJECTS.map(subject => (
-                            <div key={subject.name} className="flex items-center justify-between">
-                            <label htmlFor={`subject-count-${subject.name}`} className="flex items-center gap-2 text-sm font-medium">
-                                <subject.icon className="h-4 w-4" />
-                                {subject.name}
-                            </label>
-                            <Select
-                                onValueChange={(value) => {
-                                setFullTestSettings(prev => ({ ...prev, [subject.name]: parseInt(value, 10) }));
-                                }}
-                                defaultValue="0"
-                            >
-                                <SelectTrigger id={`subject-count-${subject.name}`} className="w-[120px]">
-                                <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                {[0, 1, 2, 3, 4].map(i => (
-                                    <SelectItem key={i} value={String(i)}>{i} passage{i !== 1 ? 's' : ''}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            </div>
-                        ))}
-                        </div>
-                    </div>
-                    </TabsContent>
-                </Tabs>
-                </CardContent>
-                <CardFooter>
-                <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && totalFullTestPassages === 0)} className="w-full">
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Start Practice
-                </Button>
-                </CardFooter>
-            </Card>
-          </div>
-        );
-      case "test":
-        if (!testData) return null;
-        const totalRecommendedTime = testData.reduce((sum, d) => sum + (d.recommendedTime || 0), 0);
-
-        const subjectCounts: Record<string, number> = {};
-        const tabLabels = testData.map(data => {
-            const count = subjectCounts[data.subject] || 0;
-            subjectCounts[data.subject] = count + 1;
-            const total = testData.filter(d => d.subject === data.subject).length;
-            return total > 1 ? `${data.subject} #${count + 1}` : data.subject;
-        });
-
-        return (
-          <div className="w-full max-w-6xl mx-auto">
-            <div className="w-full relative">
-                 <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
-                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
-                        </Button>
-                        {totalRecommendedTime > 0 && (
-                        <div className="sticky top-20 z-10">
-                            <TestTimer 
-                                initialTime={totalRecommendedTime * 60} 
-                                onTimeUpdate={handleTimeUpdate}
-                            />
-                        </div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
-                            <Rows className="mr-2 h-4 w-4"/>
-                            Normal
-                        </Button>
-                        <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
-                            <Columns3 className="mr-2 h-4 w-4"/>
-                            Compact
-                        </Button>
-                    </div>
-                </div>
-                <div className="w-full bg-card p-4 rounded-lg border">
-                    {testView === 'normal' && (
-                    <div className="w-full max-w-4xl mx-auto">
-                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="mb-4">
-                            {testData.map((data, index) => (
-                            <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
-                            ))}
-                        </TabsList>
-                        {testData.map((data, passageIndex) => (
-                            <TabsContent key={passageIndex} value={String(passageIndex)}>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                        <div className="flex items-center gap-2 pt-2 border-t">
-                                            <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
-                                            <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div
-                                            id={`passage-content-${passageIndex}`}
-                                            key={`passage-${passageIndex}-${data.passage?.length}`}
-                                            className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
-                                            dangerouslySetInnerHTML={{ __html: data.passage }} 
-                                        />
-                                        {data.chartData && renderChart(data.chartData)}
-                                    </CardContent>
-                                </Card>
-                                <Card className="mt-6">
-                                    <CardHeader>
-                                    <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
-                                    </CardHeader>
-                                    <CardContent>
-                                    <div className="flex flex-col gap-6">
-                                        {data.questions.map((q, questionIndex) => (
-                                        <div key={questionIndex}>
-                                            <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                            <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)} value={userAnswers[passageIndex]?.[questionIndex]}>
-                                                <div className="space-y-2">
-                                                {q.options.map((option, optIndex) => (
-                                                    <div key={optIndex} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
-                                                        <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                    </div>
-                                                ))}
-                                                </div>
-                                            </RadioGroup>
-                                        </div>
-                                        ))}
-                                    </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        ))}
-                        </Tabs>
-                    </div>
-                    )}
-                    {testView === 'compact' && (
-                    <div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                            <div className="w-full lg:sticky lg:top-20">
-                                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="mb-4">
-                                    {testData.map((data, index) => (
-                                        <TabsTrigger key={index} value={String(index)}>{tabLabels[index]}</TabsTrigger>
-                                    ))}
-                                </TabsList>
-                                {testData.map((data, index) => (
-                                    <TabsContent key={index} value={String(index)}>
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
-                                                <div className="flex items-center gap-2 pt-2 border-t">
-                                                    <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
-                                                    <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div
-                                                id={`passage-content-${index}`}
-                                                key={`passage-${index}-${data.passage?.length}`}
-                                                className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
-                                                dangerouslySetInnerHTML={{ __html: data.passage }}
-                                                />
-                                                {data.chartData && renderChart(data.chartData)}
-                                            </CardContent>
-                                        </Card>
-                                    </TabsContent>
-                                ))}
-                                </Tabs>
-                            </div>
-                            
-                            <div className="w-full">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="font-headline">Questions</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="pr-4 space-y-6">
-                                            {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
-                                                <div key={questionIndex}>
-                                                    <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
-                                                    <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
-                                                        <div className="space-y-2">
-                                                        {q.options.map((option, optIndex) => (
-                                                            <div key={optIndex} className="flex items-center space-x-2">
-                                                                <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
-                                                                <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
-                                                            </div>
-                                                        ))}
-                                                        </div>
-                                                    </RadioGroup>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </div>
-                    )}
-                    <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Submit All Answers
-                    </Button>
-                </div>
-          </div>
-        );
-      default:
-        return null;
-    }
   };
+
+  // Memoize calculation of variables for test view
+  const testViewData = useMemo(() => {
+    if (!testData || view !== 'test') {
+      return { tabLabels: [], totalRecommendedTime: 0 };
+    }
+    const totalRecommendedTime = testData.reduce((sum, d) => sum + (d.recommendedTime || 0), 0);
+    const subjectCounts: Record<string, number> = {};
+    const tabLabels = testData.map(data => {
+        const count = subjectCounts[data.subject] || 0;
+        subjectCounts[data.subject] = count + 1;
+        const total = testData.filter(d => d.subject === data.subject).length;
+        return total > 1 ? `${data.subject} #${count + 1}` : data.subject;
+    });
+    return { tabLabels, totalRecommendedTime };
+  }, [testData, view]);
+
+  const totalFullTestPassages = useMemo(() => {
+    return Object.values(fullTestSettings).reduce((sum, count) => sum + count, 0);
+  }, [fullTestSettings]);
+
 
   return (
     <div className="min-h-screen w-full flex flex-col">
       <AppHeader />
       <main className="flex-1 flex items-start justify-center p-4 md:p-8">
         <div className="container mx-auto flex justify-center">
-            {renderContent()}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-lg font-headline">Loading your test...</p>
+              <p className="text-muted-foreground">This may take a few moments.</p>
+            </div>
+          ) : view === "setup" ? (
+            <div className="w-full max-w-2xl space-y-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Demo Area</CardTitle>
+                        <CardDescription>Try the app without an API key using these pre-generated test sets.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid sm:grid-cols-2 gap-4">
+                        <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet1)}>
+                            <Dna className="mr-2 h-5 w-5"/>
+                            Biology Demo Set #1
+                        </Button>
+                        <Button size="lg" variant="outline" onClick={() => handleStartDemo(biologyDemoSet2)}>
+                            <Dna className="mr-2 h-5 w-5"/>
+                            Biology Demo Set #2
+                        </Button>
+                         <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet1)}>
+                            <Mountain className="mr-2 h-5 w-5"/>
+                            Geology Demo Set #1
+                        </Button>
+                        <Button size="lg" variant="outline" onClick={() => handleStartDemo(geologyDemoSet2)}>
+                            <Mountain className="mr-2 h-5 w-5"/>
+                            Geology Demo Set #2
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card className="w-full">
+                    <CardHeader>
+                    <CardTitle className="font-headline text-2xl">New AI-Generated Practice</CardTitle>
+                    <CardDescription>Configure your API key on the API Key page to generate unlimited new practice sessions.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Tabs value={mode} onValueChange={(value) => setMode(value as "single" | "full")} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="single" className="gap-2"><BookOpen className="h-4 w-4"/>Single Passage</TabsTrigger>
+                        <TabsTrigger value="full" className="gap-2"><FileText className="h-4 w-4"/>Full Test</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="single" className="mt-6">
+                            <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <Label>Subject</Label>
+                                        <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
+                                            <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
+                                            <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {mode === 'single' && selectedSingleSubject?.isScience && (
+                                        <div className="space-y-3">
+                                            <Label>Passage Format</Label>
+                                            <RadioGroup value={passageFormat} onValueChange={setPassageFormat} className="flex space-x-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="auto" id="auto" />
+                                                    <Label htmlFor="auto">Auto</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="reference" id="reference" />
+                                                    <Label htmlFor="reference">Reference Style</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="act" id="act" />
+                                                    <Label htmlFor="act">ACT Style</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        <Label htmlFor="difficulty">Difficulty</Label>
+                                        <Select onValueChange={setDifficulty} defaultValue={difficulty}>
+                                          <SelectTrigger id="difficulty"><SelectValue /></SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="Easy">Easy</SelectItem>
+                                            <SelectItem value="Medium">Medium</SelectItem>
+                                            <SelectItem value="Hard">Hard</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-3">
+                                      <div className="flex justify-between items-center">
+                                        <Label htmlFor="wordLength">Passage Length</Label>
+                                        <span className="text-sm text-muted-foreground font-medium">{wordLength[0]} words</span>
+                                      </div>
+                                      <Slider id="wordLength" min={400} max={1200} step={200} value={wordLength} onValueChange={setWordLength} />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                       <div className="flex justify-between items-center">
+                                        <Label htmlFor="numQuestions">Number of Questions</Label>
+                                         <span className="text-sm text-muted-foreground font-medium">{numQuestions[0]} questions</span>
+                                      </div>
+                                      <Slider id="numQuestions" min={5} max={15} step={1} value={numQuestions} onValueChange={setNumQuestions} />
+                                    </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="full" className="mt-6">
+                        <div className="space-y-4">
+                            <div>
+                            <Label>Select Subjects</Label>
+                            <CardDescription>Choose the number of passages for each subject. Passages will have random difficulty and length.</CardDescription>
+                            </div>
+                            <div className="space-y-3">
+                            {SUBJECTS.map(subject => (
+                                <div key={subject.name} className="flex items-center justify-between">
+                                <label htmlFor={`subject-count-${subject.name}`} className="flex items-center gap-2 text-sm font-medium">
+                                    <subject.icon className="h-4 w-4" />
+                                    {subject.name}
+                                </label>
+                                <Select
+                                    onValueChange={(value) => {
+                                    setFullTestSettings(prev => ({ ...prev, [subject.name]: parseInt(value, 10) }));
+                                    }}
+                                    defaultValue="0"
+                                >
+                                    <SelectTrigger id={`subject-count-${subject.name}`} className="w-[120px]">
+                                    <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                    {[0, 1, 2, 3, 4].map(i => (
+                                        <SelectItem key={i} value={String(i)}>{i} passage{i !== 1 ? 's' : ''}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                </div>
+                            ))}
+                            </div>
+                        </div>
+                        </TabsContent>
+                    </Tabs>
+                    </CardContent>
+                    <CardFooter>
+                    <Button onClick={handleGenerateTest} disabled={isLoading || (mode === 'single' && !selectedSingleSubject) || (mode === 'full' && totalFullTestPassages === 0)} className="w-full">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Start Practice
+                    </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+          ) : view === "test" && testData ? (
+             <div className="w-full max-w-6xl mx-auto">
+                <div className="w-full relative">
+                     <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setIsBackAlertOpen(true)}>
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
+                            </Button>
+                            {testViewData.totalRecommendedTime > 0 && (
+                            <div className="sticky top-20 z-10">
+                                <TestTimer 
+                                    initialTime={testViewData.totalRecommendedTime * 60} 
+                                    onTimeUpdate={handleTimeUpdate}
+                                />
+                            </div>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant={testView === 'normal' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('normal')}>
+                                <Rows className="mr-2 h-4 w-4"/>
+                                Normal
+                            </Button>
+                            <Button variant={testView === 'compact' ? 'default' : 'outline'} size="sm" onClick={() => setTestView('compact')}>
+                                <Columns3 className="mr-2 h-4 w-4"/>
+                                Compact
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="w-full bg-card p-4 rounded-lg border">
+                        {testView === 'normal' && (
+                        <div className="w-full max-w-4xl mx-auto">
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <TabsList className="mb-4">
+                                {testData.map((data, index) => (
+                                <TabsTrigger key={index} value={String(index)}>{testViewData.tabLabels[index]}</TabsTrigger>
+                                ))}
+                            </TabsList>
+                            {testData.map((data, passageIndex) => (
+                                <TabsContent key={passageIndex} value={String(passageIndex)}>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                            <div className="flex items-center gap-2 pt-2 border-t">
+                                                <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                                <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div
+                                                id={`passage-content-${passageIndex}`}
+                                                key={`passage-${passageIndex}-${data.passage?.length}`}
+                                                className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
+                                                dangerouslySetInnerHTML={{ __html: data.passage }} 
+                                            />
+                                            {data.chartData && renderChart(data.chartData)}
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="mt-6">
+                                        <CardHeader>
+                                        <CardTitle className="font-headline" dangerouslySetInnerHTML={{ __html: `Questions for "${data.title}"`}} />
+                                        </CardHeader>
+                                        <CardContent>
+                                        <div className="flex flex-col gap-6">
+                                            {data.questions.map((q, questionIndex) => (
+                                            <div key={questionIndex}>
+                                                <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                                <RadioGroup onValueChange={(value) => handleAnswerChange(passageIndex, questionIndex, value)} value={userAnswers[passageIndex]?.[questionIndex]}>
+                                                    <div className="space-y-2">
+                                                    {q.options.map((option, optIndex) => (
+                                                        <div key={optIndex} className="flex items-center space-x-2">
+                                                            <RadioGroupItem value={option} id={`p${passageIndex}q${questionIndex}o${optIndex}`} />
+                                                            <Label htmlFor={`p${passageIndex}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                        </div>
+                                                    ))}
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                            ))}
+                                        </div>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            ))}
+                            </Tabs>
+                        </div>
+                        )}
+                        {testView === 'compact' && (
+                        <div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                                <div className="w-full lg:sticky lg:top-20">
+                                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                                    <TabsList className="mb-4">
+                                        {testData.map((data, index) => (
+                                            <TabsTrigger key={index} value={String(index)}>{testViewData.tabLabels[index]}</TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                    {testData.map((data, index) => (
+                                        <TabsContent key={index} value={String(index)}>
+                                            <Card>
+                                                <CardHeader>
+                                                    <CardTitle className="font-headline text-3xl mb-2" dangerouslySetInnerHTML={{ __html: data.title }} />
+                                                    <div className="flex items-center gap-2 pt-2 border-t">
+                                                        <Button variant="ghost" size="sm" onClick={handleHighlight}><Highlighter className="mr-2 h-4 w-4"/>Highlight</Button>
+                                                        <Button variant="ghost" size="sm" onClick={handleUnderline}><Underline className="mr-2 h-4 w-4"/>Underline</Button>
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div
+                                                    id={`passage-content-${index}`}
+                                                    key={`passage-${index}-${data.passage?.length}`}
+                                                    className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
+                                                    dangerouslySetInnerHTML={{ __html: data.passage }}
+                                                    />
+                                                    {data.chartData && renderChart(data.chartData)}
+                                                </CardContent>
+                                            </Card>
+                                        </TabsContent>
+                                    ))}
+                                    </Tabs>
+                                </div>
+                                
+                                <div className="w-full">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="font-headline">Questions</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="pr-4 space-y-6">
+                                                {testData[parseInt(activeTab)].questions.map((q, questionIndex) => (
+                                                    <div key={questionIndex}>
+                                                        <p className="font-semibold mb-2" dangerouslySetInnerHTML={{__html: `${questionIndex + 1}. ${q.question}`}} />
+                                                        <RadioGroup onValueChange={(value) => handleAnswerChange(parseInt(activeTab), questionIndex, value)} value={userAnswers[parseInt(activeTab)]?.[questionIndex]}>
+                                                            <div className="space-y-2">
+                                                            {q.options.map((option, optIndex) => (
+                                                                <div key={optIndex} className="flex items-center space-x-2">
+                                                                    <RadioGroupItem value={option} id={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} />
+                                                                    <Label htmlFor={`p${parseInt(activeTab)}q${questionIndex}o${optIndex}`} className="cursor-pointer" dangerouslySetInnerHTML={{__html: option}} />
+                                                                </div>
+                                                            ))}
+                                                            </div>
+                                                        </RadioGroup>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        </div>
+                        )}
+                        <Button onClick={handleSubmitTest} className="w-full mt-6" disabled={isLoading}>
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Submit All Answers
+                        </Button>
+                    </div>
+                </div>
+            </div>
+          ) : null}
         </div>
       </main>
       <AlertDialog open={isBackAlertOpen} onOpenChange={setIsBackAlertOpen}>
@@ -778,5 +773,3 @@ export default function PracticePage() {
     </div>
   );
 }
-
-    
