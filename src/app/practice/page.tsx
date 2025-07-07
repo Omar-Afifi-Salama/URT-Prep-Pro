@@ -150,7 +150,9 @@ export default function PracticePage() {
       return;
     }
 
-    const topicHistory = JSON.parse(localStorage.getItem(TOPIC_HISTORY_KEY) || '[]') as string[];
+    const rawTopicHistory = localStorage.getItem(TOPIC_HISTORY_KEY);
+    const topicHistory = rawTopicHistory ? (JSON.parse(rawTopicHistory) as any[]).filter((item): item is string => typeof item === 'string' && !!item) : [];
+    
     const generationParams: GenerateUrtPassageInput[] = [];
 
     if (mode === 'single') {
@@ -222,7 +224,7 @@ export default function PracticePage() {
         }
 
         if (data.length > 0) {
-          const newTopics = data.map(d => d.title);
+          const newTopics = data.map(d => d.title).filter((t): t is string => typeof t === 'string' && !!t);
           const updatedHistory = [...newTopics, ...topicHistory];
           const limitedHistory = updatedHistory.slice(0, TOPIC_HISTORY_LIMIT);
           localStorage.setItem(TOPIC_HISTORY_KEY, JSON.stringify(limitedHistory));
