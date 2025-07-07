@@ -24,12 +24,12 @@ const GenerateUrtPassageInputSchema = z.object({
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
 const QuestionSchema = z.object({
-  question: z.string().describe('The question text.'),
+  question: z.string().min(1, "Question text cannot be empty.").describe('The question text.'),
   options: z.array(z.string()).length(4).describe('An array of 4 multiple choice options.'),
-  answer: z.string().describe('The correct answer, which must be one of the provided options.'),
-  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
-  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
-  passageContext: z.string().describe('The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet. Use HTML tags for formatting if they were present in the original passage.')
+  answer: z.string().min(1, "Answer cannot be empty.").describe('The correct answer, which must be one of the provided options.'),
+  explanationEnglish: z.string().min(1, "English explanation cannot be empty.").describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationArabic: z.string().min(1, "Arabic explanation cannot be empty.").describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  passageContext: z.string().min(1, "Passage context cannot be empty.").describe('The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet. Use HTML tags for formatting if they were present in the original passage.')
 });
 
 const ChartDataSchema = z.object({
@@ -41,10 +41,10 @@ const ChartDataSchema = z.object({
 });
 
 const GenerateUrtPassageOutputSchema = z.object({
-  title: z.string().describe('An appropriate title for the passage.'),
-  passage: z.string().describe('The generated URT passage, formatted with HTML tags.'),
+  title: z.string().min(1, "Title cannot be empty.").describe('An appropriate title for the passage.'),
+  passage: z.string().min(1, "Passage cannot be empty.").describe('The generated URT passage, formatted with HTML tags.'),
   questions: z.array(QuestionSchema).describe('The generated multiple-choice questions associated with the passage.'),
-  imageUrl: z.string().describe('A URL for a relevant placeholder image.'),
+  imageUrl: z.string().optional(),
   recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
   tokenUsage: z.number().optional().describe('The number of tokens used for generation.'),
   subject: z.string().describe('The subject of the passage.'),
@@ -57,7 +57,7 @@ const standardTextPromptTemplate = `You are a master curriculum designer and sub
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic of '{{topic}}'.
 
 **PASSAGE REQUIREMENTS:**
-1.  **Title:** Generate a suitable title for the passage.
+1.  **Title:** Generate a suitable, non-empty title for the passage.
 2.  **Length:** The passage MUST be approximately {{wordLength}} words.
 3.  **Depth & Quality:** The passage must explain *how* processes work, not just *what* they are. Use illustrative language and concrete examples to clarify complex mechanisms and achieve a textbook-like quality.
 4.  **Formatting:**
@@ -71,7 +71,7 @@ You MUST generate a novel passage. Do not repeat topics or questions from previo
 3.  **Sophisticated Distractors:** Incorrect options (distractors) MUST be plausible. They should target common misconceptions or be statements that are true but not supported by the passage, requiring careful reading to eliminate.
 
 **EXPLANATION REQUIREMENTS (MANDATORY):**
-For EACH of the {{numQuestions}} questions, you MUST provide the following:
+For EACH of the {{numQuestions}} questions, you MUST provide the following. These fields CANNOT be empty.
 1.  **English Explanation:** A thorough explanation detailing only why the correct answer is right by citing the passage.
 2.  **Arabic Explanation:** A thorough explanation in Arabic doing the same.
 3.  **Passage Context:** The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet.
@@ -91,10 +91,10 @@ const actStyleSciencePromptTemplate = `You are an expert curriculum designer spe
 You MUST generate a novel passage. Do not repeat topics or questions from previous requests. To ensure the output is completely unique and does not repeat previous content, use this random number as a creative seed: {{randomSeed}}. {{topicHistoryInstruction}} You must choose a specific, narrow sub-topic within the broader topic provided.
 
 YOUR TASK - FOLLOW THESE RULES EXACTLY:
-1.  Generate a passage with a title. The passage MUST be approximately {{wordLength}} words and MUST include data presented in a detailed HTML table.
+1.  Generate a passage with a suitable, non-empty title. The passage MUST be approximately {{wordLength}} words and MUST include data presented in a detailed HTML table.
 2.  Generate EXACTLY {{numQuestions}} multiple-choice questions that require deep interpretation of the text and tables. Avoid simple fact recall. Distractors must be plausible.
 3.  Provide a structured JSON object in the 'chartData' field that represents the data from the table, suitable for rendering a bar chart.
-4.  For EACH question, you MUST generate the following:
+4.  For EACH question, you MUST generate the following. These fields CANNOT be empty:
     a.  An English explanation detailing only why the correct answer is right by citing the passage/table.
     b.  An Arabic explanation doing the same.
     c.  In the 'passageContext' field, the exact, verbatim quote from the passage or table that supports the correct answer.
@@ -190,9 +190,9 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       }
       
       const responseText = response.text();
-      let textOutput;
+      let aiOutput;
       try {
-        textOutput = JSON.parse(responseText);
+        aiOutput = JSON.parse(responseText);
       } catch (jsonError: any) {
         console.error("Failed to parse JSON response from AI:", jsonError);
         console.error("Raw AI response:", responseText);
@@ -201,29 +201,37 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       
       const usage = await model.countTokens(prompt);
       
-      if (textOutput && textOutput.chartData && typeof textOutput.chartData.data === 'string') {
+      if (aiOutput && aiOutput.chartData && typeof aiOutput.chartData.data === 'string') {
         try {
-          const parsedData = JSON.parse(textOutput.chartData.data);
-          textOutput.chartData.data = parsedData;
+          const parsedData = JSON.parse(aiOutput.chartData.data);
+          aiOutput.chartData.data = parsedData;
         } catch (e) {
           console.error("Failed to parse chartData JSON from AI", e);
-          textOutput.chartData = undefined;
+          aiOutput.chartData = undefined;
         }
       }
 
-      if (!textOutput) {
+      if (!aiOutput) {
           throw new Error('Failed to generate text content.');
       }
       
       const imageUrl = `https://placehold.co/600x400.png`;
 
-      return {
-          ...textOutput,
+      const finalOutput = {
+          ...aiOutput,
           imageUrl,
           tokenUsage: usage?.totalTokens,
           subject: validatedInput.topic, // Always return the original subject for categorization
       };
+      
+      // Final validation to ensure the entire object matches the expected schema before returning
+      return GenerateUrtPassageOutputSchema.parse(finalOutput);
+
     } catch (e: any) {
+        if (e instanceof z.ZodError) {
+            console.error("Zod validation failed:", e.errors);
+            throw new Error(`AI response failed validation. One or more required fields were missing or empty. Details: ${e.errors.map(err => err.message).join(', ')}`);
+        }
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
             throw new Error('Your API Key is not valid. Please check it on the API Key page and try again.');
         }

@@ -296,10 +296,18 @@ export default function HistoryDetailPage() {
 
                                         <Separator />
                                         <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
-                                            <h4 className="font-bold">Explanation (English)</h4>
-                                            <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
-                                            <h4 className="font-bold">Explanation (Arabic)</h4>
-                                            <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
+                                            {result.explanationEnglish && (
+                                              <>
+                                                <h4 className="font-bold">Explanation (English)</h4>
+                                                <p dangerouslySetInnerHTML={{ __html: result.explanationEnglish }} />
+                                              </>
+                                            )}
+                                            {result.explanationArabic && (
+                                              <>
+                                                <h4 className="font-bold">Explanation (Arabic)</h4>
+                                                <p dir="rtl" className="text-right font-arabic text-lg" dangerouslySetInnerHTML={{ __html: result.explanationArabic }} />
+                                              </>
+                                            )}
                                         </div>
                                       </div>
                                     </AccordionContent>
