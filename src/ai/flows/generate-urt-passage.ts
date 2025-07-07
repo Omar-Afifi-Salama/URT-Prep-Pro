@@ -53,7 +53,7 @@ export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSc
 
 const selectBiologyTopicPrompt = `You are an expert in university entrance exam (URT) biology curriculum. Your role is to suggest a single, specific, and challenging topic for a biology reading comprehension passage, suitable for a rigorous exam for high-achieving high school students.
 
-The topic must be complex enough to sustain a 450-550 word textbook-level explanation, requiring detailed scientific vocabulary and concepts. Focus on core areas of biology often tested in advanced high school or introductory college courses. Ensure a diverse range of topics spanning molecular biology, cell biology, genetics, ecology, evolution, human physiology, and plant biology. Prioritize topics that allow for the exploration of processes, mechanisms, and interactions, not just static definitions.
+The topic must be complex enough to sustain a 450-550 word textbook-level explanation, requiring detailed scientific vocabulary and concepts. Focus on core areas of biology and ensure a diverse range of topics spanning molecular biology, cell biology, genetics, ecology, evolution, human physiology, and plant biology. Prioritize topics that allow for the exploration of processes, mechanisms, and interactions, not just static definitions.
 
 Examples of suitable topics (to guide the model on specificity and complexity):
 - "The intricate processes of cellular respiration in eukaryotes, including glycolysis, the Krebs cycle, and oxidative phosphorylation."
@@ -70,25 +70,20 @@ Avoid overly broad or simplistic topics like 'Plants,' 'Animals,' or 'Cells.' Be
 
 Provide only the topic title as plain text, nothing else.`;
 
-const biologyContentGenerationPromptTemplate = `You are an expert content generator for a university entrance exam preparation platform (URT prep). Your task is to create a rigorous, textbook-level reading comprehension passage and a set of multiple-choice questions on the following specific academic topic: "{{topic}}".
-
-Aim for the style and complexity of established college-level introductory textbooks such as *Campbell Biology*. The passage must be suitable for high-achieving Grade 12 or college freshman-level students preparing for a demanding standardized entrance exam.
+const biologyContentGenerationPromptTemplate = `You are a senior editor for a university-level biology textbook (e.g., *Campbell Biology*). Your task is to create a rigorous reading comprehension passage and a set of multiple-choice questions on the following specific academic topic: "{{topic}}". Maintain a formal, objective, and analytical tone. Avoid colloquialisms and generic filler phrases.
 
 **PASSAGE REQUIREMENTS:**
-*   **Content Depth & Style:** The passage must delve into the topic with significant detail, explaining complex concepts thoroughly and providing accurate factual information. To achieve a textbook-like quality, go beyond simply listing facts. Use illustrative language, concrete examples, or a brief, relevant analogy to clarify a complex mechanism (e.g., comparing ATP synthase to a revolving door). The goal is to build deep understanding, not just present a list of terms. Maintain a formal, objective, and analytical tone.
-*   **Inferential Reasoning Potential:** The passage must contain information that allows a student to make logical inferences. The relationships between concepts should be multi-layered, not just simple cause-and-effect.
-*   **Length:** The passage must be approximately **450-550 words** long.
-*   **Paragraphs:** Structure the content into **4-6 distinct paragraphs**.
-*   **Formatting:** All paragraphs must be wrapped in <p> tags and numbered (e.g., "<p>1. ...</p>"). Use HTML tags like <sub> and <sup> for formulas.
+*   **Content Depth & Mechanism Focus:** The passage must delve into the topic with significant detail, prioritizing the explanation of *how* processes work, not just *what* they are. Explain complex molecular mechanisms and signaling pathways thoroughly.
+*   **Specificity and Elucidation:** To add depth, you must name specific key proteins, enzymes, or molecules where appropriate (e.g., mentioning "CaMKII" when discussing LTP-related kinases). If you introduce a related high-level concept (like "epigenetic modifications"), you must briefly explain its specific, direct role in the context of the main topic.
+*   **Illustrative Quality:** To achieve a textbook-like quality, go beyond simply listing facts. Use clear, illustrative language and concrete examples to build deep understanding.
+*   **Inferential Potential:** The passage must contain information that allows a student to make logical inferences. The relationships between concepts should be multi-layered.
+*   **Technical Details:** The passage must be **450-550 words** long, structured into **4-6 distinct, numbered paragraphs** wrapped in \`<p>\` tags. Use HTML tags like \`<sub>\` and \`<sup>\` for all formulas.
 
 **QUESTION REQUIREMENTS (CRITICAL):**
-Your questions must be sophisticated and test true comprehension, not simple recall. All questions, options, and answers MUST be derived *directly* from the provided passage. Do not introduce external information or concepts not mentioned in the text.
-*   **Plausible Distractors:** The incorrect options (distractors) MUST be plausible and target common misconceptions. All options should seem credible to a student who has only skimmed the passage, but the correct answer must be unambiguously supported by a careful reading.
-*   **Question Style - AVOID simple recall.** Instead of "What is X?", ask about the function, implication, or relationship of X.
-*   **Question Style - FAVOR complex reasoning.** At least half of the questions should require one of the following:
-    *   **Inference:** Combining information from different parts of the passage to draw a conclusion.
-    *   **Application:** Applying a concept from the passage to a new, hypothetical scenario.
-    *   **Purpose:** Asking about the primary purpose of a specific paragraph or the author's reason for including a particular detail.
+Your questions must be sophisticated and test true comprehension, not simple recall. **All questions, options, and answers MUST be derived *directly* from the provided passage.** Do not introduce external information.
+*   **Question Mix:** At least half of the questions should require complex reasoning (Inference, Application to a new scenario, or analyzing the Purpose of a detail).
+*   **Sophisticated Distractors:** Incorrect options (distractors) MUST be plausible. They should target common misconceptions or be statements that are true but not supported by the passage, requiring careful reading to eliminate.
+*   **No Hallucinations:** Do not create questions based on concepts or analogies not explicitly present in the text you've written.
 
 **EXPLANATION REQUIREMENTS (MANDATORY CHECKLIST):**
 For EACH of the {{numQuestions}} questions, you MUST provide a thorough explanation in both English and Arabic that follows these rules:
@@ -161,6 +156,8 @@ Difficulty: {{difficulty}}
 IMPORTANT: You must format your response as a single, valid JSON object. Do not include any text or markdown formatting (like \`\`\`json) before or after the JSON object. Your entire response should be only the JSON.
 `;
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
     const validatedInput = GenerateUrtPassageInputSchema.parse(input);
 
@@ -209,6 +206,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           } else {
               finalTopic = specificTopic;
           }
+          await delay(1500); // Wait 1.5s to avoid hitting per-minute rate limits
 
           prompt = biologyContentGenerationPromptTemplate
               .replace('{{topic}}', finalTopic)
