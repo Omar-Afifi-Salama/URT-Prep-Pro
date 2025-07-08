@@ -19,7 +19,6 @@ const GenerateUrtPassageInputSchema = z.object({
   apiKey: z.string().describe('The user-provided Google AI API key.'),
   randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
   passageFormat: z.enum(['auto', 'reference', 'act']).optional().describe('The desired passage format for science topics.'),
-  topicHistory: z.array(z.string()).optional().describe('A list of topics that have already been generated in this session to avoid repetition.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -150,11 +149,6 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           .replace(/\{\{wordLength\}\}/g, String(finalInput.wordLength))
           .replace(/\{\{numQuestions\}\}/g, String(finalInput.numQuestions))
           .replace(/\{\{randomSeed\}\}/g, String(finalInput.randomSeed));
-
-      if (finalInput.topicHistory && finalInput.topicHistory.length > 0) {
-        const historyConstraint = `\n\n**Constraint on Topic Variety:** For this request, please generate a passage on a subject DIFFERENT from the following, which have already been used in this session: ${finalInput.topicHistory.join(', ')}.`;
-        prompt += historyConstraint;
-      }
       
       const modelConfig = {
           model: "gemini-1.5-flash-latest",

@@ -148,7 +148,7 @@ export default function PracticePage() {
       return;
     }
     
-    const generationParams: Omit<GenerateUrtPassageInput, 'apiKey' | 'topicHistory'>[] = [];
+    const generationParams: Omit<GenerateUrtPassageInput, 'apiKey'>[] = [];
 
     if (mode === 'single') {
         if (!selectedSingleSubject) {
@@ -195,17 +195,14 @@ export default function PracticePage() {
 
     try {
         const data: UrtTest[] = [];
-        const generatedTopicsInThisBatch: string[] = [];
 
         for (const [index, params] of generationParams.entries()) {
             const passageData = await generateUrtPassage({ 
                 ...params, 
                 apiKey,
-                topicHistory: generatedTopicsInThisBatch
             });
 
             data.push(passageData);
-            generatedTopicsInThisBatch.push(passageData.subject);
             
             setTestData([...data]); // Update UI incrementally
             if (index < generationParams.length - 1) {
