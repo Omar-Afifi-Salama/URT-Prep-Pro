@@ -276,6 +276,9 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         if (errorMessage.includes('resource has been exhausted')) {
             throw new Error('You have likely exceeded the daily quota for the Google AI free tier.');
         }
+        if (errorMessage.includes('503') || errorMessage.toLowerCase().includes('overloaded')) {
+            throw new Error('The AI model is currently experiencing high demand and is temporarily unavailable. Please try again in a few moments.');
+        }
 
         // For other errors, re-throw the original message for better debugging.
         throw new Error(errorMessage);
