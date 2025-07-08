@@ -110,8 +110,6 @@ The JSON object must have the following structure and content:
 }
 `;
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
     const validatedInput = GenerateUrtPassageInputSchema.parse(input);
 
@@ -178,18 +176,17 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       const generationResult = await model.generateContent(prompt);
       const response = generationResult.response;
 
+      if (response?.promptFeedback?.blockReason) {
+        throw new Error(`Generation blocked by safety settings: ${response.promptFeedback.blockReason}. Please adjust the prompt or topic.`);
+      }
+
       if (!response || !response.candidates || response.candidates.length === 0 || !response.text()) {
         console.error("AI Generation Error: No response, candidates, or text returned.", response?.promptFeedback);
-        const blockReason = response?.promptFeedback?.blockReason;
-        if (blockReason) {
-            throw new Error(`Generation blocked by safety settings: ${blockReason}. Please adjust the prompt or topic.`);
-        }
         throw new Error('The AI model returned an empty or incomplete response. Please try again.');
       }
       
       let responseText = response.text();
       
-      // Clean the response to remove markdown wrappers if they exist
       const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
       if (jsonMatch && jsonMatch[1]) {
         responseText = jsonMatch[1];
@@ -204,9 +201,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error("The AI model returned an invalid format. The raw response has been logged to the console. Please try again.");
       }
       
-      // Comprehensive data normalization to handle cases where the AI returns an object instead of a string.
       if (aiOutput) {
-        // Normalize top-level string fields
         if (aiOutput.title && typeof aiOutput.title === 'object') {
           aiOutput.title = String(aiOutput.title.text || JSON.stringify(aiOutput.title));
         }
@@ -214,7 +209,6 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           aiOutput.passage = String(aiOutput.passage.text || JSON.stringify(aiOutput.passage));
         }
         
-        // Normalize fields within the questions array
         if (Array.isArray(aiOutput.questions)) {
           aiOutput.questions.forEach((q: any) => {
             if (q.question && typeof q.question === 'object') {
@@ -232,13 +226,12 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
             if (q.passageContext && typeof q.passageContext === 'object') {
               q.passageContext = String(q.passageContext.text || JSON.stringify(q.passageContext));
             }
-            // Normalize the options array
             if (Array.isArray(q.options)) {
               q.options = q.options.map((opt: any) => {
                 if (opt && typeof opt === 'object') {
                   return String(opt.text || JSON.stringify(opt));
                 }
-                return String(opt); // Ensure it's a string
+                return String(opt);
               });
             }
           });
@@ -269,28 +262,28 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
           tokenUsage: usage?.totalTokens,
       };
       
-      // Final validation to ensure the entire object matches the expected schema before returning
       return GenerateUrtPassageOutputSchema.parse(finalOutput);
 
     } catch (e: any) {
+        console.error("Error in generateUrtPassage:", e);
+
         if (e instanceof z.ZodError) {
-            console.error("Zod validation failed:", e.errors);
-            throw new Error(`AI response failed validation. One or more required fields were missing or empty. Details: ${e.errors.map(err => err.message).join(', ')}`);
+            throw new Error(`AI response failed validation. Details: ${e.errors.map(err => err.message).join(', ')}`);
         }
-        if (e.message && (e.message.includes('API key not valid') || e.message.includes('400'))) {
+        
+        const errorMessage = e.message || 'An unknown error occurred.';
+
+        if (errorMessage.includes('API key not valid') || errorMessage.includes('400')) {
             throw new Error('Your API Key is not valid. Please check it on the API Key page and try again.');
         }
-        if (e.message && e.message.includes('429')) {
-            throw new Error('API rate limit exceeded (requests per minute). Please wait a moment before generating more passages.');
+        if (errorMessage.includes('429')) {
+            throw new Error('API rate limit exceeded. Please wait a moment before generating more passages.');
         }
-        if (e.message && e.message.includes('resource has been exhausted')) {
-            throw new Error('You have likely exceeded the daily quota for the Google AI free tier. Please check your account status or try again tomorrow.');
+        if (errorMessage.includes('resource has been exhausted')) {
+            throw new Error('You have likely exceeded the daily quota for the Google AI free tier.');
         }
-        // Re-throw specific errors from the try block
-        if (e.message.startsWith('Generation blocked') || e.message.startsWith('The AI model')) {
-            throw e;
-        }
-        console.error("Error in generateUrtPassage:", e);
-        throw new Error('An unexpected error occurred while generating the passage.');
+
+        // For other errors, re-throw the original message for better debugging.
+        throw new Error(errorMessage);
     }
 }
