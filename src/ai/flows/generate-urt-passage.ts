@@ -58,7 +58,7 @@ Your entire response MUST be a single, valid JSON object. Do not include any tex
 The JSON object must have the following structure and content:
 {
   "title": "string", // REQUIRED: An appropriate, non-empty, academic title for the passage.
-  "passage": "string", // REQUIRED: A novel, information-dense passage of approximately {{wordLength}} words. The passage must be formal, objective, and formatted with HTML <p> tags for each paragraph (e.g., "<p>1. ...</p>"). The quality should be similar to a university textbook, using illustrative language and concrete examples to explain mechanisms and processes.
+  "passage": "string", // REQUIRED: A novel, information-dense passage of approximately {{wordLength}} words. The passage must be formal, objective, and formatted with HTML <p> tags for each paragraph. The quality must be similar to a university textbook, using illustrative language and concrete examples. For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure or diagram. For English passages, focus on literary analysis.
   "questions": [ // REQUIRED: An array of exactly {{numQuestions}} multiple-choice questions.
     {
       "question": "string", // REQUIRED: The question text.
@@ -66,7 +66,7 @@ The JSON object must have the following structure and content:
       "answer": "string", // REQUIRED: The correct answer, which must exactly match one of the options.
       "explanationEnglish": "string", // REQUIRED: A detailed English explanation of why the correct answer is correct.
       "explanationArabic": "string", // REQUIRED: A detailed Arabic explanation of why the correct answer is correct.
-      "passageContext": "string" // REQUIRED: The exact, verbatim quote from the passage that supports the answer.
+      "passageContext": "string" // REQUIRED: The verbatim quote from the passage that supports the answer.
     }
   ],
   "recommendedTime": "number", // REQUIRED: The recommended completion time in minutes. Calculate this using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then round to the nearest whole number.
@@ -128,7 +128,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         } else if (validatedInput.passageFormat === 'reference') {
           shouldUseActStyle = false;
         } else { // 'auto' or undefined
-          shouldUseActStyle = Math.random() < 0.25;
+          shouldUseActStyle = Math.random() < 0.5;
         }
       }
       
