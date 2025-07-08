@@ -148,7 +148,7 @@ export default function PracticePage() {
       return;
     }
     
-    const generationParams: GenerateUrtPassageInput[] = [];
+    const generationParams: Omit<GenerateUrtPassageInput, 'apiKey' | 'topicHistory'>[] = [];
 
     if (mode === 'single') {
         if (!selectedSingleSubject) {
@@ -160,7 +160,6 @@ export default function PracticePage() {
             difficulty,
             wordLength: wordLength[0],
             numQuestions: numQuestions[0],
-            apiKey,
             passageFormat: selectedSingleSubject.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
         });
     } else { // full test mode
@@ -176,7 +175,6 @@ export default function PracticePage() {
                       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
                       wordLength: wordLengths[Math.floor(Math.random() * wordLengths.length)],
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
-                      apiKey,
                       passageFormat: subjectInfo?.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
                   });
               }
@@ -197,9 +195,18 @@ export default function PracticePage() {
 
     try {
         const data: UrtTest[] = [];
+        const generatedTopicsInThisBatch: string[] = [];
+
         for (const [index, params] of generationParams.entries()) {
-            const passageData = await generateUrtPassage(params);
+            const passageData = await generateUrtPassage({ 
+                ...params, 
+                apiKey,
+                topicHistory: generatedTopicsInThisBatch
+            });
+
             data.push(passageData);
+            generatedTopicsInThisBatch.push(passageData.subject);
+            
             setTestData([...data]); // Update UI incrementally
             if (index < generationParams.length - 1) {
               await delay(2000); 
