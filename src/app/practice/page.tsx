@@ -54,8 +54,6 @@ type View = "setup" | "test";
 type TestView = "normal" | "compact";
 const API_KEY_STORAGE_KEY = 'google-ai-api-key';
 const RETAKE_STORAGE_KEY = 'urt-retake-test';
-const TOPIC_HISTORY_KEY = 'urt-topic-history';
-const TOPIC_HISTORY_LIMIT = 30;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -149,9 +147,6 @@ export default function PracticePage() {
       });
       return;
     }
-
-    const rawTopicHistory = localStorage.getItem(TOPIC_HISTORY_KEY);
-    const topicHistory = rawTopicHistory ? (JSON.parse(rawTopicHistory) as any[]).filter((item): item is string => typeof item === 'string' && !!item) : [];
     
     const generationParams: GenerateUrtPassageInput[] = [];
 
@@ -167,7 +162,6 @@ export default function PracticePage() {
             numQuestions: numQuestions[0],
             apiKey,
             passageFormat: selectedSingleSubject.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
-            topicHistory,
         });
     } else { // full test mode
         Object.entries(fullTestSettings).forEach(([subjectName, count]) => {
@@ -184,7 +178,6 @@ export default function PracticePage() {
                       numQuestions: numQuestionsOpts[Math.floor(Math.random() * numQuestionsOpts.length)],
                       apiKey,
                       passageFormat: subjectInfo?.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
-                      topicHistory,
                   });
               }
             }
@@ -221,13 +214,6 @@ export default function PracticePage() {
 
         if (totalRequests > 0) {
           addUsage({ requests: totalRequests, tokens: totalTokens });
-        }
-
-        if (data.length > 0) {
-          const newTopics = data.map(d => d.title).filter((t): t is string => typeof t === 'string' && !!t);
-          const updatedHistory = [...newTopics, ...topicHistory];
-          const limitedHistory = updatedHistory.slice(0, TOPIC_HISTORY_LIMIT);
-          localStorage.setItem(TOPIC_HISTORY_KEY, JSON.stringify(limitedHistory));
         }
 
         if (totalTokens > 0) {

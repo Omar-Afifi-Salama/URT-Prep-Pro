@@ -19,7 +19,6 @@ const GenerateUrtPassageInputSchema = z.object({
   apiKey: z.string().describe('The user-provided Google AI API key.'),
   randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
   passageFormat: z.enum(['auto', 'reference', 'act']).optional().describe('The desired passage format for science topics.'),
-  topicHistory: z.array(z.string()).optional().describe('A list of recently generated topics to avoid repetition.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
 
@@ -78,7 +77,6 @@ The JSON object must have the following structure and content:
 - All questions must be based *only* on the information provided in the passage.
 - At least half the questions must test inference or application, not just recall.
 - Incorrect options (distractors) must be plausible and target common misunderstandings.
-{{topicHistoryInstruction}}
 `;
 
 const actStyleSciencePromptTemplate = `You are an expert curriculum designer creating a challenging ACT Science test passage on {{topic}}.
@@ -109,7 +107,6 @@ The JSON object must have the following structure and content:
   "recommendedTime": "number", // REQUIRED: Recommended time in minutes. Calculate using (Word Count / 130) + (Num Questions * 0.75), rounded.
   "subject": "{{topic}}" // REQUIRED: Must be exactly "{{topic}}".
 }
-{{topicHistoryInstruction}}
 `;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -148,16 +145,7 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       
       const finalInput = { ...validatedInput, randomSeed: Math.random() };
       
-      let topicHistoryInstruction = "";
-      if (finalInput.topicHistory && finalInput.topicHistory.length > 0) {
-          const validHistory = finalInput.topicHistory.filter(t => typeof t === 'string' && t.trim() !== '');
-          if (validHistory.length > 0) {
-            topicHistoryInstruction = `To ensure variety, you MUST NOT generate a passage on a topic that is the same as or semantically very similar to any of the following recently used topics: ${validHistory.join('; ')}.`;
-          }
-      }
-
       prompt = promptTemplate
-          .replace(/\{\{topicHistoryInstruction\}\}/g, topicHistoryInstruction)
           .replace(/\{\{topic\}\}/g, finalInput.topic)
           .replace(/\{\{difficulty\}\}/g, finalInput.difficulty)
           .replace(/\{\{wordLength\}\}/g, String(finalInput.wordLength))
