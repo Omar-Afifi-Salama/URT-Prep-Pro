@@ -27,9 +27,9 @@ const QuestionSchema = z.object({
   question: z.string().min(1, "Question text cannot be empty.").describe('The question text.'),
   options: z.array(z.string()).length(4).describe('An array of 4 multiple choice options.'),
   answer: z.string().min(1, "Answer cannot be empty.").describe('The correct answer, which must be one of the provided options.'),
-  explanationEnglish: z.string().describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
-  explanationArabic: z.string().describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
-  passageContext: z.string().describe('The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet. Use HTML tags for formatting if they were present in the original passage.')
+  explanationEnglish: z.string().min(1, "English explanation cannot be empty.").describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  explanationArabic: z.string().min(1, "Arabic explanation cannot be empty.").describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
+  passageContext: z.string().min(1, "Passage context cannot be empty.").describe('The exact, verbatim quote from the passage that directly supports the correct answer. This should be a short snippet. Use HTML tags for formatting if they were present in the original passage.')
 });
 
 const ChartDataSchema = z.object({
@@ -52,74 +52,62 @@ const GenerateUrtPassageOutputSchema = z.object({
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
-const standardTextPromptTemplate = `You are a curriculum designer and expert in {{topic}} for a competitive university entrance exam. Your task is to generate a high-quality practice test based on the provided parameters.
+const standardTextPromptTemplate = `You are an expert curriculum designer for a competitive university entrance exam, tasked with creating a high-quality practice test on the topic of {{topic}}.
 
-**Instructions:**
-1.  **Generate a Passage:** Create a novel, information-dense passage of approximately {{wordLength}} words on a specific sub-topic within '{{topic}}'. The passage must be formal, academic, and objective.
-    -   The passage text MUST be formatted with HTML <p> tags, and each paragraph must be numbered (e.g., "<p>1. ...</p>").
-2.  **Generate Questions:** Create exactly {{numQuestions}} multiple-choice questions based *ONLY* on the information in the passage.
-    -   At least half the questions should require inference or application, not just simple recall of facts.
-    -   Incorrect options (distractors) must be plausible and designed to target common misunderstandings.
-3.  **Provide Explanations:** For EACH question, you are required to provide:
-    -   \\\`explanationEnglish\\\`: A detailed explanation in English of why the correct answer is correct.
-    -   \\\`explanationArabic\\\`: A detailed explanation in Arabic of why the correct answer is correct.
-    -   \\\`passageContext\\\`: The exact, verbatim quote from the passage that directly supports the answer.
-    -   These fields CANNOT be empty.
-4.  **Calculate Time:** Recommend a completion time in minutes using this formula: (Passage Word Count / 130) + (Number of Questions * 0.75). Round to the nearest whole number.
+Your entire response MUST be a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON.
 
-**Output Format:**
-Your entire response MUST be a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON object. The structure must conform to the following schema, and all fields are mandatory unless marked as optional.
-
+The JSON object must have the following structure and content:
 {
-  "title": "A suitable, non-empty title for the passage.",
-  "passage": "The generated HTML passage content.",
-  "questions": [
+  "title": "string", // REQUIRED: An appropriate, non-empty, academic title for the passage.
+  "passage": "string", // REQUIRED: A novel, information-dense passage of approximately {{wordLength}} words. The passage must be formal, objective, and formatted with HTML <p> tags for each paragraph (e.g., "<p>1. ...</p>"). The quality should be similar to a university textbook, using illustrative language and concrete examples to explain mechanisms and processes.
+  "questions": [ // REQUIRED: An array of exactly {{numQuestions}} multiple-choice questions.
     {
-      "question": "The question text.",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "answer": "The correct option text, which must exactly match one of the options.",
-      "explanationEnglish": "The mandatory English explanation.",
-      "explanationArabic": "The mandatory Arabic explanation.",
-      "passageContext": "The mandatory supporting quote from the passage."
+      "question": "string", // REQUIRED: The question text.
+      "options": ["string", "string", "string", "string"], // REQUIRED: An array of exactly 4 options.
+      "answer": "string", // REQUIRED: The correct answer, which must exactly match one of the options.
+      "explanationEnglish": "string", // REQUIRED: A detailed English explanation of why the correct answer is correct.
+      "explanationArabic": "string", // REQUIRED: A detailed Arabic explanation of why the correct answer is correct.
+      "passageContext": "string" // REQUIRED: The exact, verbatim quote from the passage that supports the answer.
     }
   ],
-  "recommendedTime": 10,
-  "subject": "{{topic}}"
+  "recommendedTime": "number", // REQUIRED: The recommended completion time in minutes. Calculate this using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then round to the nearest whole number.
+  "subject": "{{topic}}" // REQUIRED: Must be exactly the topic provided: "{{topic}}".
 }
+
+**Critical Rules for Questions:**
+- All questions must be based *only* on the information provided in the passage.
+- At least half the questions must test inference or application, not just recall.
+- Incorrect options (distractors) must be plausible and target common misunderstandings.
 {{topicHistoryInstruction}}
 `;
 
-const actStyleSciencePromptTemplate = `You are an expert curriculum designer specializing in creating challenging ACT Science test passages.
+const actStyleSciencePromptTemplate = `You are an expert curriculum designer creating a challenging ACT Science test passage on {{topic}}.
 
-**Instructions:**
-1.  **Generate a Passage:** Create a passage of approximately {{wordLength}} words on a specific sub-topic within '{{topic}}'. The passage MUST include data presented in a detailed HTML table.
-2.  **Generate Questions:** Create exactly {{numQuestions}} multiple-choice questions that require deep interpretation of the text and tables.
-3.  **Provide Explanations:** For EACH question, you MUST provide:
-    -   \\\`explanationEnglish\\\`: A detailed English explanation for the correct answer.
-    -   \\\`explanationArabic\\\`: A detailed Arabic explanation for the correct answer.
-    -   \\\`passageContext\\\`: The verbatim quote or data from the passage that supports the answer.
-    -   These fields CANNOT be empty.
-4.  **Structure Chart Data:** Provide a JSON object in the 'chartData' field that represents the data from the HTML table, suitable for rendering a bar chart.
-5.  **Calculate Time:** Recommend a completion time in minutes using the formula: (Word Count / 130) + (Number of Questions * 0.75), rounded to the nearest whole number.
+Your entire response MUST be a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON.
 
-**Output Format:**
-Your response MUST be a single, valid JSON object. Do not include any text or markdown before or after the JSON. The structure must be:
+The JSON object must have the following structure and content:
 {
-  "title": "A suitable title for the passage.",
-  "passage": "The generated HTML passage content including the table.",
-  "chartData": { "type": "bar", "data": [...], "xAxisKey": "...", "yAxisKeys": ["..."], "yAxisLabel": "..." },
-  "questions": [
+  "title": "string", // REQUIRED: A suitable, non-empty title for the passage.
+  "passage": "string", // REQUIRED: A passage of approximately {{wordLength}} words. The passage MUST include data presented in a detailed HTML table.
+  "chartData": { // REQUIRED for this format.
+    "type": "bar", // Must be 'bar'.
+    "data": [], // An array of data objects for the chart.
+    "xAxisKey": "string", // The key in the data objects for the X-axis.
+    "yAxisKeys": [], // The keys in the data objects for the Y-axis.
+    "yAxisLabel": "string" // A short label for the Y-axis.
+  },
+  "questions": [ // REQUIRED: An array of exactly {{numQuestions}} multiple-choice questions.
     {
-      "question": "The question text.",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "answer": "The correct option text.",
-      "explanationEnglish": "The mandatory English explanation.",
-      "explanationArabic": "The mandatory Arabic explanation.",
-      "passageContext": "The supporting quote/data from the passage."
+      "question": "string", // REQUIRED: The question text. Must require interpretation of text and tables.
+      "options": ["string", "string", "string", "string"], // REQUIRED: An array of exactly 4 options.
+      "answer": "string", // REQUIRED: The correct answer text.
+      "explanationEnglish": "string", // REQUIRED: A detailed English explanation for the correct answer.
+      "explanationArabic": "string", // REQUIRED: A detailed Arabic explanation for the correct answer.
+      "passageContext": "string" // REQUIRED: The verbatim quote or data from the passage that supports the answer.
     }
   ],
-  "recommendedTime": 12,
-  "subject": "{{topic}}"
+  "recommendedTime": "number", // REQUIRED: Recommended time in minutes. Calculate using (Word Count / 130) + (Num Questions * 0.75), rounded.
+  "subject": "{{topic}}" // REQUIRED: Must be exactly "{{topic}}".
 }
 {{topicHistoryInstruction}}
 `;
@@ -162,7 +150,10 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
       
       let topicHistoryInstruction = "";
       if (finalInput.topicHistory && finalInput.topicHistory.length > 0) {
-          topicHistoryInstruction = `To ensure variety, you MUST NOT generate a passage on a topic that is the same as or semantically very similar to any of the following recently used topics: ${finalInput.topicHistory.join('; ')}.`;
+          const validHistory = finalInput.topicHistory.filter(t => typeof t === 'string' && t.trim() !== '');
+          if (validHistory.length > 0) {
+            topicHistoryInstruction = `To ensure variety, you MUST NOT generate a passage on a topic that is the same as or semantically very similar to any of the following recently used topics: ${validHistory.join('; ')}.`;
+          }
       }
 
       prompt = promptTemplate
@@ -309,5 +300,3 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error('An unexpected error occurred while generating the passage.');
     }
 }
-
-    
