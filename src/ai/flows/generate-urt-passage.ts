@@ -80,7 +80,7 @@ Your response MUST adhere to the following strict quality standards:
 
 1.  **Title:** The title must be specific, descriptive, and engaging (e.g., "The Role of Mitochondria in Cellular Energy Production," not "Biology Passage").
 2.  **Passage Content & Quality:**
-    *   The passage should be approximately ${validatedInput.wordLength} words.
+    *   The passage's word count MUST be very close to ${validatedInput.wordLength} words. This is a strict requirement.
     *   It must be information-dense, formal, and written at a university-level.
     *   **Crucially, the passage must be formatted into multiple paragraphs using HTML <p> tags for structure and readability.** A single block of text is unacceptable.
     *   For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure.
@@ -103,7 +103,7 @@ Your response MUST adhere to the following strict quality standards:
 
 1.  **Title:** The title must be specific and descriptive, reflecting the scientific study presented (e.g., "An Experiment on Enzyme Inhibition," not "Science Test").
 2.  **Passage Content & Quality:**
-    *   The passage should be approximately ${validatedInput.wordLength} words.
+    *   The passage's word count MUST be very close to ${validatedInput.wordLength} words. This is a strict requirement.
     *   It MUST be an ACT Science style passage, presenting one or more studies with an introduction and experimental results.
     *   **The passage MUST include a detailed data table using a proper HTML \`<table>\` tag.**
     *   The passage MUST be formatted into multiple paragraphs using HTML \`<p>\` tags.
