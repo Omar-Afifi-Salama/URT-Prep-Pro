@@ -10,6 +10,7 @@
 
 import { z } from 'zod';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const GenerateUrtPassageInputSchema = z.object({
   topic: z.string().describe('The topic to generate the URT passage and questions about (English, Physics, Chemistry, Biology, Geology).'),
@@ -17,7 +18,6 @@ const GenerateUrtPassageInputSchema = z.object({
   wordLength: z.number().describe('The approximate number of words for the passage.'),
   numQuestions: z.number().describe('The number of questions to generate.'),
   apiKey: z.string().describe('The user-provided Google AI API key.'),
-  randomSeed: z.number().optional().describe('A random number to ensure prompt uniqueness.'),
   passageFormat: z.enum(['auto', 'reference', 'act']).optional().describe('The desired passage format for science topics.'),
 });
 export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSchema>;
@@ -51,63 +51,16 @@ const GenerateUrtPassageOutputSchema = z.object({
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
-const standardTextPromptTemplate = `You are an expert curriculum designer for a competitive university entrance exam, tasked with creating a high-quality practice test on the topic of {{topic}}.
+// Define a tool for the AI to use, which enforces the output schema.
+const GenerateUrtPassageToolSchema = z.object({
+  passageOutput: GenerateUrtPassageOutputSchema,
+});
 
-Your entire response MUST be a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON.
-
-The JSON object must have the following structure and content:
-{
-  "title": "string", // REQUIRED: An appropriate, non-empty, academic title for the passage.
-  "passage": "string", // REQUIRED: A novel, information-dense passage of approximately {{wordLength}} words. The passage must be formal, objective, and formatted with HTML <p> tags for each paragraph. The quality must be similar to a university textbook, using illustrative language and concrete examples. For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure or diagram. For English passages, focus on literary analysis.
-  "questions": [ // REQUIRED: An array of exactly {{numQuestions}} multiple-choice questions.
-    {
-      "question": "string", // REQUIRED: The question text.
-      "options": ["string", "string", "string", "string"], // REQUIRED: An array of exactly 4 options.
-      "answer": "string", // REQUIRED: The correct answer, which must exactly match one of the options.
-      "explanationEnglish": "string", // REQUIRED: A detailed English explanation of why the correct answer is correct.
-      "explanationArabic": "string", // REQUIRED: A detailed Arabic explanation of why the correct answer is correct.
-      "passageContext": "string" // REQUIRED: The verbatim quote from the passage that supports the answer.
-    }
-  ],
-  "recommendedTime": "number", // REQUIRED: The recommended completion time in minutes. Calculate this using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then round to the nearest whole number.
-  "subject": "{{topic}}" // REQUIRED: Must be exactly the topic provided: "{{topic}}".
-}
-
-**Critical Rules for Questions:**
-- All questions must be based *only* on the information provided in the passage.
-- At least half the questions must test inference or application, not just recall.
-- Incorrect options (distractors) must be plausible and target common misunderstandings.
-`;
-
-const actStyleSciencePromptTemplate = `You are an expert curriculum designer creating a challenging ACT Science test passage on {{topic}}.
-
-Your entire response MUST be a single, valid JSON object. Do not include any text or markdown formatting before or after the JSON.
-
-The JSON object must have the following structure and content:
-{
-  "title": "string", // REQUIRED: A suitable, non-empty title for the passage.
-  "passage": "string", // REQUIRED: A passage of approximately {{wordLength}} words. The passage MUST include data presented in a detailed HTML table.
-  "chartData": { // REQUIRED for this format.
-    "type": "bar", // Must be 'bar'.
-    "data": [], // An array of data objects for the chart.
-    "xAxisKey": "string", // The key in the data objects for the X-axis.
-    "yAxisKeys": [], // The keys in the data objects for the Y-axis.
-    "yAxisLabel": "string" // A short label for the Y-axis.
-  },
-  "questions": [ // REQUIRED: An array of exactly {{numQuestions}} multiple-choice questions.
-    {
-      "question": "string", // REQUIRED: The question text. Must require interpretation of text and tables.
-      "options": ["string", "string", "string", "string"], // REQUIRED: An array of exactly 4 options.
-      "answer": "string", // REQUIRED: The correct answer text.
-      "explanationEnglish": "string", // REQUIRED: A detailed English explanation for the correct answer.
-      "explanationArabic": "string", // REQUIRED: A detailed Arabic explanation for the correct answer.
-      "passageContext": "string" // REQUIRED: The verbatim quote or data from the passage that supports the answer.
-    }
-  ],
-  "recommendedTime": "number", // REQUIRED: Recommended time in minutes. Calculate using (Word Count / 130) + (Num Questions * 0.75), rounded.
-  "subject": "{{topic}}" // REQUIRED: Must be exactly "{{topic}}".
-}
-`;
+const passageGeneratorTool = {
+  name: 'passageGenerator',
+  description: 'Generates a URT practice passage with questions and metadata.',
+  parameters: zodToJsonSchema(GenerateUrtPassageToolSchema),
+};
 
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
     const validatedInput = GenerateUrtPassageInputSchema.parse(input);
@@ -132,118 +85,52 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         }
       }
       
-      let prompt;
-      let promptTemplate;
+      let system_prompt: string;
 
       if (shouldUseActStyle) {
-          promptTemplate = actStyleSciencePromptTemplate;
+          system_prompt = `You are an expert curriculum designer creating a challenging ACT Science test passage on ${validatedInput.topic}. The passage should be approximately ${validatedInput.wordLength} words and have ${validatedInput.numQuestions} questions. It MUST include a detailed HTML table in the passage text and provide structured data for a bar chart. All questions must be answerable from the text and data provided. The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number. The subject MUST be exactly "${validatedInput.topic}".`;
       } else {
-          promptTemplate = standardTextPromptTemplate;
+          system_prompt = `You are an expert curriculum designer creating a high-quality practice test on the topic of ${validatedInput.topic}. The passage should be approximately ${validatedInput.wordLength} words and have ${validatedInput.numQuestions} questions. It must be formal and information-dense. For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure or diagram. All questions must be answerable from the text provided. The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number. The subject MUST be exactly "${validatedInput.topic}".`;
       }
       
-      const finalInput = { ...validatedInput, randomSeed: Math.random() };
-      
-      prompt = promptTemplate
-          .replace(/\{\{topic\}\}/g, finalInput.topic)
-          .replace(/\{\{difficulty\}\}/g, finalInput.difficulty)
-          .replace(/\{\{wordLength\}\}/g, String(finalInput.wordLength))
-          .replace(/\{\{numQuestions\}\}/g, String(finalInput.numQuestions))
-          .replace(/\{\{randomSeed\}\}/g, String(finalInput.randomSeed));
-      
-      const modelConfig = {
-          model: "gemini-1.5-flash-latest",
-          generationConfig: {
-              responseMimeType: "application/json",
-          },
-      };
-      
       const model = genAI.getGenerativeModel({
-          ...modelConfig,
+          model: "gemini-1.5-flash-latest",
           safetySettings: [
               { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
               { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
               { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
               { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          ]
+          ],
+          systemInstruction: system_prompt,
       });
       
-      const generationResult = await model.generateContent(prompt);
+      const generationResult = await model.generateContent({
+        contents: [{role: 'user', parts: [{text: "Generate the passage and questions."}]}],
+        tools: [{ functionDeclarations: [passageGeneratorTool] }],
+        toolConfig: {
+            functionCallingConfig: {
+              mode: 'ANY',
+            },
+        },
+      });
+      
       const response = generationResult.response;
 
       if (response?.promptFeedback?.blockReason) {
         throw new Error(`Generation blocked by safety settings: ${response.promptFeedback.blockReason}. Please adjust the prompt or topic.`);
       }
 
-      if (!response || !response.candidates || response.candidates.length === 0 || !response.text()) {
-        console.error("AI Generation Error: No response, candidates, or text returned.", response?.promptFeedback);
-        throw new Error('The AI model returned an empty or incomplete response. Please try again.');
-      }
-      
-      let responseText = response.text();
-      
-      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
-      if (jsonMatch && jsonMatch[1]) {
-        responseText = jsonMatch[1];
+      const functionCall = response?.candidates?.[0]?.content?.parts?.[0]?.functionCall;
+
+      if (!functionCall || !functionCall.args || !functionCall.args.passageOutput) {
+        console.error("AI Generation Error: The model did not return a valid function call with the expected arguments.", response);
+        throw new Error('The AI model returned an invalid format. The raw response has been logged to the console. Please try again.');
       }
 
-      let aiOutput;
-      try {
-        aiOutput = JSON.parse(responseText);
-      } catch (jsonError: any) {
-        console.error("Failed to parse JSON response from AI:", jsonError);
-        console.error("Raw AI response:", responseText);
-        throw new Error("The AI model returned an invalid format. The raw response has been logged to the console. Please try again.");
-      }
-      
-      if (aiOutput) {
-        if (aiOutput.title && typeof aiOutput.title === 'object') {
-          aiOutput.title = String(aiOutput.title.text || JSON.stringify(aiOutput.title));
-        }
-        if (aiOutput.passage && typeof aiOutput.passage === 'object') {
-          aiOutput.passage = String(aiOutput.passage.text || JSON.stringify(aiOutput.passage));
-        }
-        
-        if (Array.isArray(aiOutput.questions)) {
-          aiOutput.questions.forEach((q: any) => {
-            if (q.question && typeof q.question === 'object') {
-              q.question = String(q.question.text || JSON.stringify(q.question));
-            }
-            if (q.answer && typeof q.answer === 'object') {
-              q.answer = String(q.answer.text || JSON.stringify(q.answer));
-            }
-            if (q.explanationEnglish && typeof q.explanationEnglish === 'object') {
-              q.explanationEnglish = String(q.explanationEnglish.text || JSON.stringify(q.explanationEnglish));
-            }
-            if (q.explanationArabic && typeof q.explanationArabic === 'object') {
-              q.explanationArabic = String(q.explanationArabic.text || JSON.stringify(q.explanationArabic));
-            }
-            if (q.passageContext && typeof q.passageContext === 'object') {
-              q.passageContext = String(q.passageContext.text || JSON.stringify(q.passageContext));
-            }
-            if (Array.isArray(q.options)) {
-              q.options = q.options.map((opt: any) => {
-                if (opt && typeof opt === 'object') {
-                  return String(opt.text || JSON.stringify(opt));
-                }
-                return String(opt);
-              });
-            }
-          });
-        }
-      }
+      const aiOutput = functionCall.args.passageOutput;
 
-      const usage = await model.countTokens(prompt);
+      const usage = await model.countTokens(system_prompt);
       
-      if (aiOutput && aiOutput.chartData && typeof aiOutput.chartData.data === 'string') {
-        try {
-          const parsedData = JSON.parse(aiOutput.chartData.data);
-          aiOutput.chartData.data = parsedData;
-        } catch (e) {
-          console.error("Failed to parse chartData JSON from AI", e);
-          aiOutput.chartData = undefined;
-        }
-      }
-
       if (!aiOutput) {
           throw new Error('Failed to generate text content.');
       }
@@ -262,7 +149,8 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         console.error("Error in generateUrtPassage:", e);
 
         if (e instanceof z.ZodError) {
-            throw new Error(`AI response failed validation. Details: ${e.errors.map(err => err.message).join(', ')}`);
+            console.error("Zod validation failed:", e.errors);
+            throw new Error(`AI response failed validation. Details: ${e.errors.map(err => `'${err.path.join('.')}' ${err.message}`).join(', ')}`);
         }
         
         const errorMessage = e.message || 'An unknown error occurred.';
