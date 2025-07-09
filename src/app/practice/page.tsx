@@ -49,6 +49,7 @@ import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from '
 import { useUsage } from "@/context/usage-provider";
 import { biologyDemoSet1, biologyDemoSet2, geologyDemoSet1, geologyDemoSet2 } from "@/lib/demo-data";
 import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 
 type View = "setup" | "test";
 type TestView = "normal" | "compact";
@@ -76,6 +77,9 @@ export default function PracticePage() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [activeTab, setActiveTab] = useState("0");
   const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [loadingText, setLoadingText] = useState("");
+  const [estimatedTime, setEstimatedTime] = useState(0);
   
   // Hooks
   const { toast } = useToast();
@@ -91,6 +95,8 @@ export default function PracticePage() {
         const parsedData = JSON.parse(retakeDataString);
         if (Array.isArray(parsedData)) {
             setIsLoading(true);
+            setEstimatedTime(1);
+            setLoadingText("Loading your retake test...");
             setTestData(null);
             setUserAnswers({});
             setElapsedTime(0);
@@ -113,8 +119,31 @@ export default function PracticePage() {
     }
   }, [toast]);
 
+  useEffect(() => {
+    if (!isLoading || estimatedTime === 0) {
+      setProgress(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setProgress(oldProgress => {
+        if (oldProgress >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        const increment = 100 / (estimatedTime * 10); // Update every 100ms
+        return oldProgress + increment;
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isLoading, estimatedTime]);
+
+
   const handleStartDemo = (demoSet: UrtTest[]) => {
     setIsLoading(true);
+    setEstimatedTime(2); // Short time for demo loading
+    setLoadingText("Loading demo...");
     setTestData(null);
     setUserAnswers({});
     setElapsedTime(0);
@@ -187,7 +216,13 @@ export default function PracticePage() {
         }
     }
 
+    const totalPassages = generationParams.length;
+    const estimatedTimePerPassage = 30; // 30 seconds per passage
+    const totalEstimatedTime = totalPassages * estimatedTimePerPassage;
+
     setIsLoading(true);
+    setEstimatedTime(totalEstimatedTime);
+    setLoadingText(`Generating ${totalPassages} passage${totalPassages > 1 ? 's' : ''}...`);
     setTestData(null);
     setUserAnswers({});
     setElapsedTime(0);
@@ -438,10 +473,14 @@ export default function PracticePage() {
       <div className="min-h-screen w-full flex flex-col">
         <AppHeader />
         <main className="flex-1 flex items-center justify-center p-4 md:p-8">
-          <div className="flex flex-col items-center justify-center text-center gap-4">
+          <div className="flex flex-col items-center justify-center text-center gap-4 w-full max-w-md">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-lg font-headline">Loading your test...</p>
-            <p className="text-muted-foreground">This may take a few moments.</p>
+            <p className="text-lg font-headline">{loadingText}</p>
+            <div className="w-full">
+              <Progress value={progress} className="w-full" />
+              <p className="text-sm text-muted-foreground mt-2">{Math.round(progress)}%</p>
+            </div>
+            <p className="text-muted-foreground">This may take a few moments. Please don't navigate away.</p>
           </div>
         </main>
       </div>

@@ -24,7 +24,7 @@ export type GenerateUrtPassageInput = z.infer<typeof GenerateUrtPassageInputSche
 
 const QuestionSchema = z.object({
   question: z.string().min(1, "Question text cannot be empty.").describe('The question text.'),
-  options: z.array(z.string()).length(4).describe('An array of 4 multiple choice options.'),
+  options: z.array(z.string()).length(4, "Each question must have exactly 4 options.").describe('An array of 4 multiple choice options.'),
   answer: z.string().min(1, "Answer cannot be empty.").describe('The correct answer, which must be one of the provided options.'),
   explanationEnglish: z.string().min(1, "English explanation cannot be empty.").describe('A detailed explanation in English of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
   explanationArabic: z.string().min(1, "Arabic explanation cannot be empty.").describe('A detailed explanation in Arabic of why the correct answer is correct. Use HTML tags for formatting if necessary (e.g., <sub>, <sup>).'),
@@ -86,12 +86,14 @@ Your response MUST adhere to the following strict quality standards:
     *   For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure.
 3.  **Question Quality:**
     *   Generate ${validatedInput.numQuestions} questions.
+    *   Each question MUST have exactly 4 multiple-choice options in its \`options\` array.
     *   The questions MUST test comprehension, analysis, and data interpretation, not just simple recall. They should require critical thinking.
     *   All questions must be answerable SOLELY from the text and data provided.
 4.  **Explanations & Context:**
     *   Provide detailed \`explanationEnglish\` and \`explanationArabic\` for why the correct answer is correct.
     *   Provide a \`passageContext\` quote that directly supports the answer.
 5.  **Calculated Time:** The \`recommendedTime\` must be calculated as (Word Count / 130) + (Questions * 0.75), rounded to the nearest integer.
+6.  **Chart Data:** For this reference-style passage, the \`chartData\` field MUST be set to \`null\`.
 
 Your output MUST be a single, valid JSON object that strictly adheres to the schema. Do not include any markdown formatting like \`\`\`json.`;
       
@@ -105,9 +107,10 @@ Your response MUST adhere to the following strict quality standards:
     *   It MUST be an ACT Science style passage, presenting one or more studies with an introduction and experimental results.
     *   **The passage MUST include a detailed data table using a proper HTML \`<table>\` tag.**
     *   The passage MUST be formatted into multiple paragraphs using HTML \`<p>\` tags.
-3.  **Chart Data:** You MUST provide structured data for a bar chart in the \`chartData\` field that visualizes the data from the passage's table.
+3.  **Chart Data:** You MUST provide structured data for a bar chart in the \`chartData\` field. This field must contain a JSON object with the keys 'type', 'data', 'xAxisKey', 'yAxisKeys', and 'yAxisLabel'. The value for this field MUST be a JSON object, not an array.
 4.  **Question Quality:**
     *   Generate ${validatedInput.numQuestions} questions.
+    *   Each question MUST have exactly 4 multiple-choice options in its \`options\` array.
     *   The questions MUST test data interpretation, analysis of experimental design, and the ability to draw conclusions from the provided text and data. Avoid simple recall questions.
     *   All questions must be answerable SOLELY from the passage, table, and chart data.
 5.  **Explanations & Context:**
