@@ -74,33 +74,50 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         }
       }
       
-      let system_prompt: string;
+      const reference_style_prompt = `You are an expert curriculum designer specializing in creating publication-quality educational content, similar to a university textbook. Your task is to generate a URT practice set on the topic of "${validatedInput.topic}".
 
-      if (shouldUseActStyle) {
-          system_prompt = `You are an expert curriculum designer. Your task is to generate a URT practice set on the topic of "${validatedInput.topic}".
-The passage should be approximately ${validatedInput.wordLength} words. Generate ${validatedInput.numQuestions} questions.
-The passage MUST be an ACT Science style passage, including a detailed HTML table and structured data for a bar chart.
-All questions MUST be answerable from the text and data provided.
-The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number.
-The subject MUST be exactly "${validatedInput.topic}".
+Your response MUST adhere to the following strict quality standards:
 
-Your output MUST be a single, valid JSON object that strictly adheres to the following JSON schema. Do not include any markdown formatting like \`\`\`json.
-The JSON object must contain these fields: 'title', 'passage', 'questions', 'recommendedTime', 'subject', 'chartData'.
-The 'questions' field must be an array of objects, where each object contains: 'question', 'options' (an array of 4 strings), 'answer', 'explanationEnglish', 'explanationArabic', and 'passageContext'.
-All text fields MUST NOT be empty.`;
-      } else {
-          system_prompt = `You are an expert curriculum designer. Your task is to generate a URT practice set on the topic of "${validatedInput.topic}".
-The passage should be approximately ${validatedInput.wordLength} words. Generate ${validatedInput.numQuestions} questions.
-The passage must be formal and information-dense. For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure or diagram.
-All questions must be answerable from the text provided.
-The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number.
-The subject MUST be exactly "${validatedInput.topic}".
+1.  **Title:** The title must be specific, descriptive, and engaging (e.g., "The Role of Mitochondria in Cellular Energy Production," not "Biology Passage").
+2.  **Passage Content & Quality:**
+    *   The passage should be approximately ${validatedInput.wordLength} words.
+    *   It must be information-dense, formal, and written at a university-level.
+    *   **Crucially, the passage must be formatted into multiple paragraphs using HTML <p> tags for structure and readability.** A single block of text is unacceptable.
+    *   For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure.
+3.  **Question Quality:**
+    *   Generate ${validatedInput.numQuestions} questions.
+    *   The questions MUST test comprehension, analysis, and data interpretation, not just simple recall. They should require critical thinking.
+    *   All questions must be answerable SOLELY from the text and data provided.
+4.  **Explanations & Context:**
+    *   Provide detailed \`explanationEnglish\` and \`explanationArabic\` for why the correct answer is correct.
+    *   Provide a \`passageContext\` quote that directly supports the answer.
+5.  **Calculated Time:** The \`recommendedTime\` must be calculated as (Word Count / 130) + (Questions * 0.75), rounded to the nearest integer.
 
-Your output MUST be a single, valid JSON object that strictly adheres to the following JSON schema. Do not include any markdown formatting like \`\`\`json.
-The JSON object must contain these fields: 'title', 'passage', 'questions', 'recommendedTime', 'subject'. The 'chartData' field is optional.
-The 'questions' field must be an array of objects, where each object contains: 'question', 'options' (an array of 4 strings), 'answer', 'explanationEnglish', 'explanationArabic', and 'passageContext'.
-All text fields MUST NOT be empty.`;
-      }
+Your output MUST be a single, valid JSON object that strictly adheres to the schema. Do not include any markdown formatting like \`\`\`json.`;
+      
+      const act_style_prompt = `You are an expert curriculum designer specializing in creating ACT Science-style practice tests. Your task is to generate a URT practice set on the topic of "${validatedInput.topic}".
+
+Your response MUST adhere to the following strict quality standards:
+
+1.  **Title:** The title must be specific and descriptive, reflecting the scientific study presented (e.g., "An Experiment on Enzyme Inhibition," not "Science Test").
+2.  **Passage Content & Quality:**
+    *   The passage should be approximately ${validatedInput.wordLength} words.
+    *   It MUST be an ACT Science style passage, presenting one or more studies with an introduction and experimental results.
+    *   **The passage MUST include a detailed data table using a proper HTML \`<table>\` tag.**
+    *   The passage MUST be formatted into multiple paragraphs using HTML \`<p>\` tags.
+3.  **Chart Data:** You MUST provide structured data for a bar chart in the \`chartData\` field that visualizes the data from the passage's table.
+4.  **Question Quality:**
+    *   Generate ${validatedInput.numQuestions} questions.
+    *   The questions MUST test data interpretation, analysis of experimental design, and the ability to draw conclusions from the provided text and data. Avoid simple recall questions.
+    *   All questions must be answerable SOLELY from the passage, table, and chart data.
+5.  **Explanations & Context:**
+    *   Provide detailed \`explanationEnglish\` and \`explanationArabic\` for why the correct answer is correct.
+    *   Provide a \`passageContext\` quote that directly supports the answer.
+6.  **Calculated Time:** The \`recommendedTime\` must be calculated as (Word Count / 130) + (Questions * 0.75), rounded to the nearest integer.
+
+Your output MUST be a single, valid JSON object that strictly adheres to the schema. Do not include any markdown formatting like \`\`\`json.`;
+
+      const promptToUse = shouldUseActStyle ? act_style_prompt : reference_style_prompt;
       
       const model = genAI.getGenerativeModel({
           model: "gemini-1.5-flash-latest",
@@ -110,7 +127,7 @@ All text fields MUST NOT be empty.`;
               { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
               { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
           ],
-          systemInstruction: system_prompt,
+          systemInstruction: promptToUse,
           generationConfig: {
             responseMimeType: "application/json",
           }
@@ -138,7 +155,7 @@ All text fields MUST NOT be empty.`;
           throw new Error('The AI model returned an empty response.');
       }
       
-      const usage = await model.countTokens(system_prompt);
+      const usage = await model.countTokens(promptToUse);
       
       const imageUrl = `https://placehold.co/600x400.png`;
 
@@ -173,7 +190,6 @@ All text fields MUST NOT be empty.`;
             throw new Error('The AI model is currently experiencing high demand and is temporarily unavailable. Please try again in a few moments.');
         }
 
-        // For other errors, re-throw the original message for better debugging.
         throw new Error(errorMessage);
     }
 }
