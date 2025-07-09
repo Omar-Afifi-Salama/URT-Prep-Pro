@@ -241,7 +241,7 @@ export default function HistoryDetailPage() {
                     <Card className="mb-4">
                         <CardHeader><CardTitle className="font-headline text-2xl" dangerouslySetInnerHTML={{ __html: passageData.title }} /></CardHeader>
                         <CardContent>
-                            <div className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: passageData.passage }} />
+                            <div className={cn("prose max-w-none prose-p:text-justify", font)} dangerouslySetInnerHTML={{ __html: passageData.passage }} />
                              {passageData.chartData && renderChart(passageData.chartData)}
                         </CardContent>
                     </Card>
@@ -295,7 +295,7 @@ export default function HistoryDetailPage() {
                                         )}
 
                                         <Separator />
-                                        <div className={cn("prose prose-sm dark:prose-invert max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
+                                        <div className={cn("prose prose-sm max-w-none prose-p:text-foreground prose-h4:text-foreground prose-strong:text-foreground", font)}>
                                             {result.explanationEnglish && (
                                               <>
                                                 <h4 className="font-bold">Explanation (English)</h4>

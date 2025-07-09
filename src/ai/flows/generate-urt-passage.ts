@@ -158,15 +158,13 @@ Your output MUST be a single, valid JSON object that strictly adheres to the sch
           throw new Error('The AI model returned an empty response.');
       }
       
-      const usage = await model.countTokens(promptToUse);
-      
       const imageUrl = `https://placehold.co/600x400.png`;
 
       const finalOutput = {
           ...aiOutput,
           subject: validatedInput.topic,
           imageUrl,
-          tokenUsage: usage?.totalTokens,
+          tokenUsage: response.usageMetadata?.totalTokenCount,
       };
       
       return GenerateUrtPassageOutputSchema.parse(finalOutput);

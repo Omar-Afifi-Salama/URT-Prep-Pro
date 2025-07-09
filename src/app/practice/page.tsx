@@ -48,7 +48,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '
 import { Bar, XAxis, YAxis, CartesianGrid, BarChart as RechartsBarChart } from 'recharts';
 import { useUsage } from "@/context/usage-provider";
 import { biologyDemoSet1, biologyDemoSet2, geologyDemoSet1, geologyDemoSet2 } from "@/lib/demo-data";
-import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 
 type View = "setup" | "test";
@@ -64,8 +63,8 @@ export default function PracticePage() {
   const [selectedSingleSubject, setSelectedSingleSubject] = useState<Subject | null>(null);
   const [fullTestSettings, setFullTestSettings] = useState<Record<string, number>>({});
   const [difficulty, setDifficulty] = useState("Medium");
-  const [wordLength, setWordLength] = useState([800]);
-  const [numQuestions, setNumQuestions] = useState([10]);
+  const [wordLength, setWordLength] = useState(800);
+  const [numQuestions, setNumQuestions] = useState(10);
   const [passageFormat, setPassageFormat] = useState('auto');
   
   // App State
@@ -155,7 +154,7 @@ export default function PracticePage() {
         setIsLoading(false);
         toast({
             title: "Demo Started",
-            description: "This is a pre-generated demo. No API key is required.",
+            description: "This is a pre-generated demo (Easy difficulty). No API key is required.",
         });
     }, 500);
   }
@@ -187,8 +186,8 @@ export default function PracticePage() {
         generationParams.push({
             topic: selectedSingleSubject.name,
             difficulty,
-            wordLength: wordLength[0],
-            numQuestions: numQuestions[0],
+            wordLength: wordLength,
+            numQuestions: numQuestions,
             passageFormat: selectedSingleSubject.isScience ? (passageFormat as 'auto' | 'reference' | 'act') : undefined,
         });
     } else { // full test mode
@@ -542,7 +541,7 @@ export default function PracticePage() {
                                     <div
                                         id={`passage-content-${passageIndex}`}
                                         key={`passage-${passageIndex}-${data.passage?.length}`}
-                                        className={cn("prose dark:prose-invert max-w-none prose-p:text-justify", font)} 
+                                        className={cn("prose max-w-none prose-p:text-justify", font)} 
                                         dangerouslySetInnerHTML={{ __html: data.passage }} 
                                     />
                                     {data.chartData && renderChart(data.chartData)}
@@ -601,7 +600,7 @@ export default function PracticePage() {
                                             <div
                                             id={`passage-content-${index}`}
                                             key={`passage-${index}-${data.passage?.length}`}
-                                            className={cn("prose dark:prose-invert max-w-none pr-4 prose-p:text-justify", font)} 
+                                            className={cn("prose max-w-none pr-4 prose-p:text-justify", font)} 
                                             dangerouslySetInnerHTML={{ __html: data.passage }}
                                             />
                                             {data.chartData && renderChart(data.chartData)}
@@ -716,60 +715,63 @@ export default function PracticePage() {
                         </TabsList>
                         <TabsContent value="single" className="mt-6">
                             <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label>Subject</Label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        {SUBJECTS.map((s) => (
+                                            <Button key={s.name} variant={selectedSingleSubject?.name === s.name ? 'default' : 'outline'} onClick={() => setSelectedSingleSubject(s)} className="flex items-center justify-center gap-2 h-12 text-base">
+                                                <s.icon className="h-5 w-5" />
+                                                <span>{s.name}</span>
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {selectedSingleSubject?.isScience && (
                                     <div className="space-y-2">
-                                        <Label>Subject</Label>
-                                        <Select onValueChange={(value) => setSelectedSingleSubject(SUBJECTS.find(s => s.name === value) || null)}>
-                                            <SelectTrigger><SelectValue placeholder="Select a subject..." /></SelectTrigger>
-                                            <SelectContent>{SUBJECTS.map((s) => (<SelectItem key={s.name} value={s.name}><div className="flex items-center gap-2"><s.icon className="h-4 w-4" /><span>{s.name}</span></div></SelectItem>))}</SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    {mode === 'single' && selectedSingleSubject?.isScience && (
-                                        <div className="space-y-3">
-                                            <Label>Passage Format</Label>
-                                            <RadioGroup value={passageFormat} onValueChange={setPassageFormat} className="flex space-x-4">
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="auto" id="auto" />
-                                                    <Label htmlFor="auto">Auto</Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="reference" id="reference" />
-                                                    <Label htmlFor="reference">Reference Style</Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="act" id="act" />
-                                                    <Label htmlFor="act">ACT Style</Label>
-                                                </div>
-                                            </RadioGroup>
+                                        <Label>Passage Format</Label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[{id: 'auto', label: 'Auto'}, {id: 'reference', label: 'Reference'}, {id: 'act', label: 'ACT Style'}].map(format => (
+                                                <Button key={format.id} variant={passageFormat === format.id ? 'default' : 'outline'} onClick={() => setPassageFormat(format.id)}>
+                                                    {format.label}
+                                                </Button>
+                                            ))}
                                         </div>
-                                    )}
+                                    </div>
+                                )}
 
-                                    <div className="space-y-3">
-                                        <Label htmlFor="difficulty">Difficulty</Label>
-                                        <Select onValueChange={setDifficulty} defaultValue={difficulty}>
-                                          <SelectTrigger id="difficulty"><SelectValue /></SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="Easy">Easy</SelectItem>
-                                            <SelectItem value="Medium">Medium</SelectItem>
-                                            <SelectItem value="Hard">Hard</SelectItem>
-                                          </SelectContent>
-                                        </Select>
+                                <div className="space-y-2">
+                                    <Label>Difficulty</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {['Easy', 'Medium', 'Hard'].map(d => (
+                                            <Button key={d} variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)}>
+                                                {d}
+                                            </Button>
+                                        ))}
                                     </div>
-                                    <div className="space-y-3">
-                                      <div className="flex justify-between items-center">
-                                        <Label htmlFor="wordLength">Passage Length</Label>
-                                        <span className="text-sm text-muted-foreground font-medium">{wordLength[0]} words</span>
-                                      </div>
-                                      <Slider id="wordLength" min={400} max={1200} step={200} value={wordLength} onValueChange={setWordLength} />
-                                    </div>
+                                </div>
 
-                                    <div className="space-y-3">
-                                       <div className="flex justify-between items-center">
-                                        <Label htmlFor="numQuestions">Number of Questions</Label>
-                                         <span className="text-sm text-muted-foreground font-medium">{numQuestions[0]} questions</span>
-                                      </div>
-                                      <Slider id="numQuestions" min={5} max={15} step={1} value={numQuestions} onValueChange={setNumQuestions} />
+                                <div className="space-y-2">
+                                    <Label>Passage Length (approx. words)</Label>
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                                        {[400, 600, 800, 1000, 1200].map(wl => (
+                                            <Button key={wl} variant={wordLength === wl ? 'default' : 'outline'} onClick={() => setWordLength(wl)}>
+                                                {wl}
+                                            </Button>
+                                        ))}
                                     </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Number of Questions</Label>
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                                        {[5, 7, 10, 12, 15].map(nq => (
+                                            <Button key={nq} variant={numQuestions === nq ? 'default' : 'outline'} onClick={() => setNumQuestions(nq)}>
+                                                {nq}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </TabsContent>
                         <TabsContent value="full" className="mt-6">
