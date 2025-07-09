@@ -51,17 +51,6 @@ const GenerateUrtPassageOutputSchema = z.object({
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
-// Define a tool for the AI to use, which enforces the output schema.
-const GenerateUrtPassageToolSchema = z.object({
-  passageOutput: GenerateUrtPassageOutputSchema,
-});
-
-const passageGeneratorTool = {
-  name: 'passageGenerator',
-  description: 'Generates a URT practice passage with questions and metadata.',
-  parameters: zodToJsonSchema(GenerateUrtPassageToolSchema),
-};
-
 export async function generateUrtPassage(input: GenerateUrtPassageInput): Promise<GenerateUrtPassageOutput> {
     const validatedInput = GenerateUrtPassageInputSchema.parse(input);
 
@@ -85,12 +74,34 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         }
       }
       
+      const jsonSchema = zodToJsonSchema(GenerateUrtPassageOutputSchema, "mySchema");
+
       let system_prompt: string;
 
       if (shouldUseActStyle) {
-          system_prompt = `You are an expert curriculum designer creating a challenging ACT Science test passage on ${validatedInput.topic}. The passage should be approximately ${validatedInput.wordLength} words and have ${validatedInput.numQuestions} questions. It MUST include a detailed HTML table in the passage text and provide structured data for a bar chart. All questions must be answerable from the text and data provided. The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number. The subject MUST be exactly "${validatedInput.topic}".`;
+          system_prompt = `You are an expert curriculum designer. Your task is to generate a URT practice set on the topic of "${validatedInput.topic}".
+The passage should be approximately ${validatedInput.wordLength} words. Generate ${validatedInput.numQuestions} questions.
+The passage MUST be an ACT Science style passage, including a detailed HTML table and structured data for a bar chart.
+All questions MUST be answerable from the text and data provided.
+The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number.
+The subject MUST be exactly "${validatedInput.topic}".
+
+Your output MUST be a single, valid JSON object that strictly adheres to the following JSON schema. Do not include any markdown formatting like \`\`\`json.
+The JSON object must contain these fields: 'title', 'passage', 'questions', 'recommendedTime', 'subject', 'chartData'.
+The 'questions' field must be an array of objects, where each object contains: 'question', 'options' (an array of 4 strings), 'answer', 'explanationEnglish', 'explanationArabic', and 'passageContext'.
+All text fields MUST NOT be empty.`;
       } else {
-          system_prompt = `You are an expert curriculum designer creating a high-quality practice test on the topic of ${validatedInput.topic}. The passage should be approximately ${validatedInput.wordLength} words and have ${validatedInput.numQuestions} questions. It must be formal and information-dense. For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure or diagram. All questions must be answerable from the text provided. The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number. The subject MUST be exactly "${validatedInput.topic}".`;
+          system_prompt = `You are an expert curriculum designer. Your task is to generate a URT practice set on the topic of "${validatedInput.topic}".
+The passage should be approximately ${validatedInput.wordLength} words. Generate ${validatedInput.numQuestions} questions.
+The passage must be formal and information-dense. For science topics, it is REQUIRED to include illustrative data, such as a summary table in an HTML '<table>', a chemical equation using '<sub>' and '<sup>' tags, or a detailed description of a scientific figure or diagram.
+All questions must be answerable from the text provided.
+The recommended completion time should be calculated using the formula: (Passage Word Count / 130) + (Number of Questions * 0.75), then rounded to the nearest whole number.
+The subject MUST be exactly "${validatedInput.topic}".
+
+Your output MUST be a single, valid JSON object that strictly adheres to the following JSON schema. Do not include any markdown formatting like \`\`\`json.
+The JSON object must contain these fields: 'title', 'passage', 'questions', 'recommendedTime', 'subject'. The 'chartData' field is optional.
+The 'questions' field must be an array of objects, where each object contains: 'question', 'options' (an array of 4 strings), 'answer', 'explanationEnglish', 'explanationArabic', and 'passageContext'.
+All text fields MUST NOT be empty.`;
       }
       
       const model = genAI.getGenerativeModel({
@@ -102,18 +113,12 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
               { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
           ],
           systemInstruction: system_prompt,
+          generationConfig: {
+            responseMimeType: "application/json",
+          }
       });
       
-      const generationResult = await model.generateContent({
-        contents: [{role: 'user', parts: [{text: "Generate the passage and questions."}]}],
-        tools: [{ functionDeclarations: [passageGeneratorTool] }],
-        toolConfig: {
-            functionCallingConfig: {
-              mode: 'ONE',
-              allowedFunctionNames: [passageGeneratorTool.name],
-            },
-        },
-      });
+      const generationResult = await model.generateContent("Generate the URT practice set now.");
       
       const response = generationResult.response;
 
@@ -121,20 +126,21 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         throw new Error(`Generation blocked by safety settings: ${response.promptFeedback.blockReason}. Please adjust the prompt or topic.`);
       }
 
-      const functionCall = response?.candidates?.[0]?.content?.parts?.[0]?.functionCall;
-
-      if (!functionCall || !functionCall.args || !functionCall.args.passageOutput) {
-        console.error("AI Generation Error: The model did not return a valid function call with the expected arguments.", response);
-        throw new Error('The AI model returned an invalid format. The raw response has been logged to the console. Please try again.');
-      }
-
-      const aiOutput = functionCall.args.passageOutput;
-
-      const usage = await model.countTokens(system_prompt);
+      const responseText = response.text();
+      let aiOutput;
       
-      if (!aiOutput) {
-          throw new Error('Failed to generate text content.');
+      try {
+          aiOutput = JSON.parse(responseText);
+      } catch (e) {
+          console.error("AI Generation Error: Failed to parse JSON response.", responseText);
+          throw new Error('The AI model returned an invalid JSON format. The raw response has been logged to the console. Please try again.');
       }
+
+      if (!aiOutput) {
+          throw new Error('The AI model returned an empty response.');
+      }
+      
+      const usage = await model.countTokens(system_prompt);
       
       const imageUrl = `https://placehold.co/600x400.png`;
 
