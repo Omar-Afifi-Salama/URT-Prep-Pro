@@ -47,7 +47,7 @@ const GenerateUrtPassageOutputSchema = z.object({
   recommendedTime: z.number().describe('The recommended time in minutes to complete the test.'),
   tokenUsage: z.number().optional().describe('The number of tokens used for generation.'),
   subject: z.string().describe('The subject of the passage.'),
-  chartData: z.optional(ChartDataSchema).describe('Optional structured data for rendering a chart.'),
+  chartData: z.optional(ChartDataSchema).nullable().describe('Optional structured data for rendering a chart.'),
 });
 export type GenerateUrtPassageOutput = z.infer<typeof GenerateUrtPassageOutputSchema>;
 
@@ -74,8 +74,6 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         }
       }
       
-      const jsonSchema = zodToJsonSchema(GenerateUrtPassageOutputSchema, "mySchema");
-
       let system_prompt: string;
 
       if (shouldUseActStyle) {
