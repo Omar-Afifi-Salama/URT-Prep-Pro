@@ -161,6 +161,7 @@ Your output MUST be a single, valid JSON object that strictly adheres to the sch
 
       const finalOutput = {
           ...aiOutput,
+          subject: validatedInput.topic,
           imageUrl,
           tokenUsage: usage?.totalTokens,
       };
