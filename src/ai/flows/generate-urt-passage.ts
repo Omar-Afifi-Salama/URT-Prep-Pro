@@ -109,7 +109,8 @@ export async function generateUrtPassage(input: GenerateUrtPassageInput): Promis
         tools: [{ functionDeclarations: [passageGeneratorTool] }],
         toolConfig: {
             functionCallingConfig: {
-              mode: 'ANY',
+              mode: 'ONE',
+              allowedFunctionNames: [passageGeneratorTool.name],
             },
         },
       });
